@@ -24,7 +24,7 @@
 
 ---
 
-> **Vermeil 0.1.0-alpha.1 (Alpha Baseline).** Initial public alpha release of Vermeil Launcher. The codebase and versioning were rebooted from earlier prototypes into a streamlined, production-grade foundation.
+> **Vermeil 0.1.0-alpha.1 (Alpha Baseline).** Initial public alpha release of Vermeil Launcher. The codebase and versioning were rebooted from earlier prototypes into a streamlined, production-grade foundation. Curious about the launcher's evolution? Check out the [Visual Evolution & UI History](https://github.com/VermeilDev/VermeilDev/blob/main/HISTORY.md) across all seven developmental eras.
 >
 > **Developed with Google Antigravity 2.0.** Built with AI pair-programming assistance using integrated Gemini models. See [DISCLAIMER.md](DISCLAIMER.md).
 ## Highlights
