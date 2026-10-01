@@ -77,7 +77,7 @@
       "endpoints": [
         "https://raw.githubusercontent.com/VermeilDev/Vermeil-Launcher/updates/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgyQjEwQ0YzRTlBN0I3MEYKUldRUHQ2ZnA4d3l4Z2d6ZkVmUmxkN3FXS2paTDBiaWVlUEhtZTdNb3ZWamF2NDE0eWwrWUNQelcK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM0ODU4RDE1NEVDMTJBOTkKUldTWktzRk9GWTJGTkNpNERrZ3lOOFQ2YUlzc2VYWDFZOVFQVFA4Sytjb05qanRVU2pqYy9TR08K",
       "windows": {
         "installMode": "passive"
       }
