@@ -378,6 +378,16 @@ Please follow this evaluation protocol:
 
 ## 2. Manual Prerequisites and Setup (If Not Using AI)
 
+> [!NOTE]
+> **Zero Required Cloud Dependencies:**
+> Building and running Vermeil locally requires **zero** external API keys or cloud services. All features provide robust local and serverless fallbacks out of the box:
+> - **Instance Sharing**: Generates and imports 100% serverless, offline `VML...` codes by default without needing a Cloudflare Worker.
+> - **Settings Persistence**: Saves locally to `%LOCALAPPDATA%\Vermeil\` (Windows) or `~/.local/share/Vermeil/` (Linux) without needing Google Cloud OAuth.
+> - **Companion Mod**: Caches locally and works offline without needing a GitHub API token.
+> - **Auto-Updater**: Only needed when shipping production auto-updating distribution builds.
+>
+> You only need to configure Google Cloud, Cloudflare, or Minisign if you are deploying your own production release infrastructure.
+
 The lists below are for building the **launcher**. The companion mod
 (maintained in [`VermeilDev/vermeil-companion`](https://github.com/VermeilDev/vermeil-companion)) needs extra JDKs — see [Companion Mod](#companion-mod).
 

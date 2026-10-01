@@ -109,7 +109,7 @@ jobs:
   # without inflating GitHub release asset download counts or triggering API rate limits.
   publish-updater-manifest:
     needs: release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
