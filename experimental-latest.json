@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0-alpha.1",
+  "notes": "## 0.1.0 (Alpha Build 1)\n\n### Added\n\n- Aggregated cross-instance in-game screenshot filmstrip in Library with isolated horizontal scroll, full-height widescreen thumbnails, single-slot [F2] ghost slot, and built-in lightbox viewer\n- Active instance storage footprint calculation, total installed content tracking, and auto-managed companion mod status telemetry\n- Redesigned Account view into tactile bento panels with bifurcated Google Cloud Settings Sync token lifecycle and one-click cloud backup/restore\n- Multi-vendor Java runtime auto-provisioning for Adoptium, Corretto, Microsoft OpenJDK, and Zulu with live streaming download progress, cancellation, and download queue integration\n- Emerald theme palette with automated Win32 COM shell shortcut and taskbar icon synchronization\n- Home screen dual-deck 2-box hero grid in Worlds and Servers tabs with live server status pinging, MOTD sanitization, and online player readouts\n- Redesigned Create Custom Instance and Import Instance screen layouts with tactile bento cards and recessed input wells\n\n### Changed\n\n- Symmetrical 56px sub-tile and 76px hero deck height with top badge integration and isolated action triggers\n- Floating pagination dock with subtle page indicator and idle state styling\n- Streamlined header meta pills with unified borders and tactile hover transitions\n\n### Fixed\n\n- Deduplicated download speed limiter updates with atomic limit tracking, eliminating redundant mutex resets and log spam\n- Hardened authentication session persistence and centralized token expiry synchronization in load_accounts with 4s pre-flight probe bounds and encrypted vault fallback\n- Elevated modal overlay z-indices to prevent stacking collision and boundary-aware tooltip alignment\n- Resolved automated Java detection scanning across nested vendor directories\n\n### Documentation\n\n- [Tactile Design & UI Architecture](docs/UI.md): Design system, modal restraint, layout invariants, and styling architecture",
+  "pub_date": "2026-10-01T15:14:47.687Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk1pbjVWZ0h2ZDB6bDVmY2k4bFZzc1d5V2Z1b1RzTWhNNlF6MitFVEpIU2JDVUhERGt5NGtWNnBRREpMa3E0cTlIZDFrc3N2MUNFenFlanordjZNZVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwODY3NjUzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xX3g2NC1zZXR1cC5leGUKYTBvb3k3bDhhNUd6NzJzZTdnTVk2RzRJczk1d0xFTm5iQVpVbWdZZGZ1NGl5aE1XMTRsc3pKbVdPeFljdGtHK29DTHZTUFhXZS9QeXlySVRQb3ZxRFE9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.1/Vermeil_0.1.0-alpha.1_x64-setup.exe"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk1pbjVWZ0h2ZDB6bDVmY2k4bFZzc1d5V2Z1b1RzTWhNNlF6MitFVEpIU2JDVUhERGt5NGtWNnBRREpMa3E0cTlIZDFrc3N2MUNFenFlanordjZNZVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwODY3NjUzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xX3g2NC1zZXR1cC5leGUKYTBvb3k3bDhhNUd6NzJzZTdnTVk2RzRJczk1d0xFTm5iQVpVbWdZZGZ1NGl5aE1XMTRsc3pKbVdPeFljdGtHK29DTHZTUFhXZS9QeXlySVRQb3ZxRFE9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.1/Vermeil_0.1.0-alpha.1_x64-setup.exe"
+    },
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkQyeE9ZdnJQekF0TEQxd1N1VWVOaldGZjFhWFV0V01VVWJzb2YwYjNMd2tpWms4REYxM0dZMzY3MERTNkUrUVZkUzhzWElFTi9xT1dNSm5JMk4zVlFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwODY3NjgzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xX2FtZDY0LkFwcEltYWdlCjdVNVJjUXRzMzJQRWM2eENWTWN6VysxUFdqNVQ5U3dQeU5kemVjYXNncmg5WWwrNkdXZ3hPMENHSUUzQ3l5eFpBVlJBc0ViWnlTTUJOVWFZcTY1TURBPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.1/Vermeil_0.1.0-alpha.1_amd64.AppImage"
+    },
+    "linux-x86_64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkQyeE9ZdnJQekF0TEQxd1N1VWVOaldGZjFhWFV0V01VVWJzb2YwYjNMd2tpWms4REYxM0dZMzY3MERTNkUrUVZkUzhzWElFTi9xT1dNSm5JMk4zVlFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwODY3NjgzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xX2FtZDY0LkFwcEltYWdlCjdVNVJjUXRzMzJQRWM2eENWTWN6VysxUFdqNVQ5U3dQeU5kemVjYXNncmg5WWwrNkdXZ3hPMENHSUUzQ3l5eFpBVlJBc0ViWnlTTUJOVWFZcTY1TURBPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.1/Vermeil_0.1.0-alpha.1_amd64.AppImage"
+    }
+  }
+}
