@@ -394,15 +394,6 @@ const Account: Component = () => {
                       Sign in with an official Microsoft account to authenticate and start playing.
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    class="btn btn--primary btn--sm"
-                    onClick={handleLogin}
-                    disabled={loggingIn()}
-                  >
-                    <IconPlus />
-                    <span>{loggingIn() ? "Signing in via browser..." : "Add Microsoft Account"}</span>
-                  </button>
                 </div>
               }
             >
