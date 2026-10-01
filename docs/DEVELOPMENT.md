@@ -33,7 +33,7 @@ Follow this step-by-step checklist:
    - Operating System specific toolchains:
      - Windows: Check for Visual Studio C++ Build Tools (MSVC compiler / WebView2).
      - Linux: Check for `webkit2gtk-4.1`, `libayatana-appindicator3`, `librsvg2`, and `patchelf`.
-   - Optional (companion mod): Check Java JDK 25 (`java -version`).
+   - Optional (Vermeil Companion mod): Check Java JDK 25 (`java -version`).
 
 2. Report Results:
    - Output a clean Markdown table summarizing:
@@ -109,6 +109,15 @@ Generate a root rules file covering:
 
 6. Verification — node scripts/check-privacy.mjs (0 violations), cargo check + cargo test
    (0 warnings), pnpm exec tsc --noEmit + pnpm run build (0 errors).
+
+7. Multi-Repository Ecosystem & Sibling Workspace Navigation — Strict separation between
+   desktop launcher (`Vermeil-Launcher`) and client companion mod (`vermeil-companion`).
+   Sibling directory topology (`../Vermeil-Launcher` ↔ `../vermeil-companion`). Launcher is
+   strictly Rust/Tauri 2 + SolidJS; mod is strictly Java / Stonecraft / Forge 1.8.9. Never copy
+   mod files into launcher or vice versa. Both repositories share the Ponytail philosophy,
+   zero telemetry, closed contribution policy, and Conventional Commits stealth git workflow.
+   When instructed to work on the companion mod, switch to `vermeil-companion` workspace and
+   use its dedicated skills (`stonecraft`, `minecraft-mod`).
 
 And generate separate skill files for these development workflows:
 - "Adding a Tauri IPC Command" — service → command → lib.rs → commands.ts → UI
@@ -227,25 +236,48 @@ Pursuant to Section 7 of the GPLv3, LICENSES.md, and standard open-source fork m
 5. Preserve cross-platform compatibility and zero-telemetry foundations.
 ```
 
-#### Step 5: Companion Mod Integration
-If you are developing features that interface between the desktop launcher and the Minecraft client companion mod (e.g., custom capes, skin baking, in-game rich presence, or video settings), use this prompt. The companion mod is maintained in its own dedicated repository at [`VermeilDev/vermeil-companion`](https://github.com/VermeilDev/vermeil-companion):
+#### Step 5: Multi-Repository Ecosystem & Companion Mod Navigation Prompt
+Use this prompt to instruct your AI assistant on navigating seamlessly across the entire **Vermeil Ecosystem** — switching between the desktop launcher (`Vermeil-Launcher`) and the Minecraft client companion mod (`vermeil-companion`), enforcing boundary discipline, and maintaining unified standards and skills across both projects:
 
 ```text
-You are an expert systems and Minecraft mod developer assisting me with the Vermeil ecosystem.
-The desktop launcher lives in `VermeilDev/Vermeil-Launcher` (Rust/Tauri 2 + SolidJS), and the client companion mod lives in its dedicated repository `VermeilDev/vermeil-companion` (Java/Gradle/Stonecutter/Mixins).
+You are an expert systems engineer and Minecraft client developer assisting me across the entire Vermeil Ecosystem.
 
-When working on features that interface between the Launcher and Companion Mod:
-1. Architecture & IPC Protocol:
-   - Communication occurs via JVM system property `-Dvermeil.dataDir=<path>` pointing to `%LOCALAPPDATA%\Vermeil\companion\`.
-   - Settings sync: The launcher writes `vermeil-settings.json` into the companion data directory on launch; the mod reads and binds client options (FOV, Zoom, Discord RPC, video settings).
-   - Capes & Skins: The launcher renders/crops capes, writing static and animated frames (`cape.png`, `meta.json`) into the companion data directory. The mod extracts `AvatarRenderState` and binds the registered dynamic texture.
-2. Mod Release & Download-on-Demand:
-   - The launcher downloads verified companion jars at launch via `launcher/src-tauri/src/services/companion_mod.rs` from `VermeilDev/vermeil-companion` releases using `companion-manifest.json`.
-   - Filenames follow `vermeil-<modVersion>+<mcVersion>.jar`.
-3. Local Development & Testing:
-   - To test local companion mod builds without publishing a release: build jars in `vermeil-companion` (`./gradlew chiseledBuildAndCollect`), then place the output jar directly into `<instance>/.minecraft/mods/` or copy to `%LOCALAPPDATA%\Vermeil\cache\companion\jars\`.
-   - Use `JAVA_HOME` with JDK 25 for modern Stonecraft (Fabric/NeoForge) and JDK 8 for legacy Forge 1.8.9.
-4. Follow zero-telemetry and Tactile Bento design principles at all times.
+Our ecosystem is structured across two dedicated sibling repositories:
+1. `Vermeil-Launcher` (Desktop launcher built with Tauri 2 in Rust, and SolidJS in TypeScript).
+2. `vermeil-companion` (In-game Minecraft client companion mod built in Java with Stonecraft/Stonecutter and ForgeGradle 2).
+
+When navigating, developing, and coordinating between these two projects, adhere strictly to this ecosystem protocol:
+
+1. Workspace Topology & Boundary Separation:
+   - Sibling Directory Structure: Both repositories live side-by-side on disk (e.g. `../Vermeil-Launcher` and `../vermeil-companion`). Reference sibling paths rather than copying files across repositories.
+   - Strict Boundary Invariant:
+     - All Rust backend logic, Tauri IPC commands, SolidJS UI screens, and Tactile Bento CSS live exclusively in `Vermeil-Launcher`.
+     - All Java mod source code, Mixins, ASM transformers, and Gradle build scripts live exclusively in `vermeil-companion`.
+     - NEVER duplicate or copy Java sources into the launcher repo. NEVER duplicate Rust or SolidJS code into the companion mod repo.
+   - Runtime Dependency: Inside the launcher, the companion mod is strictly a runtime download dependency consumed via `launcher/src-tauri/src/services/companion_mod.rs` or cached on disk.
+
+2. Context Switching Protocol:
+   - If the task asks to edit, build, or debug the desktop launcher (UI screens, Tauri commands, settings, download queue, instance management, or launch pipeline):
+     - Operate in the `Vermeil-Launcher` workspace.
+     - Leverage launcher skills: `add-mod-loader`, `add-screen`, `add-tauri-command`, `content-source-parity`, `ui-restraint`, `dependencies`, `refactoring`.
+     - Run launcher verification gates: `pnpm exec tsc --noEmit`, `pnpm run build`, `cargo check`, `cargo test`.
+   - If the task asks to edit, build, or debug the in-game companion mod (Mixins, capes, dynamic textures, client options, Stonecraft targets, or legacy Forge 1.8.9 coremods):
+     - Switch and operate in the `vermeil-companion` workspace.
+     - Leverage companion skills: `stonecraft` (modern multi-loader Fabric/NeoForge), `minecraft-mod` (Mixins, Forge 1.8.9 ASM).
+     - Run companion verification gates: `.\stonecraft\gradlew.bat -p stonecraft chiseledBuildAndCollect` (or Forge 1.8.9 build with JDK 8).
+   - If the task spans BOTH projects (End-to-End Ecosystem Feature):
+     - Follow the full pipeline:
+       a. Shared IPC / File Contract: Define JVM parameters (`-Dvermeil.dataDir=<path>`) and local JSON structures (`vermeil-settings.json`, `cape/meta.json`).
+       b. Desktop Launcher Phase: Implement SolidJS UI toggle/screen, backend state persistence, and launch argument injection in `services/launch.rs` / `services/prepare.rs`.
+       c. Companion Mod Phase: Switch to `vermeil-companion`, hydrate settings on startup, hook client render-states via Stonecraft preprocessed Mixins, and compile test jars.
+       d. Local Integration Test: Place built jar into `<instance>/.minecraft/mods/` or `%LOCALAPPDATA%\Vermeil\cache\companion\jars\` to smoke-test end-to-end.
+
+3. Unified Engineering Standards Across Both Projects:
+   - "Ponytail" Lazy Senior Dev Mode: Stop at the first rung that holds (YAGNI, reuse existing helpers, standard library first, shortest working diff, fix root causes). Never delete Stonecutter preprocessor comments (`//? if ...`).
+   - Zero Telemetry & Privacy-First: All communication and data persistence remain 100% local. Zero external analytics or phone-home tracking.
+   - Closed Contribution Policy: Maintainer-driven development. External PRs are not accepted; downstream forks are guided under GPLv3.
+   - Stealth Git Workflow & Conventional Commits: Autonomous local commits once verification gates pass. Manual push protocol only (`git push` strictly requires explicit user confirmation). Zero leaked machine paths or internal AI prompts in commit history.
+   - Privacy Hygiene: Run `node scripts/check-privacy.mjs` before committing in either repository.
 ```
 
 ---
@@ -483,7 +515,7 @@ Every push and pull request touching `launcher/**` triggers `.github/workflows/c
 
 ## Companion Mod
 
-The **Vermeil companion Minecraft mod** is maintained in its own dedicated repository:  
+The **Vermeil Companion Minecraft Mod** is maintained in its own dedicated repository:  
 👉 **[`VermeilDev/vermeil-companion`](https://github.com/VermeilDev/vermeil-companion)**
 
 It provides in-game client features (custom capes, Discord Rich Presence, client options synchronization). It is versioned and published independently of the desktop launcher.
