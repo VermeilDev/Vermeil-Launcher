@@ -31,7 +31,7 @@
 
 - **All Major Mod Loaders**: Full support for Fabric, Quilt, NeoForge, and Forge with automatic version detection, Adoptium Java auto-provisioning (Java 8–25), and offline manifest caching.
 - **Unified Content Browser**: Search, filter, and batch-install mods, resource packs, shaders, and complete modpacks directly from Modrinth and CurseForge.
-- **3D Character Studio & Custom Capes**: Interactive WebGL skin stage, dummy mannequins, historical skin sync via Crafty.gg, and in-game animated capes via the Vermeil companion mod.
+- **3D Character Studio & Custom Capes**: Interactive WebGL skin stage, dummy mannequins, historical skin sync via Crafty.gg, and in-game animated capes via the Vermeil Companion mod.
 - **Tactile Bento UI & 6 Themes**: Mechanical tactile interface featuring chunky 3D buttons, modular Bento panels, smooth navigation dock, and 6 visual colorways (Neon Aurora, Emerald, Inferno, Stealth, Deep Ocean, Void) with live Windows taskbar icon synchronization.
 - **Zero Telemetry & Private Cloud Sync**: No tracking, no launcher accounts, and no data harvesting. Optional preferences sync connects directly to your private Google Drive app sandbox without intermediate servers.
 
@@ -88,7 +88,6 @@ See [DISCLAIMER.md](DISCLAIMER.md) for full project disclaimers and [docs/DEVELO
 
 ## Acknowledgements
 
-- **[Ponytail](https://github.com/DietrichGebert/ponytail)** by **Dietrich Gebert** — The "Lazy Senior Dev" efficiency philosophy and restraint decision ladder guiding our architecture and AI pair programming.
 - **[Feather Icons](https://github.com/feathericons/feather)** by **Cole Bemis** — System iconography and UI glyphs.
 - **[skinview3d](https://github.com/bs-community/skinview3d)** — 3D Minecraft character and cape rendering canvas.
 
