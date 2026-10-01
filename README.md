@@ -88,6 +88,7 @@ See [DISCLAIMER.md](DISCLAIMER.md) for full project disclaimers and [docs/DEVELO
 
 ## Acknowledgements
 
+- **[Ponytail](https://github.com/DietrichGebert/ponytail)** by **Dietrich Gebert** — The "Lazy Senior Dev" efficiency philosophy and restraint decision ladder guiding our architecture and engineering workflows.
 - **[Feather Icons](https://github.com/feathericons/feather)** by **Cole Bemis** — System iconography and UI glyphs.
 - **[skinview3d](https://github.com/bs-community/skinview3d)** — 3D Minecraft character and cape rendering canvas.
 
