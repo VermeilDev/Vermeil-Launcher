@@ -1063,8 +1063,9 @@ const Home: Component = () => {
                         </div>
                       );
                     })()}
+                  </Show>
 
-                    {/* Secondary Server 1 (Height 38px) */}
+                  {/* Secondary Server 1 (Height 38px) */}
                     <Show
                       when={quickServers().length > 1}
                       fallback={
@@ -1231,7 +1232,6 @@ const Home: Component = () => {
                         );
                       })()}
                     </Show>
-                  </Show>
                 </div>
               </div>
             </Show>
