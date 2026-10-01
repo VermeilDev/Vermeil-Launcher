@@ -1,0 +1,204 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* =========================================================
+   splash.css — boot splash shown when the launcher window first
+   appears. A turning 3D cube of the app logo + shimmering wordmark
+   + a determinate progress bar, on a dark glow field. Ported from
+   the marketing site's loader; dismissed by components/Splash.tsx
+   (min on-screen time, then fade). Classes are `splash-` prefixed
+   so they never collide with in-app `.loader-*` styles.
+   ========================================================= */
+
+/* Bundled pixel font — self-hosted so the splash works offline and the
+   production CSP doesn't need to allow fonts.googleapis.com. OFL license. */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block; /* avoid FOUT on the splash — it's better to wait briefly */
+  src: url('/fonts/PressStart2P.woff2') format('woff2');
+}
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  background:
+    /* 1. Cinematic edge vignette to deepen corners */
+    radial-gradient(circle at 50% 48%, transparent 40%, rgba(0, 0, 0, 0.65) 100%),
+    /* 2. Seamless multi-stop spherical atmospheric glow with smooth inverse-square falloff */
+    radial-gradient(
+      circle at 50% 44%,
+      color-mix(in srgb, var(--accent) 12%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 9.5%, transparent) 18%,
+      color-mix(in srgb, var(--accent) 6.8%, transparent) 34%,
+      color-mix(in srgb, var(--accent) 4.2%, transparent) 50%,
+      color-mix(in srgb, var(--accent) 2.2%, transparent) 68%,
+      color-mix(in srgb, var(--accent) 0.8%, transparent) 84%,
+      transparent 100%
+    ),
+    /* 3. Pure sunken floor */
+    var(--surface-sunken);
+  opacity: 1;
+  visibility: visible;
+  overflow: hidden;
+  transition: opacity 0.6s ease, transform 0.6s ease, visibility 0s linear 0.6s;
+}
+.splash.is-done {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.08);
+}
+
+/* Micro-dither film grain — breaks up 8-bit Mach bands so dark gradients render completely smooth */
+.splash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.032;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+.splash-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  animation: splashInnerIn 0.7s ease-out both;
+}
+@keyframes splashInnerIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 3D boot cube — the app logo floating inside a glass cube turning on a glow. */
+.splash-stage { position: relative; width: 140px; height: 140px; perspective: 900px; }
+
+/* Ambient radial illumination directly centered on the 3D cube */
+.splash-stage::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  margin: auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 70%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.splash-cube {
+  position: absolute; inset: 0; margin: auto;
+  width: 120px; height: 120px;
+  transform-style: preserve-3d;
+  animation: splashCubeSpin 9s linear infinite;
+  z-index: 1;
+}
+@keyframes splashCubeSpin {
+  from { transform: rotateX(-24deg) rotateY(0deg); }
+  to   { transform: rotateX(-24deg) rotateY(360deg); }
+}
+.splash-cube-face {
+  position: absolute; inset: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: inset 0 0 30px color-mix(in srgb, var(--accent) 14%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent-strong) 4%, transparent));
+  backface-visibility: visible;
+}
+.splash-cube-face.cap {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, transparent), color-mix(in srgb, var(--accent-strong) 6%, transparent));
+}
+
+/* Logo at the cube's centre — counter-rotates so it stays upright and facing
+   the viewer. Screen blend drops the PNG's dark tile, leaving the glowing mark. */
+.splash-cube-logo {
+  position: absolute; inset: 0; margin: auto;
+  width: 74px; height: 74px;
+  animation: splashCubeLogoCounter 9s linear infinite;
+}
+.splash-cube-logo img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+@keyframes splashCubeLogoCounter {
+  from { transform: rotateY(0deg) rotateX(24deg); }
+  to   { transform: rotateY(-360deg) rotateX(24deg); }
+}
+.splash-cube-face.front  { transform: rotateY(0deg)   translateZ(60px); }
+.splash-cube-face.back   { transform: rotateY(180deg) translateZ(60px); }
+.splash-cube-face.right  { transform: rotateY(90deg)  translateZ(60px); }
+.splash-cube-face.left   { transform: rotateY(-90deg) translateZ(60px); }
+.splash-cube-face.top    { transform: rotateX(90deg)  translateZ(60px); }
+.splash-cube-face.bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+/* Glow pool beneath the cube. */
+.splash-stage::after {
+  content: ""; position: absolute; left: 50%; bottom: -24px;
+  width: 140px; height: 24px; transform: translateX(-50%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent) 28%, transparent), transparent 70%);
+  filter: blur(10px);
+  animation: splashGlowPulse 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes splashGlowPulse {
+  0%, 100% { opacity: 0.45; transform: translateX(-50%) scaleX(1); }
+  50%      { opacity: 0.85; transform: translateX(-50%) scaleX(1.3); }
+}
+
+/* Shimmering wordmark — pixel font matching the website's loader. Flows
+   through the logo palette on a seamless loop. Antialiasing disabled for
+   crisp pixel edges. */
+.splash-word {
+  font-family: 'Press Start 2P', monospace;
+  font-weight: 400;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  padding-left: 0.42em;
+  background: var(--splash-word-gradient, linear-gradient(90deg, #2dd4ef, #4f86f7, #8b5cf6, #d94ff0, #8b5cf6, #4f86f7, #2dd4ef));
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: splashWordShine 5s linear infinite;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+@keyframes splashWordShine {
+  from { background-position: 0% center; }
+  to   { background-position: 200% center; }
+}
+
+/* Determinate progress fill — width driven by components/Splash.tsx. */
+.splash-bar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 8px; background: color-mix(in srgb, var(--accent) 14%, transparent); overflow: hidden;
+  z-index: 3;
+}
+.splash-bar-fill {
+  height: 100%; width: 0;
+  background: var(--splash-bar-gradient, linear-gradient(90deg, var(--accent), var(--accent-strong)));
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Reduced motion — hold the cube/logo at a flattering static angle, no shine. */
+@media (prefers-reduced-motion: reduce) {
+  .splash-inner, .splash-cube, .splash-cube-logo, .splash-stage::after, .splash-word { animation: none !important; }
+  .splash-cube { transform: rotateX(-24deg) rotateY(-32deg); }
+  .splash-cube-logo { transform: rotateY(32deg) rotateX(24deg); }
+  .splash-word { -webkit-text-fill-color: var(--text); color: var(--text); }
+  .splash { transition: opacity 0.3s ease; }
+}

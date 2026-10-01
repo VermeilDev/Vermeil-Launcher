@@ -1,0 +1,354 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* logs.css — Log viewer, log toolbar, continue/news/article views (Home + Logs tabs) */
+
+/* Standalone logs popout window (separate Tauri "logs" window). The window is
+   undecorated and uses the launcher's own .titlebar, so this fills the native
+   window with: titlebar (flush, full width) + a padded body holding the
+   shared log toolbar and viewer. */
+.logs-popout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  box-sizing: border-box;
+}
+.logs-popout-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-3);
+  gap: var(--space-3);
+}
+.logs-popout-body .log-viewer-frame { flex: 1; min-height: 0; }
+
+/* Instance screen logs tab — fills remaining vertical space without page-level scrolling */
+.instance-screen--logs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.inst-logs-tab {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logs-tab placeholder shown in the main window while the logs are detached
+   into the popout. Centered prompt + a button to reattach. */
+.logs-detached {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+  color: var(--muted);
+}
+.logs-detached .btn { align-self: center; }
+
+/* Log viewer.
+   The viewer is wrapped in a non-scrolling `.log-viewer-frame` so the
+   ASCII backdrop can be pinned to the visible area. Without this wrap, the
+   backdrop would sit in the scroll container's content area and scroll
+   away as new log lines pushed it up. */
+.log-viewer-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.log-viewer {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.log-viewer::-webkit-scrollbar { width: 4px; }
+.log-viewer::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-xs); }
+
+/* Each log line layout */
+.log-line {
+  display: flex;
+  align-items: flex-start;
+  color: var(--muted);
+  padding: 1.5px var(--space-3) 1.5px calc(var(--space-3) - 2.5px);
+  border-left: 2.5px solid transparent;
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  transition: background 0.1s ease;
+}
+.log-line:hover:not(:last-child) {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.log-prompt {
+  color: var(--muted);
+  opacity: 0.55;
+  user-select: none;
+  -webkit-user-select: none;
+  margin-right: 8px;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.log-text {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-line.log-error .log-text { color: var(--danger); }
+.log-line.log-error .log-prompt { color: var(--danger); opacity: 0.8; }
+.log-line.log-error.log-trace .log-text { color: rgba(239, 68, 68, 0.85); }
+.log-line.log-error.log-trace .log-prompt { color: rgba(239, 68, 68, 0.5); }
+
+.log-line.log-warn .log-text { color: var(--yellow); }
+.log-line.log-warn .log-prompt { color: var(--yellow); opacity: 0.8; }
+
+/* Latest line highlight — matches tactile reference with 2.5px purple accent bar & soft background glow */
+.log-line:last-child {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-left-color: var(--accent);
+}
+.log-line:last-child .log-prompt {
+  color: var(--accent);
+  opacity: 0.9;
+}
+.log-line:last-child .log-text {
+  color: var(--text);
+}
+
+.log-line.log-error:last-child {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: var(--danger);
+}
+.log-line.log-error:last-child .log-prompt {
+  color: var(--danger);
+  opacity: 0.9;
+}
+.log-line.log-error:last-child .log-text {
+  color: var(--danger);
+}
+
+.log-line.log-warn:last-child {
+  background: rgba(234, 179, 8, 0.12);
+  border-left-color: var(--yellow);
+}
+.log-line.log-warn:last-child .log-prompt {
+  color: var(--yellow);
+  opacity: 0.9;
+}
+.log-line.log-warn:last-child .log-text {
+  color: var(--yellow);
+}
+
+/* Anime girl backdrop ASCII — pinned to the (non-scrolling) frame so it
+   stays centered on the visible viewport regardless of how many log lines
+   have piled up. The accent gradient (cyan → purple) is clipped to the
+   text so the art stands out clearly in the dark theme without overwhelming
+   the foreground logs. */
+.log-ascii-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+.log-ascii-backdrop pre, .log-ascii-backdrop svg {
+  user-select: none;
+  margin: 0;
+  opacity: 0.4;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.2));
+}
+.log-empty-hint {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: var(--muted);
+  padding: var(--space-4);
+  font-size: 12px;
+}
+
+.log-filter-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  font-size: 11px;
+  font-family: inherit;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  outline: none;
+  transition: all .12s;
+}
+.log-filter-btn:hover { color: var(--text); }
+.log-filter-btn.active { background: var(--accent-tint); border-color: var(--accent); color: var(--accent); }
+.log-filter-btn.error.active { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+.log-filter-btn.warn.active { background: var(--warn-soft); border-color: var(--yellow); color: var(--yellow); }
+
+/* Toggle switch — Tactile-style square checkbox toggle.
+   Dark recessed square box with a centered solid purple inner square when ON. */
+.toggle {
+  width: 20px;
+  height: 20px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.toggle:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.toggle.on {
+  background: var(--surface-sunken);
+  border-color: var(--accent);
+}
+.toggle.on:hover {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+.toggle::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: transparent;
+  transition: background .12s, transform .12s ease-out;
+  transform: scale(0);
+}
+.toggle.on::after {
+  background: var(--accent);
+  transform: scale(1);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+/* Instance settings panel */
+.instance-settings-panel {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: var(--space-4); margin-bottom: var(--space-4);
+}
+
+/* Log placeholder ASCII art */
+.log-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-8); min-height: 200px;
+}
+.log-ascii {
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  line-height: 1.3; white-space: pre; text-align: left;
+}
+
+/* Context bar action group — a recessed track holding the raised tab plates.
+   Sunken rather than --bg3 so the plates (which are --bg3) read against it
+   instead of blending into a same-tone box. */
+.ctx-action-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* News card media thumbnail — composes inside the canonical
+   `.card .card--media`; the card surface/frame comes from `.card`. */
+.news-thumb {
+  /* Bumped from 130px so the screenshot is the focus of the card. Using
+     aspect-ratio so the height tracks the card width — full-bleed on a
+     wide window, still proportional on narrow ones. */
+  aspect-ratio: 16 / 9;
+  background-size: cover; background-position: center;
+  background-color: var(--bg4);
+}
+/* Article detail */
+.article-detail { animation: fadeIn .15s ease; }
+.article-header { margin-bottom: var(--space-4); }
+/* Article hero — blurred backdrop fills the banner while the real image sits
+   centred and contained on top. Feed images are low-res (patch notes are only
+   540×540, news 772×350); contain at this frame height only ever downscales
+   them, so they stay sharp and never crop, with the blur hiding the letterbox. */
+.article-hero-wrap {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg4);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.article-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(26px) brightness(0.55);
+  transform: scale(1.25); /* hide the blurred edge bleed */
+}
+.article-hero-img {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+.article-title-section { display: flex; align-items: baseline; gap: var(--space-3); }
+.article-title { font-size: 18px; font-weight: 600; color: var(--text); margin: 0; }
+.article-version {
+  font-size: 11px; color: var(--muted); font-family: var(--font-mono);
+  background: var(--bg4); padding: var(--space-1) var(--space-2); border-radius: var(--radius-xs);
+}
+.article-body {
+  font-size: 13px; line-height: 1.7; color: var(--text);
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: var(--space-4); max-height: 300px; overflow-y: auto;
+}
+.article-body::-webkit-scrollbar { width: 4px; }
+.article-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-xs); }
+.article-body p { margin-bottom: var(--space-3); }
+.article-body ul, .article-body ol { padding-left: var(--space-5); margin-bottom: var(--space-3); }
+.article-body li { margin-bottom: var(--space-1); }
+.article-body h1, .article-body h2, .article-body h3 { color: var(--text); margin: var(--space-3) 0 var(--space-2); }
+.article-body a { color: var(--accent); text-decoration: none; }
+.article-body a:hover { text-decoration: underline; }
+
+
+/* News grid (Home) reflows via the canonical .card-grid (auto-fit) — no
+   bespoke column override. */

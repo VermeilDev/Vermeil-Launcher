@@ -1,0 +1,899 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* dock.css — Floating bottom-centered dock navigation.
+ *
+ * Single unified pill containing 6 nav buttons (3 left, 3 right) with a
+ * raised circular FAB-style center button. The center button is absolutely
+ * positioned so it appears to float above the pill.
+ *
+ * Two modes:
+ *   • Default — nav buttons + notch under the FAB
+ *   • Pin selector (.pin-mode) — pill expands and renders a scrollable
+ *     carousel of pinned instances. Triggered by the toggle_pin_selector
+ *     keybind (default Ctrl+P).
+ */
+
+
+
+/* Wrapper centers the dock and reserves space for the raised FAB. */
+.dock-wrap {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  pointer-events: none;
+  /* Fluid-scale the entire bottom dock with viewport width. Uses `zoom`
+     instead of `transform: scale` because the wrap already owns the
+     `translateX(-50%)` centering transform and the slide-up entry / hide
+     animations — adding a scale on top would clobber those. `zoom` also
+     scales layout (not just visuals) so hit areas, drop shadows, tooltip
+     anchors, and the pagination island all stay correct. */
+  zoom: var(--dock-scale);
+  animation: dockSlideUp 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) 0.1s backwards;
+  transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease;
+}
+@keyframes dockSlideUp {
+  from { opacity: 0; transform: translate(-50%, 24px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Auto-hidden state (e.g. on the Logs tab). Slides fully off the bottom
+   edge. The dock reveals itself again when the cursor nears the bottom of
+   the window (handled in FloatingDock via a mousemove listener). */
+.dock-wrap.dock-hidden {
+  transform: translate(-50%, calc(100% + 40px));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease;
+}
+
+/* Cut-off rectangular bottom-centered trigger zone.
+ * Appears when the dock is auto-hidden (Logs tab, Skins tab) so the
+ * user has a precise, tactile target to summon the dock without
+ * accidentally triggering it across the entire bottom width of the screen.
+ */
+.dock-trigger-zone {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 140px;
+  height: 6px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border-strong);
+  border-bottom: none;
+  border-top: 1.5px solid var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+  z-index: 28;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 -2px 10px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0, 0, 1),
+    opacity 0.2s ease,
+    height 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.15s ease;
+}
+
+/* Invisible hit area expansion above the 6px visible tab */
+.dock-trigger-zone::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -16px;
+  right: -16px;
+  top: -24px;
+}
+
+/* Visible state when dock is auto-hidden and not yet revealed */
+.dock-trigger-zone.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hover state: slight height expansion and brighter tactile glow */
+.dock-trigger-zone:hover {
+  height: 9px;
+  background: var(--surface-raised);
+  border-top-color: var(--accent-strong);
+  box-shadow: 0 -3px 16px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* The dock pill — clean, seamless dark container with frosted glassmorphism. */
+.dock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: auto;
+  transition: padding 0.25s ease, background 0.25s ease;
+}
+
+/* When pin selector is open, give the pill more breathing room to
+   accommodate the carousel and use a slightly different surface tint. */
+.dock-wrap.pin-mode .dock {
+  padding: 10px 14px;
+  background: var(--surface-glass-strong);
+}
+
+/* Unified nav row — all 7 buttons in one seamless line with even spacing */
+.dock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: dockRowIn 0.2s ease-out;
+}
+@keyframes dockRowIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Button slot — fixed size box that never moves or resizes during button press,
+   preventing layout shift or empty space jitter. */
+.dock-btn-slot {
+  width: 42px;
+  height: 42px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Individual nav button — chunky plate with sharp corners, 1px border */
+.dock-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  outline: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 0;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  user-select: none;
+  box-shadow: var(--btn-depth);
+  transition:
+    transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1),
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.dock-btn svg {
+  width: 19px;
+  height: 19px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Linux/WebKitGTK renders thin SVG strokes noticeably heavier than Chromium
+   (WebView2 on Windows), so the small dock icons read as bold. Trim the stroke
+   on Linux only so the visual weight matches the Windows build. Scoped to the
+   dock — these are the smallest icons where the difference is most obvious.
+   CSS stroke-width overrides each icon's presentation attribute. */
+.platform-linux .dock-btn svg,
+.platform-linux .dock-center-icon svg,
+.platform-linux .dock-pin-tile-manage .dock-pin-tile-img svg {
+  stroke-width: 1.5;
+}
+
+.dock-btn:hover:not(.active),
+.dock-btn:focus-visible:not(.active) {
+  outline: none;
+  transform: translateY(-2px) scale(1.04);
+  background: var(--surface-panel);
+  border-color: var(--border-hover);
+  color: #ffffff;
+  box-shadow: none;
+  z-index: 5;
+}
+.dock-btn:active:not(.active) {
+  transform: translateY(1px) scale(0.97);
+  background: var(--surface-panel);
+  box-shadow: none;
+  z-index: 5;
+}
+
+/* Active route button state */
+.dock-btn.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent-strong);
+  box-shadow: var(--btn-depth-strong), 0 0 0 1px var(--accent);
+}
+.dock-btn.active:hover,
+.dock-btn.active:focus-visible {
+  transform: translateY(-2px) scale(1.04);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 1px var(--accent);
+  z-index: 5;
+}
+.dock-btn.active:active {
+  transform: translateY(1px) scale(0.97);
+  background: var(--accent-strong);
+  box-shadow: none;
+  z-index: 5;
+}
+
+/* Active indicator bar inside button */
+.dock-btn-dot {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 2.5px;
+  border-radius: 0;
+  background: var(--accent-contrast);
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Active downloads indicator badge on dock buttons */
+.dock-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 10;
+  pointer-events: none;
+  animation: dockBadgePulse 2s ease-in-out infinite;
+}
+
+.dock-btn.active .dock-badge {
+  background: #0d0c11;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 8px var(--accent-glow);
+}
+
+@keyframes dockBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.dock-center-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+/* ═══ DOCK BUTTON ENCHANTED GLINT ═══
+   Tactile shimmer that pans diagonally across dock buttons.
+   - Standby: shines continuously on the currently selected/active screen dock button.
+   - Hover: dynamically lights up whichever dock button is hovered under the cursor.
+   - Dynamic transfer: when hovering another button, the inactive selected button's glint is suppressed.
+   - Stop button: excluded via :not(.dock-btn-stop) to preserve solid crimson styling. */
+.dock-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 30%,
+    color-mix(in srgb, var(--accent) 55%, #ffffff) 42%,
+    rgba(255, 255, 255, 0.8) 50%,
+    color-mix(in srgb, var(--accent) 55%, #ffffff) 58%,
+    transparent 70%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+/* 1. Standby: Active screen dock button carries the enchanted glint */
+.dock-btn.active:not(.dock-btn-stop)::after {
+  opacity: 1;
+  animation: enchantGlint 3.2s linear infinite;
+}
+
+/* 2. Hover: Any hovered dock button lights up with the enchanted glint */
+.dock-btn:hover:not(.dock-btn-stop)::after,
+.dock-btn:focus-visible:not(.dock-btn-stop)::after {
+  opacity: 1;
+  animation: enchantGlint 3.2s linear infinite;
+}
+
+/* 3. Dynamic Transfer: When hovering another button in the dock, suppress the active button's glint */
+.dock-row:hover .dock-btn.active:not(:hover)::after {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes enchantGlint {
+  from { background-position: 100% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-btn::after {
+    animation: none !important;
+    display: none !important;
+  }
+}
+
+/* Stop state (game running) */
+.dock-btn.dock-btn-stop {
+  background: var(--danger) !important;
+  color: #ffffff !important;
+  border-color: #f87171 !important;
+  box-shadow: var(--btn-depth-strong) !important;
+}
+.dock-btn.dock-btn-stop:hover {
+  transform: translateY(-2px) scale(1.04);
+  background: #f87171 !important;
+  border-color: #f87171 !important;
+  box-shadow: none !important;
+  z-index: 5;
+}
+.dock-btn.dock-btn-stop:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: none !important;
+  z-index: 5;
+}
+
+/* ============================================================
+   Pin selector mode — tactile quick-launch shelf inside the dock pill.
+   ============================================================ */
+.dock-pin-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: min(640px, calc(100vw - 32px));
+  animation: pinCarouselIn 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pinCarouselIn {
+  from { opacity: 0; transform: scale(0.96) translateY(2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dock-pin-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.dock-pin-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Action buttons (Manage & Close) */
+.dock-pin-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 1px solid var(--border);
+  padding-left: 10px;
+}
+
+/* Empty-state guidance shown when nothing is pinned yet */
+.dock-pin-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  padding: 0 var(--space-3);
+  user-select: none;
+}
+.dock-pin-hint-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.dock-pin-hint-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Tiles in the carousel — chunky 3D buttons with bottom elevation */
+.dock-pin-tile {
+  position: relative;
+  flex-shrink: 0;
+  width: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  animation: pinTileIn 0.25s cubic-bezier(0.2, 0, 0, 1) both;
+  font-family: var(--font);
+}
+@keyframes pinTileIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dock-pin-tile:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+.dock-pin-tile:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.dock-pin-tile-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+  box-shadow: var(--btn-depth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  user-select: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1),
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.dock-pin-tile:hover .dock-pin-tile-img {
+  border-color: var(--border-hover);
+  box-shadow: none;
+}
+.dock-pin-tile:active .dock-pin-tile-img {
+  box-shadow: none;
+}
+.dock-pin-tile-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.dock-pin-tile-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font);
+  letter-spacing: 0.02em;
+}
+.dock-pin-tile-name {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 54px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  transition: color 0.12s ease;
+}
+.dock-pin-tile:hover .dock-pin-tile-name {
+  color: var(--text);
+}
+
+/* Loader-tinted backgrounds & hover borders for tiles */
+.dock-pin-tile.loader-vanilla .dock-pin-tile-img { background: var(--grad-loader-vanilla); }
+.dock-pin-tile.loader-fabric  .dock-pin-tile-img { background: var(--grad-loader-fabric); }
+.dock-pin-tile.loader-quilt   .dock-pin-tile-img { background: var(--grad-loader-quilt); }
+.dock-pin-tile.loader-forge   .dock-pin-tile-img { background: var(--grad-loader-forge); }
+.dock-pin-tile.loader-neoforge .dock-pin-tile-img { background: var(--grad-loader-neoforge); }
+
+.dock-pin-tile.loader-vanilla:hover .dock-pin-tile-img  { border-color: #10b981; }
+.dock-pin-tile.loader-fabric:hover .dock-pin-tile-img   { border-color: #38bdf8; }
+.dock-pin-tile.loader-quilt:hover .dock-pin-tile-img    { border-color: #a855f7; }
+.dock-pin-tile.loader-forge:hover .dock-pin-tile-img    { border-color: #f97316; }
+.dock-pin-tile.loader-neoforge:hover .dock-pin-tile-img { border-color: #f59e0b; }
+
+/* Manage action tile */
+.dock-pin-tile-manage .dock-pin-tile-img {
+  background: var(--surface-raised);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-muted);
+}
+.dock-pin-tile-manage .dock-pin-tile-img svg { width: 18px; height: 18px; }
+.dock-pin-tile-manage:hover .dock-pin-tile-img {
+  border-color: var(--accent);
+  color: #ffffff;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-raised));
+  box-shadow: none;
+}
+.dock-pin-tile-manage:active .dock-pin-tile-img {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-contrast);
+  box-shadow: none;
+}
+.dock-pin-tile-manage:hover .dock-pin-tile-name {
+  color: var(--accent);
+}
+
+/* Close action tile */
+.dock-pin-tile-close .dock-pin-tile-img {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.dock-pin-tile-close .dock-pin-tile-img svg { width: 17px; height: 17px; }
+.dock-pin-tile-close:hover .dock-pin-tile-img {
+  border-color: #ef4444;
+  color: #ffffff;
+  background: rgba(239, 68, 68, 0.18);
+  box-shadow: none;
+}
+.dock-pin-tile-close:active .dock-pin-tile-img {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: none;
+}
+.dock-pin-tile-close:hover .dock-pin-tile-name {
+  color: #ef4444;
+}
+
+/* ============================================================
+   Pagination island — iOS-style dot indicator pill above the dock.
+   ============================================================ */
+.dock-island-wrap {
+  position: fixed;
+  z-index: 30;
+  pointer-events: auto;
+  zoom: var(--dock-scale);
+  transition:
+    bottom 0.3s cubic-bezier(0.34, 1.2, 0.64, 1),
+    top 0.3s cubic-bezier(0.34, 1.2, 0.64, 1),
+    left 0.3s ease,
+    right 0.3s ease,
+    transform 0.3s ease;
+}
+
+/* Bottom-centered orientation (horizontal) */
+.dock-island-wrap.pos-bottom {
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(18px + 64px + 8px);
+  transform: translateX(-50%);
+}
+
+.dock-island-wrap.pos-bottom.dock-hidden {
+  bottom: 14px;
+}
+
+/* Left-centered orientation (vertical) */
+.dock-island-wrap.pos-left {
+  left: 16px;
+  right: auto;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+/* Right-centered orientation (vertical) */
+.dock-island-wrap.pos-right {
+  right: 16px;
+  left: auto;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+/* Vertical layout rules for left and right positions */
+.dock-island-wrap.pos-left .dock-page-dots,
+.dock-island-wrap.pos-right .dock-page-dots {
+  flex-direction: column;
+}
+
+.dock-island-wrap.pos-left .dock-page-island,
+.dock-island-wrap.pos-right .dock-page-island {
+  padding: var(--space-3) var(--space-2);
+}
+
+.dock-island-wrap.pos-left .dock-page-hold-input,
+.dock-island-wrap.pos-right .dock-page-hold-input {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dock-page-island {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-3);
+  width: fit-content;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  pointer-events: auto;
+  animation: dockPagIslandIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+@keyframes dockPagIslandIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Hold animation — removed. Just show the input directly. */
+
+/* When input is showing, subtle border. */
+.dock-page-island.holding {
+  border-color: var(--border-hover);
+}
+
+/* Scroll Mode active — indicates mouse wheel anywhere in window drives pagination */
+.dock-page-island.scroll-mode-active {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 14px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Dot row */
+.dock-page-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Individual dot */
+.dock-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  background: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition:
+    width 0.28s ease-in,
+    height 0.28s ease-in,
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease;
+  cursor: pointer;
+}
+.dock-dot:hover:not(.active) {
+  background: var(--text);
+  opacity: 0.8 !important;
+}
+.dock-dot.active,
+.dock-dot.active.expanded {
+  background: var(--accent);
+  min-width: 26px;
+  width: auto;
+  padding: 0 4px;
+  height: 14px;
+  box-sizing: border-box;
+  transition:
+    width 0.18s ease-out,
+    min-width 0.18s ease-out,
+    height 0.18s ease-out,
+    background 0.2s ease;
+}
+
+.dock-dot.active.scrolling {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.dock-dot-num {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-contrast);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  animation: dockDotNumIn 0.18s ease-out;
+}
+@keyframes dockDotNumIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Page number input (shown on hold) — shows input / total */
+.dock-page-hold-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  font-family: var(--font);
+}
+.dock-page-input {
+  width: 32px;
+  height: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg4);
+  border-radius: var(--radius-xs);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  font-family: var(--font);
+  padding: 0;
+}
+.dock-page-total {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Tooltips for dock buttons — appear ABOVE with sharp accent tag.
+   ============================================================ */
+.dock-btn[data-tooltip]::before,
+.dock-pin-tile[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 2.5px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  padding: 4px 9px 4px 8px;
+  border-radius: 0;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 100;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.65),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.dock-btn[data-tooltip]:hover::before,
+.dock-pin-tile[data-tooltip]:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* ============================================================
+   Keybind capture (Settings → Keybinds tab)
+   ============================================================ */
+.keybind-capture-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.keybind-capture {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  min-width: 110px;
+  text-align: center;
+  white-space: nowrap;
+  transition: border-color 0.12s, background 0.12s;
+}
+.keybind-capture:hover {
+  border-color: var(--accent);
+}
+.keybind-capture.capturing {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+  animation: keybindCapturePulse 1s ease-in-out infinite;
+}
+@keyframes keybindCapturePulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50% { box-shadow: var(--glow-accent); }
+}
+.keybind-keys, .keybind-capturing-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+.keybind-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, border-color 0.12s;
+}
+.keybind-reset svg {
+  width: 14px;
+  height: 14px;
+}
+.keybind-reset:hover:not(:disabled) {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.keybind-reset:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

@@ -1,0 +1,37 @@
+// SPDX-FileCopyrightText: 2026 VermeilDev
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pub mod app_updater;
+pub mod auth;
+pub mod cf_import;
+pub mod cf_mod_install;
+pub mod companion_mod;
+pub mod companion_settings;
+pub mod curseforge;
+pub mod discord;
+pub mod download;
+pub mod fabric;
+pub mod google_cloud;
+pub mod icon_cache;
+pub mod instance_cape;
+pub mod instance_service;
+pub mod java;
+pub mod launch;
+pub mod loader_scan;
+pub mod manual_download;
+pub mod lwjgl_compat;
+pub mod memory;
+pub mod meta;
+pub mod mod_install;
+pub mod mod_updates;
+pub mod modpack;
+pub mod modrinth;
+pub mod neoforge;
+pub mod prepare;
+pub mod quilt;
+pub mod settings_service;
+pub mod share_code;
+pub mod skins;
+pub mod video_options;
+pub mod window_icon;
+pub mod server_ping;

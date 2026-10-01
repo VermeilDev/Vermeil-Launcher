@@ -1,0 +1,12 @@
+{
+  "identifier": "logs",
+  "description": "Capability for the standalone logs popout window. It listens for game-log / logs-load-instance events and drives its own custom titlebar (the window is undecorated to match the launcher chrome), so it needs the window controls the titlebar uses. The current_log_target and read_instance_log commands are app commands (registered via generate_handler) and are not gated by the ACL, so no permission is granted for them here. Deliberately excludes opener/updater/dialog/process/tray.",
+  "windows": ["logs"],
+  "permissions": [
+    "core:event:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-start-dragging"
+  ]
+}

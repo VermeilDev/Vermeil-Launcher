@@ -1,0 +1,362 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* layout.css — Titlebar, content area, section labels, generic tooltips.
+ *
+ * The old left-sidebar (`.sidebar`) was replaced by `<FloatingDock />`.
+ * Sidebar-specific styles live in `dock.css`. The legacy `.nav-icon` /
+ * `.nav-pin-icon` styles below are kept so any third-party code still
+ * referencing them via inline class strings doesn't crash — they just
+ * never render anywhere now.
+ */
+
+/* Generic tooltip (appears above element) — used by [data-tip] outside the dock.
+   Sharp corners with purple accent tag. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 2.5px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  line-height: 1.35;
+  padding: 4px 9px 4px 8px;
+  border-radius: 0;
+  white-space: normal;
+  width: max-content;
+  max-width: 280px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 200;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.65),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+[data-tip=""]::after { display: none !important; }
+[data-tip]:active::after { display: none !important; }
+body:has(.modal-overlay) [data-tip]::after,
+body:has(.news-modal-overlay) [data-tip]::after {
+  display: none !important;
+}
+body:has(.modal-overlay) [data-tip]:hover,
+body:has(.news-modal-overlay) [data-tip]:hover {
+  z-index: auto !important;
+}
+[data-tip]:hover { z-index: 300; }
+[data-tip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+.tip-below[data-tip]::after { bottom: auto; top: calc(100% + 8px); transform: translateX(-50%) translateY(-3px); }
+.tip-below[data-tip]:hover::after { transform: translateX(-50%) translateY(0); }
+.tip-left[data-tip]::after { left: 0; right: auto; transform: translateY(3px); }
+.tip-left[data-tip]:hover::after { transform: translateY(0); }
+
+/* Right-anchored variant — pins the tooltip's right edge to the element so it
+   extends leftward. For affordances at the right edge of the window or container
+   where a centered tooltip would clip off-screen. */
+.tip-right[data-tip]::after { left: auto; right: 0; transform: translateY(3px); }
+.tip-right[data-tip]:hover::after { transform: translateY(0); }
+
+/* Left-anchored bottom tooltip — pins left edge to button to prevent left clipping */
+.tip-below.tip-left[data-tip]::after,
+.tip-left.tip-below[data-tip]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  transform: translateY(-3px);
+}
+.tip-below.tip-left[data-tip]:hover::after,
+.tip-left.tip-below[data-tip]:hover::after {
+  transform: translateY(0);
+}
+
+/* Right-anchored bottom tooltip — pins right edge to button to prevent right clipping */
+.tip-below.tip-right[data-tip]::after,
+.tip-right.tip-below[data-tip]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: auto;
+  right: 0;
+  transform: translateY(-3px);
+}
+.tip-below.tip-right[data-tip]:hover::after,
+.tip-right.tip-below[data-tip]:hover::after {
+  transform: translateY(0);
+}
+
+/* Universal Stacking Context Elevation for Tooltip Containers:
+   Elevates cards, tiles, rows, slots, and action groups when a tooltip inside them is hovered,
+   ensuring tooltips are never painted under subsequent sibling elements in the DOM. */
+:is(
+  .card,
+  .card--mod,
+  .card--inst,
+  .sym-sub-tile,
+  .sym-hero-tile,
+  .sym-actions,
+  .sym-col,
+  .deck-sub-slot,
+  .deck-hero-card,
+  .continue-card,
+  .bento-card,
+  .bento-subcard,
+  .setting-row,
+  .settings-cell,
+  .setting-control,
+  .card-gamemode-section,
+  .java-slot,
+  .java-slot-actions,
+  .mod-item,
+  .mod-card,
+  .server-card,
+  .world-card,
+  .skins-cape-tile,
+  .skins-lib-card,
+  .library-meta-card,
+  .theme-swatch,
+  .log-toolbar,
+  .dl-item,
+  .dl-card,
+  .manual-dl-item
+):has([data-tip]:hover) {
+  position: relative;
+  z-index: 120 !important;
+  overflow: visible !important;
+}
+
+/* Unmask and unclip badge tracks when hovering tooltips inside them */
+.inst-card-badges:has([data-tip]:hover) {
+  overflow: visible !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+
+/* Immediate parent elevation for any element with a hovered tooltip */
+body:not(:has(.modal-overlay)):not(:has(.news-modal-overlay)) *:has(> [data-tip]:hover) {
+  z-index: 110;
+}
+
+/* Main area — fills the window now that the sidebar is gone. The warm
+   radial vignette gives the app depth (a lit scene, not a flat fill). */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--vignette); min-width: 0; }
+
+/* Titlebar */
+.titlebar {
+  height: 38px; background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 var(--space-4); gap: var(--space-3); flex-shrink: 0;
+  cursor: default;
+}
+.win-btns { display: flex; gap: var(--space-2); }
+.win-btn {
+  width: 14px; height: 14px; border-radius: 0; border: none; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  background: transparent; color: transparent; transition: all .12s;
+}
+.win-btn svg { width: 10px; height: 10px; }
+.win-btn:hover { color: var(--text); }
+.win-close { background: var(--win-close); }
+.win-close:hover { background: var(--win-close-hover); color: var(--text); }
+.win-minimize { background: var(--win-minimize); }
+.win-minimize:hover { background: var(--win-minimize-hover); color: var(--text); }
+.win-maximize { background: var(--win-maximize); }
+.win-maximize:hover { background: var(--win-maximize-hover); color: var(--text); }
+
+.titlebar-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; text-align: center; }
+.account-pill { display: flex; align-items: center; gap: var(--space-2); font-size: 12px; color: var(--muted); }
+.dot-green {
+  width: 8px; height: 8px; border-radius: 0; flex-shrink: 0;
+  background: var(--accent);
+}
+
+/* Content area. The vertical scrollbar on the right edge shows in accent
+   color when there's content to scroll. No horizontal scrollbar.
+
+   Bottom padding reserves --dock-clearance so card actions (Install
+   buttons, mod icons, pagination targets) at the end of the list always
+   scroll above the floating dock instead of disappearing behind it. The
+   matching scroll-padding-bottom keeps keyboard/anchor scrolls clear of
+   the dock too. */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-5) var(--space-5) calc(var(--space-5) + var(--dock-clearance));
+  scroll-padding-bottom: var(--dock-clearance);
+  scroll-behavior: smooth;
+  /* Flex child of .main (column). min-width:0 lets the content area shrink
+     to its container instead of being forced wide by a long unbreakable word
+     or a nowrap descendant — this is the precondition that makes the
+     overflow-x:hidden above actually clip an oversize child rather than let
+     the flex item grow to fit it. */
+  min-width: 0;
+}
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-xs); }
+
+/* When dock is auto-hidden (globally via setting or on Logs/Skins), collapse
+   the 112px bottom clearance down to standard padding to maximize vertical space. */
+.content.dock-hidden {
+  padding-bottom: var(--space-4);
+  scroll-padding-bottom: 0;
+}
+
+/* The Skins screen is a full-height Character Studio — the floating dock
+   auto-hides to give the figurine stage and side panels full vertical space.
+   Flex column flow fills the exact remaining height without page-level scrollbars. */
+.content:has(.skins-screen) {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+  scroll-padding-bottom: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The Logs tab on an Instance screen is a full-height console — fills the exact
+   remaining height without page-level scrollbars so only the log viewer scrolls. */
+.content:has(.instance-screen--logs) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The Settings screen features an anchored Top Shelf Deck with contained
+   Bento Grid scrolling — scrollbar attaches directly to the 1180px content canvas. */
+.content:has(.settings-screen-container) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-5) 0 var(--space-5);
+  scroll-padding-bottom: 0;
+}
+
+/* =====================================================================
+   Responsive_Layout (Requirements 8.1, 8.2, 8.3, 8.4, 8.6)
+   ---------------------------------------------------------------------
+   --content-min (480px, defined in base.css) is the documented minimum
+   supported content width, recorded in docs/UI.md (Requirement 8.4). At and
+   above that width the content area renders every screen within its bounds
+   with no horizontal scrollbar and no element past the left or right edge —
+   both for content >=720px (Requirement 8.1) and 480-719px (Requirement 8.2).
+
+   Card grids reflow via the shared .card-grid auto-fill rule (components.css);
+   because the fixed card track (--card-track 240px / --card-track-compact
+   180px) is narrower than --content-min, grids drop columns down to 480px
+   with no card clipped at an edge and none overlapping (Requirement 8.3).
+
+   Below --content-min full scaling is no longer guaranteed, but content keeps
+   rendering without controls overlapping one another (Requirement 8.6): the
+   content area stacks its children in normal block flow and the guards below
+   keep every child within the available width instead of letting one expand
+   past its siblings.
+   ===================================================================== */
+
+/* Direct content children stay within the content width and may shrink below
+   their intrinsic content size. Without min-width:0 a grid/flex child whose
+   min-content (e.g. a nowrap row, a fixed-width element, or a long token)
+   exceeds the viewport would push past the right edge even though .content
+   clips overflow-x; max-width:100% holds any explicitly-sized wrapper inside
+   the bounds. Together these guarantee no element extends past the edges and
+   no horizontal scrollbar appears down to (and below) the 480px floor. */
+.content > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Embedded media scales down with the content area rather than forcing a
+   horizontal scrollbar when the window is narrower than the asset. */
+.content img,
+.content video,
+.content canvas {
+  max-width: 100%;
+}
+
+/* Section label — clean caps with a thin accent rule beneath. No tick,
+   no glow, no ornament. Purpose: announce a section, nothing more. */
+.section-label {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  display: block;
+}
+
+/* Sub variant — a smaller, tighter-tracked label for grouping controls
+   *within* a screen that already has a top-level section label (e.g. the
+   Video / Sound / Window / Memory groups on Settings → Global Instance). */
+.section-label--sub {
+  font-size: var(--fs-xs);
+  letter-spacing: .05em;
+}
+
+/* Row variant — keeps the caps label on the left and lets a trailing badge
+   (e.g. the "Official · Mojang" mark on the news header) sit at the right. */
+.section-label--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+/* Trailing group on a row label — page counter + badge sit together at the
+   right edge. */
+.section-label-aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.news-page-count {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* "Official" verified badge — signals the news comes from Mojang's own feed.
+   Letter-spacing reset because the parent .section-label is heavily tracked
+   caps; the badge reads better tight. */
+.official-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 0;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: none;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+}
+.official-badge svg { width: 12px; height: 12px; }
+
+/* Page title — big display heading, sharp, no shadow ornament. */
+.page-title {
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+

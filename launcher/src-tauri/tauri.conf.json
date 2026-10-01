@@ -1,0 +1,86 @@
+{
+  "productName": "Vermeil",
+  "version": "0.1.0-alpha.1",
+  "identifier": "com.vermeil.launcher",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Vermeil",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 1100,
+        "minHeight": 720,
+        "decorations": false,
+        "transparent": false,
+        "center": true,
+        "visible": false,
+        "zoomHotkeysEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https://api.modrinth.com https://cdn.modrinth.com https://staging-cdn.modrinth.com https://api.curseforge.com https://edge.forgecdn.net https://mediafilez.forgecdn.net https://login.microsoftonline.com https://login.live.com https://user.auth.xboxlive.com https://xsts.auth.xboxlive.com https://sisu.xboxlive.com https://device.auth.xboxlive.com https://api.minecraftservices.com https://piston-meta.mojang.com https://piston-data.mojang.com https://launchermeta.mojang.com https://launcher.mojang.com https://resources.download.minecraft.net https://libraries.minecraft.net https://textures.minecraft.net https://meta.fabricmc.net https://meta.legacyfabric.net https://meta.quiltmc.org https://maven.neoforged.net https://maven.minecraftforge.net https://maven.fabricmc.net https://maven.quiltmc.org https://api.adoptium.net https://github.com https://objects.githubusercontent.com ipc: http://ipc.localhost asset: http://asset.localhost https://asset.localhost; img-src 'self' https://cdn.modrinth.com https://staging-cdn.modrinth.com https://media.forgecdn.net https://edge.forgecdn.net https://mediafilez.forgecdn.net https://launchercontent.mojang.com https://www.minecraft.net https://cdn.minecraft.net https://assets.mojang.com https://textures.minecraft.net asset: http://asset.localhost https://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**",
+          "$LOCALDATA/**",
+          "$LOCALDATA/Vermeil/**",
+          "$LOCALDATA/Vermeil/cache/**",
+          "$LOCALDATA/Vermeil/cache/icons/**",
+          "$LOCALDATA/Vermeil/icons/**",
+          "$LOCALDATA/Vermeil/theme_icons/**",
+          "$LOCALDATA/Vermeil/instances/**",
+          "$LOCALDATA/Vermeil/skins/**",
+          "$APPDATA/**",
+          "$APPDATA/Vermeil/**",
+          "$APPLOCALDATA/**",
+          "$APPLOCALDATA/cache/**",
+          "$APPLOCALDATA/cache/icons/**",
+          "$APPLOCALDATA/icons/**",
+          "$APPLOCALDATA/theme_icons/**",
+          "$APPLOCALDATA/instances/**",
+          "$APPLOCALDATA/skins/**"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "appimage"],
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/16x16.png",
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "installerHooks": "./nsis/hooks.nsi",
+        "template": "./nsis/installer.nsi"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://raw.githubusercontent.com/VermeilDev/Vermeil-Launcher/updates/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgyQjEwQ0YzRTlBN0I3MEYKUldRUHQ2ZnA4d3l4Z2d6ZkVmUmxkN3FXS2paTDBiaWVlUEhtZTdNb3ZWamF2NDE0eWwrWUNQelcK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+[package]
+name = "vermeil"
+version = "0.1.0-alpha.1"
+description = "A tactile, privacy-focused Minecraft launcher"
+authors = ["VermeilDev"]
+repository = "https://github.com/VermeilDev/Vermeil-Launcher"
+homepage = "https://vermeillauncher.app"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+
+[lib]
+name = "vermeil_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "protocol-asset", "image-png"] }
+tauri-plugin-opener = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-process = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
+futures-util = "0.3"
+sha1 = "0.10"
+sha2 = "0.10"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
+dirs = "6"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rand = "0.9"
+url = "2"
+urlencoding = "2"
+open = "5"
+zip = "2"
+discord-presence = "3"
+lazy_static = "1"
+p256 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+aes-gcm = "0.11"
+sysinfo = { version = "0.37", default-features = false, features = ["system"] }
+ammonia = "4"
+flate2 = "1"
+tar = "0.4"
+# Parses Forge / NeoForge `mods.toml` manifests inside mod JARs to read each
+# mod's declared loader-version requirement (services::loader_scan).
+toml = "0.8"
+
+[target.'cfg(windows)'.dependencies]
+# Used by services::java to enumerate JRE installs from the Windows Registry.
+# Bundled on Windows targets only.
+winreg = "0.55"
+# DPAPI wrapper for encrypting sensitive credentials (access_token, refresh_token)
+# at rest in accounts.json. Tied to the current Windows user session.
+windows-dpapi = "0.2"
+# Win32 API access for sending SW_MAXIMIZE to the Minecraft window after the
+# JVM spawns its GLFW window, then forcing it to the foreground. Minecraft has
+# no `--maximized` CLI flag, so we poll for the window by PID, toggle its
+# show-state via ShowWindow, and use the AttachThreadInput focus trick so the
+# maximized window doesn't land behind the user's active window. The Threading
+# feature also covers the PID-liveness probe (OpenProcess/GetExitCodeProcess).
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Dwm",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_System_Com",
+] }

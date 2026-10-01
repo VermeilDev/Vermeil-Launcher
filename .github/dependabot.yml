@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Security alert-only mode for GitHub Actions (0 automated PRs)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+
+  # Security alert-only mode for Rust dependencies in src-tauri (0 automated PRs)
+  - package-ecosystem: "cargo"
+    directory: "/launcher/src-tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+
+  # Security alert-only mode for frontend npm/pnpm dependencies (0 automated PRs)
+  - package-ecosystem: "npm"
+    directory: "/launcher"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0

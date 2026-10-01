@@ -1,0 +1,164 @@
+name: Release
+run-name: Release ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            target: windows
+          - os: ubuntu-24.04
+            target: linux
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Linux system dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: launcher/src-tauri
+          shared-key: "vermeil-${{ matrix.target }}"
+
+      - name: Install frontend dependencies
+        working-directory: launcher
+        run: pnpm install
+
+      - name: Read release notes
+        id: notes
+        shell: pwsh
+        run: |
+          # CHANGELOG.md only ever contains the current release's notes —
+          # prior releases are preserved in git history, not in this file.
+          #
+          # Use `Add-Content` for the heredoc-style multi-line output —
+          # it appends each value as its own line, so the EOF delimiter
+          # ends up on a line by itself the way GitHub Actions requires.
+          $body = "See assets to download and install."
+          if (Test-Path "CHANGELOG.md") {
+            $body = (Get-Content "CHANGELOG.md" -Raw).TrimEnd()
+          }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "body<<EOF"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value $body
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "EOF"
+
+      - name: Build and release Tauri app
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VERMEIL_GOOGLE_CLIENT_ID: ${{ secrets.VERMEIL_GOOGLE_CLIENT_ID }}
+          VERMEIL_GOOGLE_CLIENT_SECRET: ${{ secrets.VERMEIL_GOOGLE_CLIENT_SECRET }}
+          RUSTFLAGS: "--remap-path-prefix=${{ github.workspace }}=/build"
+        with:
+          projectPath: launcher
+          tagName: ${{ github.ref_name }}
+          # Full release by default. A tag with a pre-release suffix (a hyphen,
+          # e.g. v0.6.8-experimental / -beta / -rc.1) ships as an EXPERIMENTAL
+          # pre-release instead; a plain vX.Y.Z tag is a normal latest release.
+          releaseName: ${{ contains(github.ref_name, '-') && format('Vermeil {0} EXPERIMENTAL', github.ref_name) || format('Vermeil {0}', github.ref_name) }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+
+      # Explicitly claim the "Latest" badge for non-experimental launcher
+      # releases. GitHub's default behaviour (`make_latest: legacy`) hands the
+      # badge to the most recently published non-prerelease.
+      - name: Mark launcher release as latest
+        if: matrix.target == 'linux' && !contains(github.ref_name, '-')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --latest --repo "${{ github.repository }}"
+
+  # Publish the dual-platform updater manifest to the orphan 'updates' branch
+  # so launcher clients fetch update checks via raw.githubusercontent.com
+  # without inflating GitHub release asset download counts or triggering API rate limits.
+  publish-updater-manifest:
+    needs: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Download generated updater manifest from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "${{ github.ref_name }}" --pattern "latest.json" --clobber --repo "${{ github.repository }}"
+          if [ ! -f "latest.json" ]; then
+            echo "::error::latest.json not found in release assets for ${{ github.ref_name }}"
+            exit 1
+          fi
+
+      - name: Commit manifest to updates branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Fetch updates branch or initialize it if it does not yet exist
+          if git ls-remote --exit-code --heads origin updates >/dev/null 2>&1; then
+            git fetch origin updates:updates
+            git checkout updates
+          else
+            git checkout --orphan updates
+            git rm -rf . || true
+          fi
+
+          # Store manifest according to release channel
+          if [[ "${{ github.ref_name }}" == *-* ]]; then
+            cp latest.json experimental-latest.json
+            git add experimental-latest.json
+            git commit -m "chore(updates): publish experimental manifest for ${{ github.ref_name }} [skip ci]" || echo "No changes to commit"
+          else
+            git add latest.json
+            git commit -m "chore(updates): publish stable manifest for ${{ github.ref_name }} [skip ci]" || echo "No changes to commit"
+          fi
+
+          git push origin updates
+
+      - name: Scrub latest.json from release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Delete latest.json from release assets so it is never downloaded as a release asset
+          # and does not inflate release download metrics.
+          gh release delete-asset "${{ github.ref_name }}" "latest.json" --yes --repo "${{ github.repository }}" || true
+

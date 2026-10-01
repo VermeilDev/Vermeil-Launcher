@@ -1,0 +1,365 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* base.css — Reset, variables, body, app shell, resize handles, offline banner */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*::-webkit-scrollbar { width: 4px; height: 4px; }
+*::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 0; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* =====================================================================
+   Design_Token_System — Dungeon_Theme (Requirements 4.1, 10.1, 10.7)
+   ---------------------------------------------------------------------
+   The single hardened token layer. Every color, type size, spacing
+   value, radius, border, and shadow used by the component and surface
+   layers resolves to a token defined here. Scales are discrete and
+   finite; consumers reference var(--token), never literals.
+
+   WCAG contrast (Requirement 10.7) — verified from the hex values below
+   (ratio = (L1 + 0.05) / (L2 + 0.05), L = relative luminance):
+     --text  #ece9f2  on --surface-base  #15141a  ~ 15:1   (body  >= 4.5)
+     --text  #ece9f2  on --surface-panel #1d1b24  ~ 13:1   (body  >= 4.5)
+     --text-muted #a6a1b5 on --surface-panel      ~ 6.5:1  (body  >= 4.5)
+     --accent #8b5cf6 (icon/link) on --surface-panel ~ 4.0:1 (UI    >= 3)
+     --accent #8b5cf6 (icon/link) on --surface-base  ~ 4.2:1 (UI    >= 3)
+     --accent-contrast #ffffff on --accent #8b5cf6   = 4.2:1 (label >= 3)
+   ===================================================================== */
+:root {
+  /* --- Color: dark gray + purple surface ramp (deepest -> raised) --- */
+  --surface-base: #15141a;    /* deepest page background */
+  --surface-sunken: #0f0e13;  /* recessed wells / inset areas */
+  --surface-panel: #1d1b24;   /* elevated panels and cards */
+  --surface-raised: #28252f;  /* hover surfaces / raised controls */
+  --surface-raised-hover: #2c2839; /* hovered raised controls */
+
+  /* --- Color: borders (cool gray with a faint purple cast) --- */
+  --border: #322f3d;          /* default hairline border */
+  --border-strong: #45414f;   /* framed-panel frame */
+  --border-hover: #5b5570;    /* hovered/focused border */
+
+  /* --- Color: text --- */
+  --text: #ece9f2;            /* primary body text */
+  --text-bright: #ffffff;     /* high-contrast pure white text */
+  --text-muted: #a6a1b5;      /* secondary text (kept >= 4.5:1) */
+  --text-faint: #6f6a7e;      /* tertiary / disabled-ish text */
+
+  /* --- Color: translucent warm glass surfaces (dock / pagination island) ---
+     Derived from --surface-panel (#1e1a12) with alpha so the dock's
+     backdrop-filter glassmorphism is preserved while the hue shifts from
+     the old cool slate to the warm Dungeon palette. */
+  --surface-glass: rgba(29, 27, 36, 0.85);
+  --surface-glass-strong: rgba(29, 27, 36, 0.92);
+
+  /* --- Color: brand purple accent family (restored to original) --- */
+  --accent: #8b5cf6;          /* primary purple (brand) */
+  --accent-strong: #7c4dde;   /* deeper purple hover */
+  --accent-soft: #1a1428;     /* deep purple tint for active backgrounds */
+  --accent-contrast: #ffffff; /* light label/icon color on accent fills */
+  --accent-glow: rgba(139, 92, 246, 0.35); /* theme-reactive glow token */
+
+  /* --- 3D Button Depth Tokens (Tactile Bento) --- */
+  --btn-depth: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  --btn-depth-strong: inset 0 -4px 0 rgba(0, 0, 0, 0.30);
+  --bevel: var(--btn-depth);         /* backward-compat alias */
+  --bevel-strong: var(--btn-depth-strong);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+
+  --shadow-depth: rgba(0, 0, 0, 0.38); /* fallback drop shadow token */
+  --accent-shadow: var(--shadow-depth);
+
+  /* --- Color: semantic state (+ soft tints) --- */
+  --danger: #e05656;
+  --rose: #e05656;
+  --danger-soft: #3a1818;
+  --danger-shadow: var(--shadow-depth);
+  --warn: #e8a23a;
+  --amber: #e8a23a;
+  --warn-soft: #322512;
+  --success: #4caf72;
+  --teal: #4caf72;
+  --success-soft: #16291d;
+  --info: #5b8af0;
+  --info-soft: #16203a;
+
+  /* --- Typography: fluid clamp()-based size scale --- */
+  --fs-2xs: clamp(0.625rem, 0.60rem + 0.12vw, 0.6875rem);
+  --fs-xs:  clamp(0.6875rem, 0.66rem + 0.14vw, 0.75rem);
+  --fs-sm:  clamp(0.75rem, 0.72rem + 0.16vw, 0.8125rem);
+  --fs-md:  clamp(0.8125rem, 0.78rem + 0.18vw, 0.875rem);  /* body */
+  --fs-lg:  clamp(0.9375rem, 0.90rem + 0.22vw, 1rem);
+  --fs-xl:  clamp(1.125rem, 1.05rem + 0.40vw, 1.375rem);
+  --fs-2xl: clamp(1.375rem, 1.20rem + 0.80vw, 1.75rem);
+
+  /* --- Typography: weights + families --- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'Consolas', monospace;
+
+  /* --- Spacing: discrete 4px base scale --- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* --- Border-radius scale — zeroed for the sharp-edge design language. --- */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-pill: 0;
+
+  /* --- Border widths + composed border shorthands ---
+     Frames are a clean hairline. The redesign relies on borders + flat surfaces
+     for hierarchy, not bevels. */
+  --bw-hairline: 1px;
+  --bw-frame: 1px;
+  --border-line: var(--bw-hairline) solid var(--border);
+  --border-frame: var(--bw-frame) solid var(--border-strong);
+
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-inset-frame: none;
+  --glow-accent: 0 0 0 2px var(--accent-glow);
+
+  /* --- Decorative / theme tokens --- */
+  --bracket-size: 0;
+  --bracket-thickness: 0;
+  --bracket-color: transparent;
+  --frame-bg: var(--surface-panel);
+  --control-height-sm: 26px;
+  --control-height-md: 32px;
+  --control-height-lg: 40px;
+
+  /* --- Dock scale ---
+     Fluid multiplier applied via `zoom` on `.dock-wrap` so the entire
+     bottom dock (pill, FAB, pin carousel, pagination island) sizes up
+     with the window. Stays at 1× on the minimum window (1100w) and ramps
+     to 1.20× by the time the user is on a 1920w monitor.
+
+     Math: ((100vw - 1100px) / 4100px) gives a unitless 0 at 1100w and
+     0.20 at 1920w. Adding 1 yields the multiplier; clamp() pins both ends.
+     The 4100px divisor is intentional — it's the length that produces a
+     0.20 delta over the 1100→1920 span. */
+  --dock-scale: clamp(1, calc(1 + (100vw - 1100px) / 4100px), 1.20);
+
+  /* --- Dock clearance ---
+     Reserved bottom space on scrolling content (`.content`) so the floating
+     dock never sits on top of card actions like Install buttons. Sized to the
+     dock PILL's footprint (bottom offset 18px + pill ~54px ≈ 72px) plus a
+     breathing gap — that strip is what every card must clear. The centered
+     pagination island is narrow and only grazes the middle column, which the
+     layout tolerates. Scales with --dock-scale.
+
+     NOTE: grids must NOT add their own bottom margin on top of this — `.content`
+     already reserves the whole budget here. (Legacy inline `margin-bottom:80px`
+     on the card grids was removed; it doubled the clearance.) */
+  --dock-clearance: calc(88px * var(--dock-scale));
+  --card-track: 240px;          /* fixed card width for shared grid */
+  --card-track-compact: 240px;  /* card width for the mod Browse/Installed grids */
+  --content-min: 480px;         /* minimum supported content width */
+
+  /* --- Brand colors: intentional exceptions to the no-literal rule ---
+     Loader-identity and content-source brand hues are fixed brand values,
+     not theme tokens. They are excluded from Property 1's literal check. */
+  --loader-fabric: #dbb588;
+  --loader-fabric-soft: #2e2518;
+  --loader-forge: #e8834a;
+  --loader-forge-soft: #2e2218;
+  --loader-neoforge: #5b8af0;
+  --loader-neoforge-soft: #1a2640;
+  --loader-quilt: #c084e8;
+  --loader-quilt-soft: #241a35;
+  --loader-vanilla: #38bdf8;
+  --loader-vanilla-soft: #1a2030;
+  --source-modrinth: #1bd96a;
+  --source-modrinth-soft: rgba(27, 217, 106, 0.12);
+  --source-curseforge: #f16436;
+  --source-curseforge-soft: rgba(241, 100, 54, 0.12);
+
+  /* --- Decorative gradient tokens (instance-icon + sidebar/dock pin tiles) ---
+     One-off decorative gradients with no spacing/color-scale equivalent.
+     Defined here (the token layer) so the consuming layers reference a token
+     instead of literal gradient stops (Requirement 4.6). The instance-icon
+     `quilt` and `purple` tints share the same stops and both reference
+     --grad-inst-quilt. */
+  --grad-avatar: linear-gradient(135deg, #1a3a2a, #1a2e40);
+  --grad-inst-green: linear-gradient(135deg, #1a3a2a, #1f4a30);
+  --grad-inst-fabric: linear-gradient(135deg, #3a2e1a, #4a3820);
+  --grad-inst-blue: linear-gradient(135deg, #1a2a4a, #203560);
+  --grad-inst-orange: linear-gradient(135deg, #3a2218, #4a2a1a);
+  --grad-inst-quilt: linear-gradient(135deg, #2a1a3a, #352240);
+  --grad-loader-vanilla: linear-gradient(135deg, #2a4a30, #1f3a26);
+  --grad-loader-fabric: linear-gradient(135deg, #5a4a30, #3f3220);
+  --grad-loader-quilt: linear-gradient(135deg, #4a3a5a, #322240);
+  --grad-loader-forge: linear-gradient(135deg, #5a3520, #402415);
+  --grad-loader-neoforge: linear-gradient(135deg, #2a3a5a, #1c2a40);
+
+  /* --- Window-control traffic-light colors ---
+     Fixed macOS-style affordance hues for the titlebar close/minimize/maximize
+     buttons; each keeps a distinct hover shade so the hover feedback is
+     preserved. Not part of the theme color scale. */
+  --win-close: #ed6a5e;
+  --win-close-hover: #e5453a;
+  --win-minimize: #f4bf4f;
+  --win-minimize-hover: #e0a520;
+  --win-maximize: #61c554;
+  --win-maximize-hover: #4aad3d;
+
+  /* =====================================================================
+     Dungeons visual language — bevels, rarity palette, display font, vignette
+     (clean CSS bevels; no pixel-art assets)
+     ===================================================================== */
+
+  /* Display font — harmonized with primary system font */
+  --font-display: var(--font);
+
+  /* Bevel system — disabled for the redesign. Surfaces are flat with hairline
+     borders; depth comes from contrast (panel vs base) and shadow, not bevels.
+     Tokens are kept defined so historical references compile to a no-op. */
+  --bevel-light: transparent;
+  --bevel-dark: transparent;
+  --panel-bevel: none;
+  --well-bevel: none;
+
+  /* Decorative palette — kept defined so any straggling references resolve,
+     but the redesign is purple + neutrals only. Brackets are disabled. */
+  --gold: #b9a868;      --gold-soft: transparent;
+  --teal: #4fd4e0;      --teal-soft: transparent;
+  --emerald: #46c46e;   --emerald-soft: transparent;
+  --rarity-common: var(--text-muted);
+  --rarity-rare: var(--accent);
+  --rarity-unique: var(--accent);
+  --rarity-enchanted: var(--accent);
+
+  /* Background canvas — flat dark gray. The accent does the talking, not the
+     canvas. Anchored as a token so layouts can swap it later if desired. */
+  --vignette: var(--surface-base);
+
+  /* --- Legacy aliases (kept until surface-migration tasks remove them) ---
+     Existing CSS/markup still references these names. Aliasing them to the
+     new token layer retints the app cohesively without structural change. */
+  --bg: var(--surface-base);
+  --bg1: var(--surface-base);
+  --bg2: var(--surface-sunken);
+  --bg3: var(--surface-panel);
+  --bg4: var(--surface-raised);
+  --muted: var(--text-muted);
+  --accent2: var(--accent-strong);
+  --accent-tint: var(--accent-soft);
+  --accent-cyan: var(--loader-vanilla);
+  --accent-hover: var(--accent-strong);
+  --blue: var(--info);
+  --orange: var(--loader-forge);
+  --purple: var(--loader-quilt);
+  --yellow: #f4d04f;
+  --sidebar: 52px;
+  --radius: var(--radius-md);   /* alias for --radius-md during migration */
+
+  /* --- Token Compatibility Aliases (Fail-safe guards) --- */
+  --warning: var(--warn);
+  --warning-soft: var(--warn-soft);
+  --text-main: var(--text);
+  --text-subtle: var(--text-muted);
+  --text-dim: var(--text-faint);
+  --border-subtle: var(--border);
+  --surface-active: var(--surface-raised);
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Frameless window resize handles — invisible edge zones that trigger
+   startResizeDragging on Linux/Wayland where native decorations are absent. */
+.resize-handle {
+  position: fixed;
+  z-index: 9999;
+}
+.resize-n { top: 0; left: 5px; right: 5px; height: 5px; cursor: n-resize; }
+.resize-s { bottom: 0; left: 5px; right: 5px; height: 5px; cursor: s-resize; }
+.resize-e { top: 5px; right: 0; bottom: 5px; width: 5px; cursor: e-resize; }
+.resize-w { top: 5px; left: 0; bottom: 5px; width: 5px; cursor: w-resize; }
+.resize-ne { top: 0; right: 0; width: 8px; height: 8px; cursor: ne-resize; }
+.resize-nw { top: 0; left: 0; width: 8px; height: 8px; cursor: nw-resize; }
+.resize-se { bottom: 0; right: 0; width: 8px; height: 8px; cursor: se-resize; }
+.resize-sw { bottom: 0; left: 0; width: 8px; height: 8px; cursor: sw-resize; }
+
+.offline-banner {
+  background: #e05252;
+  color: white;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 0;
+  letter-spacing: 0.3px;
+}
+
+
+/* =====================================================================
+   Sharp-edge override block (redesign)
+   ---------------------------------------------------------------------
+   The radius scale is already 0, so anything that resolves through tokens
+   is sharp by default. The overrides below catch every literal `50%` /
+   `999px` / fixed-px border-radius rule across the stylesheets so the
+   entire app — circles, pills, FAB, traffic lights, toggle thumbs —
+   renders blocky and consistent.
+
+   DO NOT add `::-webkit-slider-thumb` / `::-moz-range-thumb` to this
+   grouped rule. A selector list containing a pseudo-element the engine
+   doesn't recognize is invalid, so WebView2 (Chromium) drops the WHOLE
+   rule over `::-moz-range-thumb` and WebKitGTK drops it over the
+   `-webkit-` one — silently killing every override here. Slider thumbs
+   are squared at their own per-vendor rules instead (slider and
+   concurrency-slider in components.css, cape slider in screens.css).
+   ===================================================================== */
+.win-btn,
+.dot-green,
+.dock-btn-dot,
+.dock-dot,
+.toggle::after,
+.onboarding-step-num,
+.slider,
+.toast-icon,
+.player-head { border-radius: 0 !important; }
+
+
+/* =====================================================================
+   Focus rings
+   ---------------------------------------------------------------------
+   Kill the default browser focus outline (the stuck white ring that
+   appears after clicking a button or tabbing to it). For keyboard users,
+   `:focus-visible` still draws an accent ring so accessibility holds —
+   modern browsers only fire :focus-visible on keyboard nav, never on
+   mouse clicks.
+   ===================================================================== */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

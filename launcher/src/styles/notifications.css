@@ -1,0 +1,742 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* notifications.css — Toasts, install/bulk/update banners, content tabs, dependency-issues modal */
+
+/* Instance card selected state */
+.inst-card-selected { border-color: var(--danger) !important; background: var(--danger-soft) !important; }
+
+/* Floating delete confirmation bar — appears above the dock when instances
+   are selected and the user clicks Delete. Same glassmorphism layer as the
+   dock for visual consistency. */
+.library-delete-bar {
+  position: fixed;
+  bottom: calc(var(--dock-clearance) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: rgba(21, 20, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--danger);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  z-index: 150;
+  animation: slideUpIn 0.2s ease-out;
+}
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+
+/* Toast notification system (Tactile design) */
+.toast-container {
+  position: fixed;
+  top: 50px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 360px;
+  pointer-events: none;
+}
+.toast-item {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--border-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), var(--btn-depth);
+  animation: toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 280px;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-info { border-left-color: var(--info); }
+.toast-success { border-left-color: var(--success); }
+.toast-warning { border-left-color: var(--warn); }
+.toast-error { border-left-color: var(--danger); }
+.toast-loading { border-left-color: var(--accent); }
+
+.toast-icon {
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+.toast-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.toast-info .toast-icon { background: var(--info-soft); color: var(--info); border: 1px solid rgba(91, 138, 240, 0.3); }
+.toast-success .toast-icon { background: var(--success-soft); color: var(--success); border: 1px solid rgba(76, 175, 114, 0.3); }
+.toast-warning .toast-icon { background: var(--warn-soft); color: var(--warn); border: 1px solid rgba(232, 162, 58, 0.3); }
+.toast-error .toast-icon { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(224, 86, 86, 0.3); }
+.toast-loading .toast-icon { background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+
+.toast-spinner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 0.9s linear infinite;
+}
+
+.toast-body { flex: 1; min-width: 0; }
+.toast-title { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text); letter-spacing: 0.2px; }
+.toast-msg { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; line-height: 1.4; word-break: break-word; }
+.toast-dismiss {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, background 0.12s, color 0.12s, transform 0.08s;
+}
+.toast-dismiss svg {
+  width: 14px;
+  height: 14px;
+}
+.toast-dismiss:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.toast-dismiss:active {
+  transform: translateY(1px);
+}
+.toast-action {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--btn-depth);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: center;
+  transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+.toast-action:hover {
+  background: var(--surface-panel);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: none;
+  transform: translateY(1px);
+}
+.toast-action:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: none;
+}
+
+/* Install progress popup (Tactile design) */
+.install-progress-popup {
+  position: fixed;
+  bottom: 84px;
+  right: 24px;
+  z-index: 9998;
+  width: 340px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), var(--btn-depth);
+  overflow: hidden;
+  animation: toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-left-color 0.2s ease;
+}
+.install-progress-popup.install-progress-done {
+  border-left-color: var(--success);
+}
+.install-progress-popup.install-progress-cancelling {
+  border-left-color: var(--warn);
+}
+.install-progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+.install-progress-icon-badge {
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  flex-shrink: 0;
+  box-shadow: var(--btn-depth);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.install-progress-popup.install-progress-done .install-progress-icon-badge {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(76, 175, 114, 0.3);
+}
+.install-progress-popup.install-progress-cancelling .install-progress-icon-badge {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-color: rgba(232, 162, 58, 0.3);
+}
+.install-progress-icon-badge svg {
+  width: 14px;
+  height: 14px;
+}
+.install-progress-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  letter-spacing: 0.2px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.install-progress-cancel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--btn-depth);
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+}
+.install-progress-cancel:hover {
+  background: var(--surface-panel);
+  border-color: var(--danger);
+  color: var(--danger);
+  box-shadow: none;
+  transform: translateY(1px);
+}
+.install-progress-cancel:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: none;
+}
+.install-progress-close {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+.install-progress-close svg {
+  width: 14px;
+  height: 14px;
+}
+.install-progress-close:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+.install-progress-body {
+  padding: 0 var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.install-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.install-progress-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.install-progress-stage {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 230px;
+}
+.install-progress-percent {
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-mono, monospace);
+}
+.install-progress-popup.install-progress-done .install-progress-percent {
+  color: var(--success);
+}
+.install-progress-bar-track {
+  height: 6px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  border-radius: 0;
+  overflow: hidden;
+}
+.install-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+  border-radius: 0;
+  transition: width 0.2s ease;
+}
+.install-progress-bar-fill.done {
+  background: var(--success);
+}
+.install-progress-bar-fill.indeterminate {
+  width: 40% !important;
+  animation: indeterminateProgress 1.4s ease-in-out infinite;
+}
+@keyframes indeterminateProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+
+
+/* Installed-tab toolbar: filter pills + scope-aware delete button */
+.installed-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.btn-danger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .12s, border-color .12s, background .12s;
+}
+.btn-danger-icon:hover:not(:disabled),
+.btn-danger-icon.active {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft, rgba(224, 82, 82, 0.12));
+}
+.btn-danger-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-danger-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+
+/* Bulk install progress toast — bottom-center, paired with InstallProgress
+   popup. Rendered only while a bulk batch is in flight (size > 1). */
+.bulk-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  padding: var(--space-3) var(--space-4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), var(--btn-depth);
+  z-index: 60;
+  animation: fadeIn .15s ease;
+}
+.bulk-toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+.bulk-toast-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+.bulk-toast-count {
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.bulk-toast-bar-track {
+  width: 100%;
+  height: 4px;
+  background: var(--surface-sunken);
+  border-radius: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+.bulk-toast-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 0;
+  transition: width 0.2s ease;
+}
+
+
+/* Installed-tab search + sort row, sits below the category filter. The sort
+   dropdown opts into the standard field height so it lines up with the search
+   input and the Check-updates button instead of sitting short. */
+.installed-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.installed-search-row .custom-dropdown { --dropdown-height: var(--control-height-md); }
+/* Modpack browse controls — dropdowns should match the search field height. */
+.screen-enter .custom-dropdown { --dropdown-height: var(--control-height-md); }
+
+
+/* Dependency-issues modal — surfaced after install when one or more required
+   deps couldn't be installed or aren't compatible with the instance loader /
+   game version. */
+.dep-issues-modal {
+  width: 540px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.dep-issues-modal .modal-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.dep-issues-modal .modal-body::-webkit-scrollbar { width: 4px; }
+.dep-issues-modal .modal-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-xs); }
+.dep-issue-summary {
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: var(--space-3);
+  line-height: 1.5;
+}
+.dep-issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.dep-issue-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-3);
+}
+.dep-issue-card.dep-issue-warn {
+  border-left-color: var(--yellow);
+}
+.dep-issue-card.dep-issue-error {
+  border-left-color: var(--danger);
+}
+.dep-issue-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+.dep-issue-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.dep-issue-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.dep-issue-tag.dep-issue-warn {
+  color: var(--yellow);
+  background: rgba(244, 191, 79, 0.12);
+}
+.dep-issue-tag.dep-issue-error {
+  color: var(--danger);
+  background: rgba(224, 82, 82, 0.12);
+}
+.dep-issue-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: var(--space-1);
+}
+.dep-issue-reason {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: var(--space-2);
+}
+.dep-issue-spec {
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-mono, monospace);
+}
+.dep-issue-spec-label {
+  color: var(--text);
+  font-weight: 600;
+}
+.dep-issue-spec-instance {
+  color: var(--accent);
+}
+
+
+/* Card tag row — loader + MC version pills, sit between description and
+   footer on both Browse and Installed mod cards. Standard chip layout. */
+.mod-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 var(--space-1);
+}
+.mod-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--muted);
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+  border: 1px solid var(--border);
+}
+.mod-tag-version {
+  font-family: var(--font-mono, monospace);
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* Content version (the mod/pack's own release, e.g. "0.5.8+mc1.21"), distinct
+   from the MC game-version pill. Accent-tinted and width-capped because
+   CurseForge display names can be long — full value lives in the title. */
+.mod-tag-vnum {
+  font-family: var(--font-mono, monospace);
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mod-tag-loader.loader-fabric { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+.mod-tag-loader.loader-quilt { background: rgba(192, 132, 232, 0.12); color: var(--loader-quilt); border-color: rgba(192, 132, 232, 0.3); }
+.mod-tag-loader.loader-forge { background: rgba(232, 131, 74, 0.12); color: #e8834a; border-color: rgba(232, 131, 74, 0.3); }
+.mod-tag-loader.loader-neoforge { background: rgba(232, 131, 74, 0.12); color: var(--loader-forge); border-color: rgba(232, 131, 74, 0.3); }
+.mod-tag-loader.loader-vanilla { background: rgba(91, 138, 240, 0.12); color: #5b8af0; border-color: rgba(91, 138, 240, 0.3); }
+.mod-tag-loader.loader-datapack { background: rgba(74, 222, 128, 0.12); color: var(--success); border-color: rgba(74, 222, 128, 0.3); }
+.mod-tag-loader.loader-iris,
+.mod-tag-loader.loader-optifine { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+
+
+
+
+/* Held pill — this entry is kept at an exact version another installed mod
+   requires, so the update checker skips it and no update pill can appear.
+   Informational, not interactive: the tooltip explains how to override. Uses the
+   info palette because nothing is wrong — a pin is working as intended. */
+.mod-tag-held {
+  background: var(--info-soft);
+  color: var(--blue);
+  border-color: rgba(91, 138, 240, 0.35);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: help;
+}
+
+
+/* Auto-updater banner — top-right corner overlay (Tactile design).
+   State machine: available → downloading → downloaded → installing.
+   Sharp corners, panel surface, 3px accent left border, tactile buttons & badges. */
+.update-banner {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  width: fit-content;
+  min-width: 310px;
+  max-width: 340px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  padding: var(--space-3) var(--space-4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), var(--btn-depth);
+  z-index: 120;
+  animation: update-banner-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes update-banner-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.update-banner-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.update-banner-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+  box-shadow: var(--btn-depth);
+  flex-shrink: 0;
+}
+.update-banner-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.update-banner-title {
+  flex: 1;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+}
+.update-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.update-banner-version-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 1px;
+}
+.update-version-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 0;
+  line-height: 1.2;
+}
+.update-version-badge--old {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.update-version-badge--new {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+.update-version-arrow {
+  color: var(--text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.update-version-arrow svg {
+  width: 13px;
+  height: 13px;
+}
+.update-banner-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.update-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.update-banner-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.update-banner-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 0;
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width 0.2s ease;
+}
+.update-banner-installing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+.update-banner-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+

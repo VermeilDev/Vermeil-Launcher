@@ -1,0 +1,32 @@
+# Normalize line endings to LF in the repo across all platforms.
+# Working trees on Windows can still use CRLF locally — git just rewrites
+# on commit/checkout. Without this file, Windows users see endless
+# "LF will be replaced by CRLF" warnings on every `git add`.
+* text=auto eol=lf
+
+# Files that are explicitly binary — never touch their bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.zip binary
+*.jar binary
+*.exe binary
+*.dll binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp4 binary
+*.webp binary
+
+# Lock files: explicit LF so cross-platform diffs don't churn.
+package-lock.json text eol=lf
+pnpm-lock.yaml text eol=lf
+Cargo.lock text eol=lf
+
+# Windows-only files keep CRLF (NSIS installer scripts, batch).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.nsi text eol=crlf

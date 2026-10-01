@@ -1,0 +1,299 @@
+/* SPDX-FileCopyrightText: 2026 VermeilDev
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* themes.css — 6-Theme Engine token overrides for Vermeil
+   Neon Aurora (Default) | Emerald | Inferno | Stealth | Deep Ocean | Void
+   Swaps CSS variables on [data-theme] with zero-reload GPU transitions. */
+
+/* ═══ 1. NEON AURORA (DEFAULT) ═══ */
+[data-theme="neon-aurora"] {
+  --surface-base: #15141a;
+  --surface-sunken: #0f0e13;
+  --surface-panel: #1d1b24;
+  --surface-raised: #28252f;
+
+  --border: #322f3d;
+  --border-strong: #45414f;
+  --border-hover: #5b5570;
+
+  --surface-glass: rgba(29, 27, 36, 0.85);
+  --surface-glass-strong: rgba(29, 27, 36, 0.92);
+
+  --accent: #8b5cf6;
+  --accent-strong: #7c4dde;
+  --accent-soft: #1a1428;
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(139, 92, 246, 0.35);
+
+  --splash-word-gradient: linear-gradient(90deg, #2dd4ef, #4f86f7, #8b5cf6, #d94ff0, #8b5cf6, #4f86f7, #2dd4ef);
+  --splash-bar-gradient: linear-gradient(90deg, #2dd4ef, #8b5cf6);
+}
+
+/* ═══ 2. INFERNO (WARM OBSIDIAN & VOLCANIC FLAME) ═══ */
+[data-theme="inferno"] {
+  --surface-base: #141010;
+  --surface-sunken: #0d0909;
+  --surface-panel: #1c1515;
+  --surface-raised: #291d1c;
+
+  --border: #3a2624;
+  --border-strong: #4f322e;
+  --border-hover: #6d413b;
+
+  --surface-glass: rgba(28, 21, 21, 0.85);
+  --surface-glass-strong: rgba(28, 21, 21, 0.92);
+
+  --accent: #ff6500;
+  --accent-strong: #e65500;
+  --accent-soft: rgba(255, 101, 0, 0.14);
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(255, 101, 0, 0.38);
+
+  --splash-word-gradient: linear-gradient(90deg, #ffe600, #ffb000, #ff6500, #e60012, #ff1744, #e60012, #ff6500, #ffb000, #ffe600);
+  --splash-bar-gradient: linear-gradient(90deg, #ffe600, #ff6500, #ff1744);
+}
+
+/* ═══ 3. STEALTH (MATTE CARBON & BRUSHED TITANIUM) ═══ */
+[data-theme="stealth"] {
+  --surface-base: #0a0b0d;
+  --surface-sunken: #060708;
+  --surface-panel: #121417;
+  --surface-raised: #1c1e23;
+
+  --border: #262930;
+  --border-strong: #363a44;
+  --border-hover: #4c525f;
+
+  --surface-glass: rgba(18, 20, 23, 0.85);
+  --surface-glass-strong: rgba(18, 20, 23, 0.92);
+
+  --accent: #e5e7eb;
+  --accent-strong: #ffffff;
+  --accent-soft: rgba(229, 231, 235, 0.10);
+  --accent-contrast: #08090b;
+  --accent-glow: rgba(229, 231, 235, 0.25);
+
+  --splash-word-gradient: linear-gradient(90deg, #ffffff, #e5e7eb, #9ca3af, #4b5563, #9ca3af, #e5e7eb, #ffffff);
+  --splash-bar-gradient: linear-gradient(90deg, #9ca3af, #e5e7eb, #ffffff);
+}
+
+/* In Stealth theme, ensure buttons using --accent have dark text for contrast */
+[data-theme="stealth"] .btn--primary,
+[data-theme="stealth"] .btn-primary {
+  color: #08090b !important;
+  font-weight: 600;
+}
+
+/* ═══ 4. DEEP OCEAN (ABYSSAL COBALT & NEON CYAN) ═══ */
+[data-theme="deep-ocean"] {
+  --surface-base: #090e18;
+  --surface-sunken: #05080e;
+  --surface-panel: #0e1626;
+  --surface-raised: #162238;
+
+  --border: #1c2e4a;
+  --border-strong: #273f66;
+  --border-hover: #38578c;
+
+  --surface-glass: rgba(14, 22, 38, 0.85);
+  --surface-glass-strong: rgba(14, 22, 38, 0.92);
+
+  --accent: #0066ff;
+  --accent-strong: #0052cc;
+  --accent-soft: rgba(0, 102, 255, 0.14);
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(0, 217, 255, 0.40);
+
+  --splash-word-gradient: linear-gradient(90deg, #00d9ff, #0088ff, #0066ff, #102a72, #0066ff, #0088ff, #00d9ff);
+  --splash-bar-gradient: linear-gradient(90deg, #00d9ff, #0066ff);
+}
+
+/* ═══ 5. VOID (ASTRAL NEBULA & ULTRAVIOLET) ═══ */
+[data-theme="void"] {
+  --surface-base: #100a19;
+  --surface-sunken: #0a0510;
+  --surface-panel: #171024;
+  --surface-raised: #241836;
+
+  --border: #331f4a;
+  --border-strong: #482b68;
+  --border-hover: #63398f;
+
+  --surface-glass: rgba(23, 16, 36, 0.85);
+  --surface-glass-strong: rgba(23, 16, 36, 0.92);
+
+  --accent: #c026ff;
+  --accent-strong: #a81be6;
+  --accent-soft: rgba(192, 38, 255, 0.14);
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(240, 60, 255, 0.38);
+
+  --splash-word-gradient: linear-gradient(90deg, #f03cff, #c026ff, #7b2cff, #32105f, #7b2cff, #c026ff, #f03cff);
+  --splash-bar-gradient: linear-gradient(90deg, #f03cff, #7b2cff);
+}
+
+/* ═══ 6. EMERALD (JADE RADIANCE & BIO-LUMINESCENT FLORA) ═══ */
+[data-theme="emerald"],
+body.theme-emerald {
+  --surface-base: #071510;
+  --surface-sunken: #040d0a;
+  --surface-panel: #0d1e18;
+  --surface-raised: #142b23;
+
+  --border: #002D25;
+  --border-strong: #00513D;
+  --border-hover: #008F5B;
+
+  --surface-glass: rgba(13, 30, 24, 0.85);
+  --surface-glass-strong: rgba(13, 30, 24, 0.92);
+
+  --accent: #00C878;
+  --accent-strong: #008F5B;
+  --accent-soft: rgba(0, 200, 120, 0.12);
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(57, 255, 170, 0.38);
+
+  --splash-word-gradient: linear-gradient(90deg, #39FFAA, #00C878, #008F5B, #00513D, #008F5B, #00C878, #39FFAA);
+  --splash-bar-gradient: linear-gradient(90deg, #39FFAA, #00C878);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME SELECTOR UI (Settings screen tactile card grid)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.tag-settings-accent {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.theme-card-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 980px) {
+  .theme-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .theme-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 8px 10px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--btn-depth);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  min-height: 155px;
+  box-sizing: border-box;
+}
+
+.theme-card:hover {
+  background: var(--surface-raised);
+  border-color: var(--border-hover);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.theme-card:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Active Theme Card: 3px left border, accent outline, soft background wash */
+.theme-card.active {
+  border-color: var(--accent);
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-panel));
+  box-shadow: var(--btn-depth), 0 0 16px var(--accent-glow);
+}
+.theme-card.active:hover {
+  box-shadow: 0 0 16px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.theme-card-emblem-wrap {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-card:hover .theme-card-emblem-wrap {
+  transform: scale(1.06);
+}
+
+.theme-card.active .theme-card-emblem-wrap {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, rgba(0, 0, 0, 0.4));
+}
+
+.theme-card-emblem {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+.theme-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  margin-bottom: 4px;
+}
+
+.theme-card.active .theme-card-title {
+  color: var(--accent);
+}
+
+.theme-card-desc {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  line-height: 1.35;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+.theme-card-swatches {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.theme-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
