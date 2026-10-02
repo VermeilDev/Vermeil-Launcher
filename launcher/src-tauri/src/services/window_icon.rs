@@ -107,11 +107,18 @@ pub fn ensure_all_theme_icons_persisted() {
     let themes = ["neon-aurora", "emerald", "inferno", "stealth", "deep-ocean", "void"];
     for t in themes {
         let assets = get_theme_assets(t);
-        let path = theme_ico_dir.join(format!("{}.ico", t));
-        if !path.exists()
-            || path.metadata().map(|m| m.len()).unwrap_or(0) != assets.ico.len() as u64
+        let ico_path = theme_ico_dir.join(format!("{}.ico", t));
+        if !ico_path.exists()
+            || ico_path.metadata().map(|m| m.len()).unwrap_or(0) != assets.ico.len() as u64
         {
-            let _ = std::fs::write(&path, assets.ico);
+            let _ = std::fs::write(&ico_path, assets.ico);
+        }
+
+        let png_path = theme_ico_dir.join(format!("{}.png", t));
+        if !png_path.exists()
+            || png_path.metadata().map(|m| m.len()).unwrap_or(0) != assets.png_256.len() as u64
+        {
+            let _ = std::fs::write(&png_path, assets.png_256);
         }
     }
 }
@@ -122,9 +129,11 @@ pub fn apply_theme_icon(app: &AppHandle, theme_id: &str) -> Result<(), String> {
     ensure_all_theme_icons_persisted();
     let assets = get_theme_assets(theme_id);
 
-    // 1. Resolve the theme .ico from permanent <theme_icons_dir>/<theme_id>.ico
     let theme_ico_dir = crate::util::paths::theme_icons_dir();
+    #[cfg(windows)]
     let ico_path = theme_ico_dir.join(format!("{}.ico", theme_id));
+    #[cfg(not(windows))]
+    let png_path = theme_ico_dir.join(format!("{}.png", theme_id));
 
     // 2. Update the Main Window and Taskbar
     if let Some(window) = app.get_webview_window("main") {
@@ -249,12 +258,20 @@ pub fn apply_theme_icon(app: &AppHandle, theme_id: &str) -> Result<(), String> {
         }
     }
 
-    // 4. Synchronize Windows Desktop, Start Menu, and Pinned Taskbar Shortcuts asynchronously
+    // 4. Synchronize Desktop and Application Launcher Shortcuts asynchronously
     #[cfg(windows)]
     if ico_path.exists() {
         let ico_clone = ico_path.clone();
         std::thread::spawn(move || {
             sync_windows_shortcuts(&ico_clone);
+        });
+    }
+
+    #[cfg(not(windows))]
+    if png_path.exists() {
+        let png_clone = png_path.clone();
+        std::thread::spawn(move || {
+            sync_linux_desktop_icons(&png_clone);
         });
     }
 
@@ -695,6 +712,116 @@ pub fn sync_windows_shortcuts(ico_path: &std::path::Path) {
     }
 }
 
+/// Updates the `Icon=` line in a Freedesktop `.desktop` file to point to `icon_path`.
+/// Returns `Ok(true)` if the file was modified, or `Ok(false)` if it already pointed to `icon_path`.
+#[cfg(not(windows))]
+pub fn update_desktop_file_icon(
+    desktop_path: &std::path::Path,
+    icon_path: &std::path::Path,
+) -> Result<bool, String> {
+    let content = std::fs::read_to_string(desktop_path).map_err(|e| e.to_string())?;
+    let mut updated_lines = Vec::new();
+    let mut modified = false;
+    let expected_icon = icon_path.display().to_string();
+    for line in content.lines() {
+        if line.starts_with("Icon=") {
+            let current = line.strip_prefix("Icon=").unwrap_or("");
+            if current != expected_icon {
+                updated_lines.push(format!("Icon={}", expected_icon));
+                modified = true;
+                continue;
+            }
+        }
+        updated_lines.push(line.to_string());
+    }
+    if modified {
+        let mut result = updated_lines.join("\n");
+        if content.ends_with('\n') {
+            result.push('\n');
+        }
+        std::fs::write(desktop_path, result).map_err(|e| e.to_string())?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+/// On Linux, updates user desktop icon caches and `.desktop` shortcut files
+/// to reflect the active theme's PNG icon.
+///
+/// Under the Freedesktop.org icon theme specification:
+/// 1. Updates `~/.local/share/icons/vermeil.png` and `~/.local/share/icons/hicolor/256x256/apps/vermeil.png`.
+/// 2. Updates `Icon=` in any existing Vermeil `.desktop` files in `~/.local/share/applications` and `~/Desktop`.
+/// 3. Updates the icon cache via `gtk-update-icon-cache` if available.
+#[cfg(not(windows))]
+pub fn sync_linux_desktop_icons(png_path: &std::path::Path) {
+    if !png_path.exists() {
+        return;
+    }
+
+    let png_bytes = match std::fs::read(png_path) {
+        Ok(b) => b,
+        Err(e) => {
+            tracing::warn!("Failed to read theme PNG {:?}: {}", png_path, e);
+            return;
+        }
+    };
+
+    let data_dir = match dirs::data_dir() {
+        Some(d) => d,
+        None => return,
+    };
+
+    // 1. Update user icon theme locations (~/.local/share/icons/ and hicolor/256x256/apps)
+    let user_icons_dir = data_dir.join("icons");
+    let hicolor_apps_dir = user_icons_dir.join("hicolor/256x256/apps");
+    let _ = std::fs::create_dir_all(&user_icons_dir);
+    let _ = std::fs::create_dir_all(&hicolor_apps_dir);
+
+    let vermeil_icon_legacy = user_icons_dir.join("vermeil.png");
+    let vermeil_icon_hicolor = hicolor_apps_dir.join("vermeil.png");
+
+    let _ = std::fs::write(&vermeil_icon_legacy, &png_bytes);
+    let _ = std::fs::write(&vermeil_icon_hicolor, &png_bytes);
+
+    // 2. Scan and update user .desktop files in ~/.local/share/applications and ~/Desktop
+    let mut desktop_dirs = vec![data_dir.join("applications")];
+    if let Some(home) = dirs::home_dir() {
+        desktop_dirs.push(home.join("Desktop"));
+    }
+
+    for dir in &desktop_dirs {
+        if !dir.exists() {
+            continue;
+        }
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("desktop") {
+                    let file_name = path
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or_default()
+                        .to_lowercase();
+                    if file_name.contains("vermeil") {
+                        let _ = update_desktop_file_icon(&path, png_path);
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Notify icon cache (e.g. gtk-update-icon-cache)
+    let hicolor_dir = user_icons_dir.join("hicolor");
+    if hicolor_dir.exists() {
+        let _ = std::process::Command::new("gtk-update-icon-cache")
+            .arg("-q")
+            .arg("-t")
+            .arg(&hicolor_dir)
+            .output();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -817,6 +944,29 @@ mod tests {
                 "Icon location on shortcut must match the theme .ico path"
             );
         }
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    #[cfg(not(windows))]
+    fn test_linux_desktop_file_icon_update() {
+        let temp_dir = std::env::temp_dir().join(format!("vermeil_test_desktop_{}", uuid::Uuid::new_v4()));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let desktop_file = temp_dir.join("vermeil.desktop");
+        let initial_content = "[Desktop Entry]\nType=Application\nName=Vermeil\nIcon=vermeil\nExec=vermeil\n";
+        let _ = std::fs::write(&desktop_file, initial_content);
+
+        let new_icon = std::path::Path::new("/usr/share/icons/vermeil-neon.png");
+        let res = update_desktop_file_icon(&desktop_file, new_icon);
+        assert_eq!(res, Ok(true));
+
+        let updated = std::fs::read_to_string(&desktop_file).unwrap();
+        assert!(updated.contains("Icon=/usr/share/icons/vermeil-neon.png"));
+
+        // Deduplication check: repeated call with same icon should return Ok(false)
+        let res_dup = update_desktop_file_icon(&desktop_file, new_icon);
+        assert_eq!(res_dup, Ok(false));
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
