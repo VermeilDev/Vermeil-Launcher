@@ -126,33 +126,20 @@ And generate separate skill files for these development workflows:
 - "Dependency Management" — check existing deps first, run verification after changes
 ```
 
-#### Step 3: Infrastructure & Release Pipeline Setup
-After your AI platform is configured, use this prompt to generate the infrastructure and release pipeline skills:
+#### Step 3: Cloud Services & Infrastructure Setup
+After your AI platform is configured, use this prompt to configure external cloud services, security scanning, updater signing, and secrets:
 
 ```text
-Generate additional skill files for the infrastructure and release workflows
+Generate additional skill files for the infrastructure and security workflows
 of this project. Use the same platform conventions as the previous step.
 
-1. "Git Workflow & Releases":
-   - Conventional Commits: type(scope): imperative summary under 70 chars.
-     Types: feat, fix, refactor, perf, style, docs, chore, test, release.
-   - Autonomous local commits: Auto-commit locally once verification gates pass
-     to keep working tree clean. Never run `git push` autonomously (strict manual push).
-   - Pending push footer: Remind the user of unpushed commits on every turn whenever
-     local commits are ahead of remote.
-   - Branch strategy: main (linear, no force-push), feature branches (rebase + delete),
-     standing data branches (updates & badges — never PR into main).
-   - Pre-commit gates: check-privacy.mjs → cargo test → pnpm build → pnpm audit.
-   - Version sync: launcher/package.json, tauri.conf.json, Cargo.toml must match.
-     Tags: git tag v0.1.0-alpha-N on a release: commit.
-
-2. "Security & Privacy":
+1. "Security & Privacy Audit":
    - node scripts/check-privacy.mjs (0 violations) — detects leaked keys (PEM, OpenSSH),
      tokens (ghp_, GOCSPX-, AIza, Discord, AWS), absolute user paths.
    - Dependency auditing: pnpm audit + cargo audit. Dependabot alert-only mode.
    - Token hygiene: encrypted on disk (DPAPI / POSIX 0600). Never log credentials.
 
-3. "Google Cloud Settings Sync Setup":
+2. "Google Cloud Settings Sync Setup":
    a. GCP Console: Create project → enable Google Drive API.
    b. OAuth consent screen: External → scope drive.appdata → add test users.
    c. Credentials: OAuth client ID → Desktop app (auto-permits loopback URIs).
@@ -161,14 +148,14 @@ of this project. Use the same platform conventions as the previous step.
    e. Architecture: RFC 8252 PKCE loopback flow, tokens encrypted at
       %LOCALAPPDATA%\Vermeil\google_cloud.enc, Drive appDataFolder sandbox.
 
-4. "Companion Mod Lifecycle":
+3. "Companion Mod Lifecycle":
    a. Update REPO constant in services/companion_mod.rs to your org/repo.
    b. Jar naming: vermeil-<loader>-<modVersion>+<mcVersion>.jar.
    c. Tag GitHub releases v* or mod-v*. Attach companion-manifest.json asset:
       { "entries": [{ "minecraftVersions", "loaders", "file", "url", "sha1", "size" }] }
    d. Lifecycle: active jar = no-op, .disabled = rename, missing = fetch + SHA-1 verify.
 
-5. "Auto-Updater & Signing":
+4. "Auto-Updater & Minisign Signing":
    a. Generate Minisign keypair: pnpm tauri signer generate -w ~/.tauri/vermeil.key
    b. Set pubkey in tauri.conf.json → plugins.updater.pubkey.
    c. Set endpoint: plugins.updater.endpoints → raw.githubusercontent.com/<org>/<repo>/updates/latest.json
@@ -176,7 +163,7 @@ of this project. Use the same platform conventions as the previous step.
    e. release.yml auto-signs via tauri-action, publishes latest.json to orphan updates branch.
    f. Pre-release tags → experimental-latest.json; stable tags → latest.json.
 
-6. "Cloudflare Worker & KV Setup (Instance Share Codes)":
+5. "Cloudflare Worker & KV Setup (Instance Share Codes)":
    a. Architecture: Instance sharing uses a Cloudflare Worker backed by a Cloudflare KV
       namespace. Short codes (`VML-XXXX-XXXX`) expire in 3 minutes (180s TTL) for zero
       data retention. Fallback: If unreachable, launcher generates offline Base62 codes (`VML...`).
@@ -194,7 +181,7 @@ of this project. Use the same platform conventions as the previous step.
    e. Optional (Website): Static landing page lives in `website/` and can be deployed to
       Cloudflare Pages via `wrangler.toml` (`directory = "."`).
 
-7. "CI Secrets Reference":
+6. "CI Secrets Reference":
    Release (release.yml): GITHUB_TOKEN (auto), TAURI_SIGNING_PRIVATE_KEY,
    TAURI_SIGNING_PRIVATE_KEY_PASSWORD, VERMEIL_GOOGLE_CLIENT_ID, VERMEIL_GOOGLE_CLIENT_SECRET.
    CI (ci.yml): PRIVACY_DENYLIST (optional custom patterns).
@@ -236,13 +223,12 @@ Pursuant to Section 7 of the GPLv3, LICENSES.md, and standard open-source fork m
 5. Preserve cross-platform compatibility and zero-telemetry foundations.
 ```
 
-#### Step 5: Multi-Repository Ecosystem & Companion Mod Navigation (Optional)
+#### Step 5: Multi-Repository Ecosystem, Git Workflow & Release Protocol
 
 > **When to use this step:**
-> - **Working on the launcher only?** You can safely skip or ignore this step. The companion mod is downloaded automatically on demand at runtime and does not require local setup.
-> - **Developing companion mod features alongside the launcher?** (e.g., custom capes, skin baking, in-game rich presence, or video settings). Run this prompt in your AI assistant to configure multi-repository navigation and update your persistent AI rules/skills across both projects.
+> - Developing companion mod features alongside the launcher? Or managing commits, private-to-public promotion, version bumps, and tag-driven releases across the ecosystem? Run this prompt in your AI assistant to configure multi-repository navigation and generate the unified `git-workflow` skill across both projects.
 >
-> **What this prompt does:** Running this prompt instructs your AI assistant to read the platform rules generated in Step 2 (`AGENTS.md`, `.cursor/rules`, `CLAUDE.md`, or `.windsurfrules`) and augment them with the cross-repository ecosystem rules, sibling workspace navigation (`Vermeil-Launcher` ↔ `Vermeil-Companion`), and companion mod skills (`stonecraft`, `minecraft-mod`) so that the AI operates cleanly across both codebases.
+> **What this prompt does:** Running this prompt instructs your AI assistant to read the platform rules generated in Step 2 (`AGENTS.md`, `.cursor/rules`, `CLAUDE.md`, or `.windsurfrules`) and augment them with cross-repository ecosystem rules, sibling workspace navigation (`Vermeil-Launcher` ↔ `Vermeil-Companion`), companion mod skills (`stonecraft`, `minecraft-mod`), and generate the **`git-workflow`** skill governing Conventional Commits, autonomous local checkpoints, dual-repo staging (`Vermeil-Private` ➔ `Vermeil-Launcher`), version synchronization, changelog generation, and tag-driven release publishing.
 
 ```text
 You are an expert systems engineer and Minecraft client developer assisting me across the entire Vermeil Ecosystem.
@@ -289,8 +275,25 @@ I am developing features that interface between the desktop launcher and the com
    - "Ponytail" Lazy Senior Dev Mode: Stop at the first rung that holds (YAGNI, reuse existing helpers, standard library first, shortest working diff, fix root causes). Never delete Stonecutter preprocessor comments (`//? if ...`).
    - Zero Telemetry & Privacy-First: All communication and data persistence remain 100% local. Zero external analytics or phone-home tracking.
    - Closed Contribution Policy: Maintainer-driven development. External PRs are not accepted; downstream forks are guided under GPLv3.
-   - Stealth Git Workflow & Conventional Commits: Autonomous local commits once verification gates pass. Manual push protocol only (`git push` strictly requires explicit user confirmation). Zero leaked machine paths or internal AI prompts in commit history.
    - Privacy Hygiene: Run `node scripts/check-privacy.mjs` before committing in either repository.
+
+5. Generate the Git Workflow & Release Skill (`git-workflow`):
+   - Conventional Commits: `type(scope): imperative summary under 70 chars`.
+     Types: `feat`, `fix`, `refactor`, `perf`, `style`, `docs`, `chore`, `test`, `release`.
+   - Autonomous Local Checkpoints: Auto-commit locally once verification gates pass (`check-privacy.mjs`, `cargo test`, `pnpm build`) to keep working tree clean.
+   - Strict Manual Push Protocol: NEVER run `git push` autonomously. Remote pushes strictly require an explicit user prompt.
+   - Pending Push Footer: If local commits are ahead of remote, include an unpushed commits banner on every turn.
+   - Dual-Repository Staging & Promotion:
+     - Launcher: `origin` (`Vermeil-Private` for active private development) ➔ `release` (`Vermeil-Launcher` for clean public releases).
+     - Companion: `origin` (`companion-private`) ➔ `release` (`vermeil-companion`).
+     - Staging Flow: Work and verify in private first. When cutting a release or publishing, sync/cherry-pick verified commits onto `release/main`. Original commit timestamps and author details are 100% preserved.
+   - Standing Data Branches: `updates` (updater manifests) and `badges` (status badges) — never PR into `main`.
+   - Release Lifecycle & Version Bumping:
+     - Synchronize versions across all three files: `launcher/package.json`, `launcher/src-tauri/tauri.conf.json`, and `launcher/src-tauri/Cargo.toml`.
+     - Changelog Generation: Update `CHANGELOG.md` with user-facing Added, Changed, Fixed sections from Conventional Commits.
+     - Tagging: Tag `v0.1.0-alpha-N` on a `release: 0.1.0 (alpha build N)` commit. Pushed tags are immutable.
+     - Companion Mod Releases: Tag `v*` on `Vermeil-Companion` to trigger GitHub Actions matrix compilation and `companion-manifest.json` generation.
+```
 ```
 
 ---
