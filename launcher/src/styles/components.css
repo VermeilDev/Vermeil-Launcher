@@ -3778,25 +3778,20 @@
   color: var(--accent);
   border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
 }
-.api-credential-status {
-  font-size: 10.5px;
-  font-family: var(--font-mono);
-  padding: 4px 8px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.3;
+.api-credential-input--testing {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-style: italic;
 }
-.api-credential-status--success {
-  background: rgba(76, 175, 114, 0.12);
+.api-credential-input--success {
   color: var(--teal);
-  border: 1px solid rgba(76, 175, 114, 0.35);
+  border-color: var(--teal);
+  background: rgba(76, 175, 114, 0.08);
 }
-.api-credential-status--error {
-  background: rgba(224, 86, 86, 0.12);
+.api-credential-input--error {
   color: var(--rose);
-  border: 1px solid rgba(224, 86, 86, 0.35);
+  border-color: var(--rose);
+  background: rgba(224, 86, 86, 0.08);
 }
 
 /* ============================================================

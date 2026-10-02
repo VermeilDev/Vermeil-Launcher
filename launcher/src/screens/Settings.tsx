@@ -652,8 +652,54 @@ const Settings: Component = () => {
   const [cfTestResult, setCfTestResult] = createSignal<ApiKeyTestResult | null>(null);
   const [modrinthTestResult, setModrinthTestResult] = createSignal<ApiKeyTestResult | null>(null);
 
+  let cfFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
+  let modrinthFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onCleanup(() => {
+    if (cfFeedbackTimer) clearTimeout(cfFeedbackTimer);
+    if (modrinthFeedbackTimer) clearTimeout(modrinthFeedbackTimer);
+  });
+
   const currentCfKey = () => (cfKeyDraft() !== null ? cfKeyDraft()! : (settings()?.curseforge_api_key ?? ""));
   const currentModrinthToken = () => (modrinthTokenDraft() !== null ? modrinthTokenDraft()! : (settings()?.modrinth_token ?? ""));
+
+  const isCfFeedback = () => testingCf() || cfTestResult() !== null;
+  const cfInputValue = () => {
+    if (testingCf()) return "Testing connection...";
+    if (cfTestResult()) return cfTestResult()!.message;
+    return currentCfKey();
+  };
+  const cfInputClass = () => {
+    const base = "api-credential-input";
+    if (testingCf()) return `${base} api-credential-input--testing`;
+    if (cfTestResult()) {
+      return `${base} ${cfTestResult()!.success ? "api-credential-input--success" : "api-credential-input--error"}`;
+    }
+    return base;
+  };
+  const clearCfFeedback = () => {
+    if (cfFeedbackTimer) clearTimeout(cfFeedbackTimer);
+    if (cfTestResult()) setCfTestResult(null);
+  };
+
+  const isModrinthFeedback = () => testingModrinth() || modrinthTestResult() !== null;
+  const modrinthInputValue = () => {
+    if (testingModrinth()) return "Testing connection...";
+    if (modrinthTestResult()) return modrinthTestResult()!.message;
+    return currentModrinthToken();
+  };
+  const modrinthInputClass = () => {
+    const base = "api-credential-input";
+    if (testingModrinth()) return `${base} api-credential-input--testing`;
+    if (modrinthTestResult()) {
+      return `${base} ${modrinthTestResult()!.success ? "api-credential-input--success" : "api-credential-input--error"}`;
+    }
+    return base;
+  };
+  const clearModrinthFeedback = () => {
+    if (modrinthFeedbackTimer) clearTimeout(modrinthFeedbackTimer);
+    if (modrinthTestResult()) setModrinthTestResult(null);
+  };
 
   const commitCfKey = async () => {
     if (cfKeyDraft() === null) return;
@@ -678,6 +724,7 @@ const Settings: Component = () => {
   };
 
   const handleTestCf = async () => {
+    if (cfFeedbackTimer) clearTimeout(cfFeedbackTimer);
     await commitCfKey();
     setTestingCf(true);
     setCfTestResult(null);
@@ -689,10 +736,14 @@ const Settings: Component = () => {
       setCfTestResult({ success: false, message: String(e) });
     } finally {
       setTestingCf(false);
+      cfFeedbackTimer = setTimeout(() => {
+        setCfTestResult(null);
+      }, 3500);
     }
   };
 
   const handleResetCf = async () => {
+    if (cfFeedbackTimer) clearTimeout(cfFeedbackTimer);
     setCfKeyDraft(null);
     setCfTestResult(null);
     await updateSetting("curseforge_api_key", "");
@@ -704,6 +755,7 @@ const Settings: Component = () => {
   };
 
   const handleTestModrinth = async () => {
+    if (modrinthFeedbackTimer) clearTimeout(modrinthFeedbackTimer);
     await commitModrinthToken();
     setTestingModrinth(true);
     setModrinthTestResult(null);
@@ -715,10 +767,14 @@ const Settings: Component = () => {
       setModrinthTestResult({ success: false, message: String(e) });
     } finally {
       setTestingModrinth(false);
+      modrinthFeedbackTimer = setTimeout(() => {
+        setModrinthTestResult(null);
+      }, 3500);
     }
   };
 
   const handleClearModrinth = async () => {
+    if (modrinthFeedbackTimer) clearTimeout(modrinthFeedbackTimer);
     setModrinthTokenDraft(null);
     setModrinthTestResult(null);
     await updateSetting("modrinth_token", "");
@@ -1394,12 +1450,17 @@ const Settings: Component = () => {
                         <div class="api-credential-input-group">
                           <div class="api-credential-input-wrap">
                             <input
-                              type={showCfKey() ? "text" : "password"}
-                              class="api-credential-input"
+                              type={isCfFeedback() ? "text" : (showCfKey() ? "text" : "password")}
+                              class={cfInputClass()}
                               placeholder={settings()?.curseforge_api_key ? "Custom key active" : "Using built-in default key"}
-                              value={currentCfKey()}
+                              value={cfInputValue()}
+                              readOnly={isCfFeedback()}
                               spellcheck={false}
-                              onInput={(e) => setCfKeyDraft(e.currentTarget.value)}
+                              onInput={(e) => {
+                                if (!isCfFeedback()) setCfKeyDraft(e.currentTarget.value);
+                              }}
+                              onFocus={clearCfFeedback}
+                              onClick={clearCfFeedback}
                               onBlur={commitCfKey}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
@@ -1416,6 +1477,7 @@ const Settings: Component = () => {
                               class="api-credential-eye-btn tip-below"
                               data-tip={showCfKey() ? "Hide key" : "Show key"}
                               aria-label={showCfKey() ? "Hide key" : "Show key"}
+                              disabled={isCfFeedback()}
                               onClick={() => setShowCfKey(!showCfKey())}
                             >
                               <Show when={showCfKey()} fallback={<IconEye />}>
@@ -1442,13 +1504,6 @@ const Settings: Component = () => {
                             </button>
                           </Show>
                         </div>
-                        <Show when={cfTestResult()}>
-                          {(res) => (
-                            <div class={`api-credential-status ${res().success ? "api-credential-status--success" : "api-credential-status--error"}`}>
-                              {res().message}
-                            </div>
-                          )}
-                        </Show>
                       </div>
 
                       {/* Modrinth Access Token Card */}
@@ -1470,12 +1525,17 @@ const Settings: Component = () => {
                         <div class="api-credential-input-group">
                           <div class="api-credential-input-wrap">
                             <input
-                              type={showModrinthToken() ? "text" : "password"}
-                              class="api-credential-input"
+                              type={isModrinthFeedback() ? "text" : (showModrinthToken() ? "text" : "password")}
+                              class={modrinthInputClass()}
                               placeholder={settings()?.modrinth_token ? "Personal PAT active" : "Leave blank for public access"}
-                              value={currentModrinthToken()}
+                              value={modrinthInputValue()}
+                              readOnly={isModrinthFeedback()}
                               spellcheck={false}
-                              onInput={(e) => setModrinthTokenDraft(e.currentTarget.value)}
+                              onInput={(e) => {
+                                if (!isModrinthFeedback()) setModrinthTokenDraft(e.currentTarget.value);
+                              }}
+                              onFocus={clearModrinthFeedback}
+                              onClick={clearModrinthFeedback}
                               onBlur={commitModrinthToken}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
@@ -1492,6 +1552,7 @@ const Settings: Component = () => {
                               class="api-credential-eye-btn tip-below"
                               data-tip={showModrinthToken() ? "Hide token" : "Show token"}
                               aria-label={showModrinthToken() ? "Hide token" : "Show token"}
+                              disabled={isModrinthFeedback()}
                               onClick={() => setShowModrinthToken(!showModrinthToken())}
                             >
                               <Show when={showModrinthToken()} fallback={<IconEye />}>
@@ -1518,13 +1579,6 @@ const Settings: Component = () => {
                             </button>
                           </Show>
                         </div>
-                        <Show when={modrinthTestResult()}>
-                          {(res) => (
-                            <div class={`api-credential-status ${res().success ? "api-credential-status--success" : "api-credential-status--error"}`}>
-                              {res().message}
-                            </div>
-                          )}
-                        </Show>
                       </div>
                     </div>
                   </div>
