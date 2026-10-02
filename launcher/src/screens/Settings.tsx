@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Component, createSignal, createResource, Show, For, onMount, onCleanup, createEffect } from "solid-js";
-import { getSettings, saveSettings, getCacheSize, purgeCache, getSharedGameDataSize, purgeSharedGameData, getAppDirectory, openAppDirectory, LauncherSettings, detectJavaInstallations, validateJavaPath, setJavaPath, installRecommendedJava, deleteJavaInstall, pruneInvalidJavaPaths, getSystemMemory, JavaInstall } from "../ipc/commands";
+import { getSettings, saveSettings, getCacheSize, purgeCache, getSharedGameDataSize, purgeSharedGameData, getAppDirectory, openAppDirectory, LauncherSettings, detectJavaInstallations, validateJavaPath, setJavaPath, installRecommendedJava, deleteJavaInstall, pruneInvalidJavaPaths, getSystemMemory, JavaInstall, testCurseforgeKey, testModrinthToken, ApiKeyTestResult } from "../ipc/commands";
 import { setActiveScreen, setActiveInstanceId, setInitialInstanceTab, instances, showToast, setDownloadToastsEnabled, setAutoHideDockSetting, setPaginationPosition, applyTheme, trackDownload, completeDownload, failDownload, downloads } from "../App";
 import { THEMES } from "../lib/theme";
 import { checkForUpdates } from "../services/updater";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { open as openFileDialog } from "@tauri-apps/plugin-dialog";
-import { IconDownload, IconSearch, IconFolderOpen, IconTrash, IconModrinth, IconCurseForge, IconChevronRight, IconGlobe, IconSettings as IconSettingsIcon, IconLayers, IconCube, IconMonitor, IconBolt, IconX, IconInfo, IconPalette, IconSliders, IconMousePointer, IconVolume2, IconCpu, IconHardDrive, IconCoffee, IconRefresh, IconPuzzle, IconMaximize2 } from "../components/Icons";
+import { IconDownload, IconSearch, IconFolderOpen, IconTrash, IconModrinth, IconCurseForge, IconChevronRight, IconGlobe, IconSettings as IconSettingsIcon, IconLayers, IconCube, IconMonitor, IconBolt, IconX, IconInfo, IconPalette, IconSliders, IconMousePointer, IconVolume2, IconCpu, IconHardDrive, IconCoffee, IconRefresh, IconPuzzle, IconMaximize2, IconKey, IconEye, IconEyeOff } from "../components/Icons";
 import JavaPathInput from "../components/JavaPathInput";
 import JavaChooserModal from "../modals/JavaChooserModal";
 import Dropdown from "../components/Dropdown";
@@ -187,6 +187,9 @@ const Settings: Component = () => {
     "Performance", "Concurrency", "Concurrent downloads", "Concurrent writes", "Download speed limit",
     "parallel", "threads", "downloads", "writes", "disk", "speed", "bandwidth", "limit", "throttle", "rate"
   );
+  const matchesApis = () => isResourcesSection() || matches(
+    "Content Platform APIs", "CurseForge", "Modrinth", "API", "token", "key", "access token", "api key", "BYOK", "credential"
+  );
   const matchesJava = () => isResourcesSection() || matches(
     "Java", "jdk", "jre", "runtime", "Adoptium", "System Java", "GC preset", "Garbage collection",
     "g1gc", "zgc", "shenandoah", "slots", "location", "detect", "browse", "install", "8", "17", "21", "25"
@@ -212,7 +215,7 @@ const Settings: Component = () => {
     "Memory", "RAM", "Maximum RAM", "Maximum memory", "allocation", "adaptive", "heap", "mb", "gb"
   );
 
-  const matchesResources = () => matchesStorage() || matchesPerformance() || matchesJava();
+  const matchesResources = () => matchesStorage() || matchesPerformance() || matchesApis() || matchesJava();
   const matchesInstances = () => matchesVideo() || matchesAccessibility() || matchesControls() || matchesAudio() || matchesWindow() || matchesMemory() ||
     (instances() || []).some(i => matches(i.name, i.game_version, i.loader.type));
   const matchesKeybinds = () => isKeybindsSection() || KEYBINDS.some(a => matches(a.label, a.description, a.default));
@@ -637,6 +640,93 @@ const Settings: Component = () => {
     const cur = settings()?.video_settings;
     if (!cur) return;
     updateSetting("video_settings", { ...cur, ...patch });
+  };
+
+  // Content Platform API Credentials state
+  const [showCfKey, setShowCfKey] = createSignal(false);
+  const [showModrinthToken, setShowModrinthToken] = createSignal(false);
+  const [cfKeyDraft, setCfKeyDraft] = createSignal<string | null>(null);
+  const [modrinthTokenDraft, setModrinthTokenDraft] = createSignal<string | null>(null);
+  const [testingCf, setTestingCf] = createSignal(false);
+  const [testingModrinth, setTestingModrinth] = createSignal(false);
+  const [cfTestResult, setCfTestResult] = createSignal<ApiKeyTestResult | null>(null);
+  const [modrinthTestResult, setModrinthTestResult] = createSignal<ApiKeyTestResult | null>(null);
+
+  const currentCfKey = () => (cfKeyDraft() !== null ? cfKeyDraft()! : (settings()?.curseforge_api_key ?? ""));
+  const currentModrinthToken = () => (modrinthTokenDraft() !== null ? modrinthTokenDraft()! : (settings()?.modrinth_token ?? ""));
+
+  const commitCfKey = async () => {
+    if (cfKeyDraft() === null) return;
+    const next = cfKeyDraft()!.trim();
+    if (next === (settings()?.curseforge_api_key ?? "")) {
+      setCfKeyDraft(null);
+      return;
+    }
+    await updateSetting("curseforge_api_key", next);
+    setCfKeyDraft(null);
+  };
+
+  const commitModrinthToken = async () => {
+    if (modrinthTokenDraft() === null) return;
+    const next = modrinthTokenDraft()!.trim();
+    if (next === (settings()?.modrinth_token ?? "")) {
+      setModrinthTokenDraft(null);
+      return;
+    }
+    await updateSetting("modrinth_token", next);
+    setModrinthTokenDraft(null);
+  };
+
+  const handleTestCf = async () => {
+    await commitCfKey();
+    setTestingCf(true);
+    setCfTestResult(null);
+    try {
+      const key = (currentCfKey() || "").trim();
+      const res = await testCurseforgeKey(key || null);
+      setCfTestResult(res);
+    } catch (e) {
+      setCfTestResult({ success: false, message: String(e) });
+    } finally {
+      setTestingCf(false);
+    }
+  };
+
+  const handleResetCf = async () => {
+    setCfKeyDraft(null);
+    setCfTestResult(null);
+    await updateSetting("curseforge_api_key", "");
+    showToast({
+      title: "CurseForge Key Reset",
+      message: "Reverted to built-in default key",
+      type: "info",
+    });
+  };
+
+  const handleTestModrinth = async () => {
+    await commitModrinthToken();
+    setTestingModrinth(true);
+    setModrinthTestResult(null);
+    try {
+      const token = (currentModrinthToken() || "").trim();
+      const res = await testModrinthToken(token || null);
+      setModrinthTestResult(res);
+    } catch (e) {
+      setModrinthTestResult({ success: false, message: String(e) });
+    } finally {
+      setTestingModrinth(false);
+    }
+  };
+
+  const handleClearModrinth = async () => {
+    setModrinthTokenDraft(null);
+    setModrinthTestResult(null);
+    await updateSetting("modrinth_token", "");
+    showToast({
+      title: "Modrinth Token Cleared",
+      message: "Switched to public unauthenticated access",
+      type: "info",
+    });
   };
 
   const openInstanceOptions = (id: string) => {
@@ -1268,6 +1358,173 @@ const Settings: Component = () => {
                             />
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Show>
+
+              <Show when={!isSearching() || matchesApis()}>
+                <div class="card-gamemode-section bento-col-12">
+                  <div class="card-section-header">
+                    <div class="bento-card-title">
+                      <IconKey />
+                      <span>Content Platform APIs</span>
+                    </div>
+                    <span class="bento-badge">INTEGRATIONS</span>
+                  </div>
+                  <div class="card-section-body">
+                    <div class="api-credential-grid">
+                      {/* CurseForge API Key Card */}
+                      <div class="api-credential-card">
+                        <div class="api-credential-header">
+                          <div class="api-credential-title-wrap">
+                            <IconCurseForge />
+                            <span class="api-credential-title">CurseForge API Key</span>
+                          </div>
+                          <Show when={Boolean(settings()?.curseforge_api_key?.trim())} fallback={
+                            <span class="api-status-badge api-status-badge--default">Default</span>
+                          }>
+                            <span class="api-status-badge api-status-badge--custom">Custom</span>
+                          </Show>
+                        </div>
+                        <span class="api-credential-desc">
+                          Used for browsing, downloading mods, and importing modpacks. Leave blank to use the built-in default key.
+                        </span>
+                        <div class="api-credential-input-group">
+                          <div class="api-credential-input-wrap">
+                            <input
+                              type={showCfKey() ? "text" : "password"}
+                              class="api-credential-input"
+                              placeholder={settings()?.curseforge_api_key ? "Custom key active" : "Using built-in default key"}
+                              value={currentCfKey()}
+                              spellcheck={false}
+                              onInput={(e) => setCfKeyDraft(e.currentTarget.value)}
+                              onBlur={commitCfKey}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  commitCfKey();
+                                  (e.currentTarget as HTMLInputElement).blur();
+                                } else if (e.key === "Escape") {
+                                  setCfKeyDraft(null);
+                                  (e.currentTarget as HTMLInputElement).blur();
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              class="api-credential-eye-btn tip-below"
+                              data-tip={showCfKey() ? "Hide key" : "Show key"}
+                              aria-label={showCfKey() ? "Hide key" : "Show key"}
+                              onClick={() => setShowCfKey(!showCfKey())}
+                            >
+                              <Show when={showCfKey()} fallback={<IconEye />}>
+                                <IconEyeOff />
+                              </Show>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--neutral"
+                            disabled={testingCf()}
+                            onClick={handleTestCf}
+                          >
+                            {testingCf() ? "Testing..." : "Test"}
+                          </button>
+                          <Show when={Boolean(settings()?.curseforge_api_key?.trim())}>
+                            <button
+                              type="button"
+                              class="btn btn--sm btn--neutral tip-below"
+                              data-tip="Revert to built-in default key"
+                              onClick={handleResetCf}
+                            >
+                              Reset
+                            </button>
+                          </Show>
+                        </div>
+                        <Show when={cfTestResult()}>
+                          {(res) => (
+                            <div class={`api-credential-status ${res().success ? "api-credential-status--success" : "api-credential-status--error"}`}>
+                              {res().message}
+                            </div>
+                          )}
+                        </Show>
+                      </div>
+
+                      {/* Modrinth Access Token Card */}
+                      <div class="api-credential-card">
+                        <div class="api-credential-header">
+                          <div class="api-credential-title-wrap">
+                            <IconModrinth />
+                            <span class="api-credential-title">Modrinth Access Token</span>
+                          </div>
+                          <Show when={Boolean(settings()?.modrinth_token?.trim())} fallback={
+                            <span class="api-status-badge api-status-badge--default">Public</span>
+                          }>
+                            <span class="api-status-badge api-status-badge--custom">Personal PAT</span>
+                          </Show>
+                        </div>
+                        <span class="api-credential-desc">
+                          Personal access token (PAT) for authenticated requests and higher rate limits. Optional (public by default).
+                        </span>
+                        <div class="api-credential-input-group">
+                          <div class="api-credential-input-wrap">
+                            <input
+                              type={showModrinthToken() ? "text" : "password"}
+                              class="api-credential-input"
+                              placeholder={settings()?.modrinth_token ? "Personal PAT active" : "Leave blank for public access"}
+                              value={currentModrinthToken()}
+                              spellcheck={false}
+                              onInput={(e) => setModrinthTokenDraft(e.currentTarget.value)}
+                              onBlur={commitModrinthToken}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  commitModrinthToken();
+                                  (e.currentTarget as HTMLInputElement).blur();
+                                } else if (e.key === "Escape") {
+                                  setModrinthTokenDraft(null);
+                                  (e.currentTarget as HTMLInputElement).blur();
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              class="api-credential-eye-btn tip-below"
+                              data-tip={showModrinthToken() ? "Hide token" : "Show token"}
+                              aria-label={showModrinthToken() ? "Hide token" : "Show token"}
+                              onClick={() => setShowModrinthToken(!showModrinthToken())}
+                            >
+                              <Show when={showModrinthToken()} fallback={<IconEye />}>
+                                <IconEyeOff />
+                              </Show>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--neutral"
+                            disabled={testingModrinth()}
+                            onClick={handleTestModrinth}
+                          >
+                            {testingModrinth() ? "Testing..." : "Test"}
+                          </button>
+                          <Show when={Boolean(settings()?.modrinth_token?.trim())}>
+                            <button
+                              type="button"
+                              class="btn btn--sm btn--neutral tip-below"
+                              data-tip="Clear custom token"
+                              onClick={handleClearModrinth}
+                            >
+                              Clear
+                            </button>
+                          </Show>
+                        </div>
+                        <Show when={modrinthTestResult()}>
+                          {(res) => (
+                            <div class={`api-credential-status ${res().success ? "api-credential-status--success" : "api-credential-status--error"}`}>
+                              {res().message}
+                            </div>
+                          )}
+                        </Show>
                       </div>
                     </div>
                   </div>

@@ -54,6 +54,11 @@ pub async fn load() -> Result<LauncherSettings, Box<dyn std::error::Error + Send
         version_changed = true;
     }
 
+    if settings.curseforge_api_key == crate::commands::mods::DEFAULT_CURSEFORGE_KEY {
+        settings.curseforge_api_key.clear();
+        version_changed = true;
+    }
+
     if version_changed {
         let _ = save(&settings).await;
     }

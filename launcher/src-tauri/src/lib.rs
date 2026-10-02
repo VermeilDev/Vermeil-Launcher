@@ -314,6 +314,8 @@ pub fn run() {
             mods::search_curseforge,
             mods::get_mod_versions,
             mods::get_cf_mod_files,
+            mods::test_curseforge_key,
+            mods::test_modrinth_token,
             // Settings
             settings::get_settings,
             settings::save_settings,

@@ -32,24 +32,16 @@ use crate::models::instance::Instance;
 use crate::services::mod_install::{
     self, InstallResult, ProjectType, find_preferred_version,
 };
-use crate::services::{cf_mod_install, curseforge, modrinth, settings_service};
+use crate::services::{cf_mod_install, curseforge, modrinth};
 use crate::util::paths;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-/// Built-in CurseForge API key — used when the user hasn't supplied their own
-/// (mirrors the fallback in the install commands so update checks work out of
-/// the box for existing configs that predate the CurseForge integration).
-const DEFAULT_CF_KEY: &str = "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu";
-
 /// Resolve the effective CurseForge API key: the user's if set, else the
 /// built-in default.
 async fn resolve_cf_key() -> String {
-    match settings_service::load().await {
-        Ok(s) if !s.curseforge_api_key.is_empty() => s.curseforge_api_key,
-        _ => DEFAULT_CF_KEY.to_string(),
-    }
+    crate::commands::mods::resolve_cf_api_key().await.unwrap_or_else(|_| crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string())
 }
 
 /// One available update for an installed Modrinth mod. Surfaced per project

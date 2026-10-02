@@ -645,10 +645,10 @@ pub async fn enrich_mod_metadata(
     let settings = crate::services::settings_service::load()
         .await
         .map_err(|e| format!("Load settings: {}", e))?;
-    let api_key = if settings.curseforge_api_key.is_empty() {
-        "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu".to_string()
+    let api_key = if settings.curseforge_api_key.trim().is_empty() {
+        crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string()
     } else {
-        settings.curseforge_api_key.clone()
+        settings.curseforge_api_key.trim().to_string()
     };
 
     // ─── Phase 1: metadata ───────────────────────────────────────────────
@@ -1240,10 +1240,10 @@ pub async fn install_from_curseforge(
     let settings = crate::services::settings_service::load()
         .await
         .map_err(|e| format!("Load settings: {}", e))?;
-    let api_key = if settings.curseforge_api_key.is_empty() {
-        "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu".to_string()
+    let api_key = if settings.curseforge_api_key.trim().is_empty() {
+        crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string()
     } else {
-        settings.curseforge_api_key.clone()
+        settings.curseforge_api_key.trim().to_string()
     };
 
     // Fetch the project's icon up-front so the new instance carries it as

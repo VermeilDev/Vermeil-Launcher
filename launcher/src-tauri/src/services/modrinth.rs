@@ -87,6 +87,13 @@ pub struct ModrinthDependency {
     pub dependency_type: String,
 }
 
+pub(crate) async fn resolve_modrinth_token() -> Option<String> {
+    crate::services::settings_service::load().await.ok().and_then(|s| {
+        let t = s.modrinth_token.trim().to_string();
+        if t.is_empty() { None } else { Some(t) }
+    })
+}
+
 pub(crate) fn build_search_facets(project_type: &str, loader: &str, game_version: &str) -> String {
     // Sanitize game_version: Meilisearch parses numeric literals and fails with
     // "invalid numeric filter literal: EOF while parsing a value at line 1 column 2"
@@ -169,9 +176,16 @@ pub async fn search_mods(
         sort
     );
 
-    let resp = crate::util::http::send_with_retry(|| crate::util::http::HTTP.get(&url))
-        .await
-        .map_err(|e| format!("Modrinth search failed: {}", e))?;
+    let token = resolve_modrinth_token().await;
+    let resp = crate::util::http::send_with_retry(|| {
+        let mut req = crate::util::http::HTTP.get(&url);
+        if let Some(ref t) = token {
+            req = req.header("Authorization", t);
+        }
+        req
+    })
+    .await
+    .map_err(|e| format!("Modrinth search failed: {}", e))?;
 
     if !resp.status().is_success() {
         let text = resp.text().await.unwrap_or_default();
@@ -200,7 +214,14 @@ pub async fn get_versions_by_ids(ids: &[String]) -> std::collections::HashMap<St
         MODRINTH_API,
         urlencoding::encode(&ids_json)
     );
-    let resp = match crate::util::http::send_with_retry(|| crate::util::http::HTTP.get(&url)).await {
+    let token = resolve_modrinth_token().await;
+    let resp = match crate::util::http::send_with_retry(|| {
+        let mut req = crate::util::http::HTTP.get(&url);
+        if let Some(ref t) = token {
+            req = req.header("Authorization", t);
+        }
+        req
+    }).await {
         Ok(r) if r.status().is_success() => r,
         _ => return HashMap::new(),
     };
@@ -260,9 +281,16 @@ pub async fn search_modpacks(
         sort
     );
 
-    let resp = crate::util::http::send_with_retry(|| crate::util::http::HTTP.get(&url))
-        .await
-        .map_err(|e| format!("Modrinth modpack search failed: {}", e))?;
+    let token = resolve_modrinth_token().await;
+    let resp = crate::util::http::send_with_retry(|| {
+        let mut req = crate::util::http::HTTP.get(&url);
+        if let Some(ref t) = token {
+            req = req.header("Authorization", t);
+        }
+        req
+    })
+    .await
+    .map_err(|e| format!("Modrinth modpack search failed: {}", e))?;
 
     if !resp.status().is_success() {
         let text = resp.text().await.unwrap_or_default();
@@ -306,8 +334,12 @@ pub async fn get_project_versions(
         params.join("&")
     );
 
-    let resp = crate::util::http::HTTP
-        .get(&url)
+    let token = resolve_modrinth_token().await;
+    let mut req = crate::util::http::HTTP.get(&url);
+    if let Some(ref t) = token {
+        req = req.header("Authorization", t);
+    }
+    let resp = req
         .send()
         .await
         .map_err(|e| format!("Modrinth versions failed: {}", e))?;
@@ -336,9 +368,12 @@ pub async fn get_versions_by_hashes(
         "algorithm": "sha1"
     });
 
-    let resp = crate::util::http::HTTP
-        .post(&url)
-        .json(&body)
+    let token = resolve_modrinth_token().await;
+    let mut req = crate::util::http::HTTP.post(&url).json(&body);
+    if let Some(ref t) = token {
+        req = req.header("Authorization", t);
+    }
+    let resp = req
         .send()
         .await
         .map_err(|e| format!("Modrinth version_files failed: {}", e))?;

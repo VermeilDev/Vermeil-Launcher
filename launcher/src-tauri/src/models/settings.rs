@@ -60,6 +60,8 @@ pub struct LauncherSettings {
     pub force_delete: bool,
     #[serde(default)]
     pub curseforge_api_key: String,
+    #[serde(default)]
+    pub modrinth_token: String,
     /// Whether the user has completed the first-run onboarding wizard. Defaults
     /// to `false` so existing users who upgrade also see it once (a five-second
     /// detour vs an indefinitely empty Library for new installs).
@@ -256,7 +258,8 @@ impl Default for LauncherSettings {
             download_speed_limit_mb: default_download_speed_limit_mb(),
             mod_sources: vec!["modrinth".to_string(), "curseforge".to_string()],
             force_delete: false,
-            curseforge_api_key: "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu".to_string(),
+            curseforge_api_key: String::new(),
+            modrinth_token: String::new(),
             onboarded: false,
             java_paths: HashMap::new(),
             sidebar_pinned_instances: Vec::new(),

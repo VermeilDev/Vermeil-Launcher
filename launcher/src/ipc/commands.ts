@@ -178,6 +178,7 @@ export interface LauncherSettings {
   mod_sources: string[];
   force_delete: boolean;
   curseforge_api_key: string;
+  modrinth_token: string;
   /**
    * Whether the user has completed the first-run onboarding wizard. The
    * wizard runs once for any user whose `onboarded` is `false` and who has
@@ -404,6 +405,17 @@ export const getModVersions = (projectId: string, loader: string, gameVersion: s
 /** CurseForge equivalent. Only the API's first page of 50 files is available. */
 export const getCfModFiles = (modId: string, loader: string, gameVersion: string) =>
   invoke<ContentVersion[]>("get_cf_mod_files", { modId, loader, gameVersion });
+
+export interface ApiKeyTestResult {
+  success: boolean;
+  message: string;
+}
+
+export const testCurseforgeKey = (key?: string | null) =>
+  invoke<ApiKeyTestResult>("test_curseforge_key", { key });
+
+export const testModrinthToken = (token?: string | null) =>
+  invoke<ApiKeyTestResult>("test_modrinth_token", { token });
 
 // Auth commands
 export const startMsLogin = () => invoke<string>("start_ms_login");

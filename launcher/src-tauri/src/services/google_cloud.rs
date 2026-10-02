@@ -734,6 +734,7 @@ pub fn sanitize_settings_for_cloud(source: &LauncherSettings) -> LauncherSetting
         concurrent_downloads: defaults.concurrent_downloads,
         concurrent_writes: defaults.concurrent_writes,
         curseforge_api_key: String::new(),
+        modrinth_token: String::new(),
         onboarded: defaults.onboarded,
         sidebar_pinned_instances: Vec::new(),
         ingame_cape: defaults.ingame_cape,

@@ -386,17 +386,127 @@ pub async fn get_cf_mod_files(
     Ok(cap_keeping_compatible(out))
 }
 
+pub const DEFAULT_CURSEFORGE_KEY: &str = "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu";
+
+#[derive(Serialize)]
+pub struct ApiKeyTestResult {
+    pub success: bool,
+    pub message: String,
+}
+
 /// The user's CurseForge key if set, else the built-in fallback for configs that
 /// predate the CurseForge integration.
 pub(crate) async fn resolve_cf_api_key() -> Result<String, String> {
     let settings = crate::services::settings_service::load()
         .await
         .map_err(|e| format!("Load settings: {}", e))?;
-    Ok(if settings.curseforge_api_key.is_empty() {
-        "$2a$10$Vqhx8J1qatEwez9lhg6cjeh1W6RC6H8AtXeLdu7o8H45smb66wCgu".to_string()
+    let key = settings.curseforge_api_key.trim();
+    Ok(if key.is_empty() {
+        DEFAULT_CURSEFORGE_KEY.to_string()
     } else {
-        settings.curseforge_api_key.clone()
+        key.to_string()
     })
+}
+
+#[tauri::command]
+pub async fn test_curseforge_key(key: Option<String>) -> Result<ApiKeyTestResult, String> {
+    let key_to_test = match key.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(k) => k.to_string(),
+        None => resolve_cf_api_key().await?,
+    };
+
+    let url = "https://api.curseforge.com/v1/mods/search?gameId=432&pageSize=1";
+    let resp = crate::util::http::HTTP
+        .get(url)
+        .header("x-api-key", &key_to_test)
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if resp.status().is_success() {
+        Ok(ApiKeyTestResult {
+            success: true,
+            message: "CurseForge API connection verified".to_string(),
+        })
+    } else {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        let detail = if status.as_u16() == 403 || status.as_u16() == 401 {
+            "Invalid or unauthorized API key"
+        } else if !body.is_empty() {
+            &body
+        } else {
+            "Connection rejected"
+        };
+        Ok(ApiKeyTestResult {
+            success: false,
+            message: format!("CurseForge rejected key ({}): {}", status, detail),
+        })
+    }
+}
+
+#[tauri::command]
+pub async fn test_modrinth_token(token: Option<String>) -> Result<ApiKeyTestResult, String> {
+    let trimmed = match token.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(t) => t.to_string(),
+        None => match crate::services::modrinth::resolve_modrinth_token().await {
+            Some(t) => t,
+            None => String::new(),
+        },
+    };
+
+    if trimmed.is_empty() {
+        let url = "https://api.modrinth.com/v2/search?limit=1";
+        let resp = crate::util::http::HTTP
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| format!("Network request failed: {}", e))?;
+
+        if resp.status().is_success() {
+            Ok(ApiKeyTestResult {
+                success: true,
+                message: "Public Modrinth API is reachable".to_string(),
+            })
+        } else {
+            Ok(ApiKeyTestResult {
+                success: false,
+                message: format!("Modrinth error (HTTP {})", resp.status()),
+            })
+        }
+    } else {
+        let url = "https://api.modrinth.com/v2/user";
+        let resp = crate::util::http::HTTP
+            .get(url)
+            .header("Authorization", &trimmed)
+            .send()
+            .await
+            .map_err(|e| format!("Network request failed: {}", e))?;
+
+        if resp.status().is_success() {
+            #[derive(serde::Deserialize)]
+            struct ModrinthUser {
+                username: String,
+            }
+            if let Ok(u) = resp.json::<ModrinthUser>().await {
+                Ok(ApiKeyTestResult {
+                    success: true,
+                    message: format!("Authenticated as @{}", u.username),
+                })
+            } else {
+                Ok(ApiKeyTestResult {
+                    success: true,
+                    message: "Modrinth token verified".to_string(),
+                })
+            }
+        } else {
+            let status = resp.status();
+            Ok(ApiKeyTestResult {
+                success: false,
+                message: format!("Invalid token (HTTP {})", status),
+            })
+        }
+    }
 }
 
 #[cfg(test)]

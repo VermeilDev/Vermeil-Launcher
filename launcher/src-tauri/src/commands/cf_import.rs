@@ -3,7 +3,6 @@
 
 use crate::models::instance::Instance;
 use crate::services::cf_import;
-use crate::services::settings_service;
 
 /// Import a CurseForge modpack from a .zip file.
 #[tauri::command]
@@ -23,8 +22,8 @@ pub async fn import_cf_zip(
             skipped: false,
         },
     );
-    let settings = settings_service::load().await.map_err(|e| e.to_string())?;
-    let instance = cf_import::import_zip(&zip_path, &settings.curseforge_api_key, None, None, Some(window)).await?;
+    let cf_api_key = crate::commands::mods::resolve_cf_api_key().await?;
+    let instance = cf_import::import_zip(&zip_path, &cf_api_key, None, None, Some(window)).await?;
     crate::util::platform::update_windows_estimated_size();
     Ok(instance)
 }
@@ -59,10 +58,10 @@ pub async fn import_share_code(
             skipped: false,
         },
     );
-    let settings = settings_service::load().await.map_err(|e| e.to_string())?;
+    let cf_api_key = crate::commands::mods::resolve_cf_api_key().await?;
     let instance = crate::services::share_code::import_share_code(
         &code,
-        &settings.curseforge_api_key,
+        &cf_api_key,
         Some(window),
     )
     .await?;

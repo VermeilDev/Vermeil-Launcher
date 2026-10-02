@@ -888,10 +888,9 @@ pub async fn export_instance_share_code(instance_id: &str) -> Result<String, Str
                 ));
             } else {
                 // CurseForge Modpack
-                if let Ok(settings) = crate::services::settings_service::load().await {
-                    let meta = crate::services::curseforge::fetch_project_meta(&settings.curseforge_api_key, pid).await;
-                    modpack_icon_url = sanitize_icon_url(meta.icon_url.as_deref());
-                }
+                let api_key = crate::commands::mods::resolve_cf_api_key().await.unwrap_or_else(|_| crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string());
+                let meta = crate::services::curseforge::fetch_project_meta(&api_key, pid).await;
+                modpack_icon_url = sanitize_icon_url(meta.icon_url.as_deref());
                 bp_ref = Some(BasePackRef(
                     "c".to_string(),
                     pid.clone(),
@@ -1286,8 +1285,7 @@ async fn enrich_preview_items(items: &mut [SharePreviewItem], payload: &ShareCod
 
     // 2. CurseForge enrichment
     if !cf_indices.is_empty() {
-        let settings = crate::services::settings_service::load().await.unwrap_or_default();
-        let api_key = settings.curseforge_api_key;
+        let api_key = crate::commands::mods::resolve_cf_api_key().await.unwrap_or_else(|_| crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string());
         if !api_key.is_empty() {
             let file_ids: Vec<u64> = cf_indices.iter().map(|(_, fid)| *fid).collect();
             let mut cf_files_map: HashMap<u64, CfBatchFileInfo> = HashMap::with_capacity(file_ids.len());
