@@ -670,11 +670,11 @@ const Home: Component = () => {
             data-tip="Manage account and identity"
           >
             <Show
-              when={account() && !account()!.is_offline}
+              when={account()}
               fallback={
                 <>
                   <IconUser class="header-pill-icon" />
-                  <span>Account: <strong>Offline / Local</strong></span>
+                  <span>Account: <strong>Not Signed In</strong></span>
                 </>
               }
             >

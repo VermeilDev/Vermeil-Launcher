@@ -328,11 +328,11 @@ const Account: Component = () => {
         <div class="account-header-meta">
           <div class="header-meta-pill tip-below" data-tip="Active profile authentication">
             <Show
-              when={account() && !account()!.is_offline}
+              when={account()}
               fallback={
                 <>
                   <IconUser class="header-pill-icon" />
-                  <span>Account: <strong>{account() ? "Offline / Local" : "None"}</strong></span>
+                  <span>Account: <strong>Not Signed In</strong></span>
                 </>
               }
             >
