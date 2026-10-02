@@ -3696,8 +3696,13 @@
 .api-credential-title-wrap svg {
   width: 16px;
   height: 16px;
-  color: var(--accent);
   flex-shrink: 0;
+}
+.api-credential-card--curseforge .api-credential-title-wrap svg {
+  color: var(--source-curseforge);
+}
+.api-credential-card--modrinth .api-credential-title-wrap svg {
+  color: var(--source-modrinth);
 }
 .api-credential-title {
   font-size: 13px;

@@ -1432,7 +1432,7 @@ const Settings: Component = () => {
                   <div class="card-section-body">
                     <div class="api-credential-grid">
                       {/* CurseForge API Key Card */}
-                      <div class="api-credential-card">
+                      <div class="api-credential-card api-credential-card--curseforge">
                         <div class="api-credential-header">
                           <div class="api-credential-title-wrap">
                             <IconCurseForge />
@@ -1507,7 +1507,7 @@ const Settings: Component = () => {
                       </div>
 
                       {/* Modrinth Access Token Card */}
-                      <div class="api-credential-card">
+                      <div class="api-credential-card api-credential-card--modrinth">
                         <div class="api-credential-header">
                           <div class="api-credential-title-wrap">
                             <IconModrinth />
