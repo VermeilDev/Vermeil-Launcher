@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-alpha.3",
-  "notes": "## 0.1.0 (Alpha Build 3)\n\n### Added\n\n- Custom CurseForge and Modrinth API credential inputs in Settings with live in-place verification and test feedback\n- Freedesktop.org Linux desktop launcher and icon theme synchronization when switching themes\n\n### Changed\n\n- Enhanced range slider thumb ergonomics to press down on hover and active states matching tactile toggles\n\n### Fixed\n\n- Restored official brand colors for Modrinth and CurseForge API integration badges\n- Resolved Linux build warning and enabled desktop application icon syncing across standard user desktop paths",
-  "pub_date": "2026-10-02T15:33:54.768Z",
+  "version": "0.1.0-alpha.4",
+  "notes": "## 0.1.0 (Alpha Build 4)\n\n### Added\n\n- Global custom cape persistence across all guest sessions, Microsoft account logins, and profile switches\n- Automatic zero-data-loss migration and path self-healing for legacy per-account cape libraries and textures\n\n### Changed\n\n- Synchronized 3D Character Studio player pedestal base and accent rim colors with the active tactile color theme\n- Streamlined custom cape cards with unified click-to-equip interaction and clean presentation thumbnails\n- Clarified unauthenticated account status pill to indicate \"Not Signed In\"\n\n### Fixed\n\n- Resolved issue where custom capes created in preview mode were lost upon logging into a Microsoft account\n- Fixed custom cape 3D viewer rendering on player model stand in guest and preview sessions\n- Removed redundant cape equip tooltip and thumbnail hover outline on custom cape cards",
+  "pub_date": "2026-10-02T19:38:07.303Z",
   "platforms": {
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5KZVNzcnFSUS9jT0RmejdVL2dUTVNmUndTZHBOdUExOXZGVHYzeVpBM0p1c0pnZkxGeDZXTGx4bkhRVm9ZNzJNbGJqRFpiZDI4NGVuRVdlb0ZOY3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MTc5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX2FtZDY0LkFwcEltYWdlCnhtSDhlR0NacG5xdC9rM1diS1lFZm5NaEJ3RnhvcTN1MDVsNmdzb0k1eDFxN2NTR1Zncjk1cTg4em5pMjg5K0haWCtsY240WDMwdUJqdE50cndDV0J3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkMvK2VsWVlYZGNsbnc5cXZtUktkTVhzekt0M2o2Z1RibkdzL1VEdXBpNVhaWVkrQWl4QlhDSFlqOFdWbEdXSUltVUNmZnVHM3IzMS9DR2FReVJ3TGdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTY5NjkwCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS40X2FtZDY0LkFwcEltYWdlClJFZVhocHJ0UWtQajh6ODE0MXZuZ2NSb3ZyMkY5SnRHd0F0SE84V2thUFltTUlTZkJFdC9hcWNHaHFxZTNNYndVcVRYMkVNWHRHaENPT1dldExNMERnPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.4/Vermeil_0.1.0-alpha.4_amd64.AppImage"
     },
     "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5KZVNzcnFSUS9jT0RmejdVL2dUTVNmUndTZHBOdUExOXZGVHYzeVpBM0p1c0pnZkxGeDZXTGx4bkhRVm9ZNzJNbGJqRFpiZDI4NGVuRVdlb0ZOY3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MTc5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX2FtZDY0LkFwcEltYWdlCnhtSDhlR0NacG5xdC9rM1diS1lFZm5NaEJ3RnhvcTN1MDVsNmdzb0k1eDFxN2NTR1Zncjk1cTg4em5pMjg5K0haWCtsY240WDMwdUJqdE50cndDV0J3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkMvK2VsWVlYZGNsbnc5cXZtUktkTVhzekt0M2o2Z1RibkdzL1VEdXBpNVhaWVkrQWl4QlhDSFlqOFdWbEdXSUltVUNmZnVHM3IzMS9DR2FReVJ3TGdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTY5NjkwCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS40X2FtZDY0LkFwcEltYWdlClJFZVhocHJ0UWtQajh6ODE0MXZuZ2NSb3ZyMkY5SnRHd0F0SE84V2thUFltTUlTZkJFdC9hcWNHaHFxZTNNYndVcVRYMkVNWHRHaENPT1dldExNMERnPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.4/Vermeil_0.1.0-alpha.4_amd64.AppImage"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkU4ZURvS051STRObG52U2VYdndkVVAwUUdWTUhHY2hSUjFIUWloUEJncjgvRmdNZENjNC9SUTFySUJUdkxqbHF6NmdGOTRqUTVqRGtwY2RiWDgxZVE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MjMyCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX3g2NC1zZXR1cC5leGUKdjZXSVFxWU1CWDh1TkEybVVjNzlqa3pJeWl5ZUVEbHNLeDlxdWJESDBOV0hDcTJ2enozVFRoU3U5R2hod0I3cm9ISlRIL2JFczQvMkNrTUFIeHFJQkE9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkx0QmJUWG41ME9EOG1DSDExcmt6dldIVEsyQy9yMWM2UzVVcmFFMG1EWklXbGxlbmZUZXNDYjk3TU1Rb3ArNjJRNFpWU3FrMTFWYUlwRjRvZzYyeHd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTY5ODg0CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS40X3g2NC1zZXR1cC5leGUKVTlhK2hDT1d2ci9qYTBBbzNQdEN4ZU1hbzBFa0I5RHZac3gyM1h5eTdoTUNjZ0NLWTJGazJhdmdIdldmOHRJU1BmMmFnQThXMEN1ZFYvVVdyc3VBQmc9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.4/Vermeil_0.1.0-alpha.4_x64-setup.exe"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkU4ZURvS051STRObG52U2VYdndkVVAwUUdWTUhHY2hSUjFIUWloUEJncjgvRmdNZENjNC9SUTFySUJUdkxqbHF6NmdGOTRqUTVqRGtwY2RiWDgxZVE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MjMyCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX3g2NC1zZXR1cC5leGUKdjZXSVFxWU1CWDh1TkEybVVjNzlqa3pJeWl5ZUVEbHNLeDlxdWJESDBOV0hDcTJ2enozVFRoU3U5R2hod0I3cm9ISlRIL2JFczQvMkNrTUFIeHFJQkE9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkx0QmJUWG41ME9EOG1DSDExcmt6dldIVEsyQy9yMWM2UzVVcmFFMG1EWklXbGxlbmZUZXNDYjk3TU1Rb3ArNjJRNFpWU3FrMTFWYUlwRjRvZzYyeHd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTY5ODg0CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS40X3g2NC1zZXR1cC5leGUKVTlhK2hDT1d2ci9qYTBBbzNQdEN4ZU1hbzBFa0I5RHZac3gyM1h5eTdoTUNjZ0NLWTJGazJhdmdIdldmOHRJU1BmMmFnQThXMEN1ZFYvVVdyc3VBQmc9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.4/Vermeil_0.1.0-alpha.4_x64-setup.exe"
     }
   }
 }
