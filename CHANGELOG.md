@@ -1,15 +1,19 @@
-## 0.1.0 (Alpha Build 3)
+## 0.1.0 (Alpha Build 4)
 
 ### Added
 
-- Custom CurseForge and Modrinth API credential inputs in Settings with live in-place verification and test feedback
-- Freedesktop.org Linux desktop launcher and icon theme synchronization when switching themes
+- Global custom cape persistence across all guest sessions, Microsoft account logins, and profile switches
+- Automatic zero-data-loss migration and path self-healing for legacy per-account cape libraries and textures
 
 ### Changed
 
-- Enhanced range slider thumb ergonomics to press down on hover and active states matching tactile toggles
+- Synchronized 3D Character Studio player pedestal base and accent rim colors with the active tactile color theme
+- Streamlined custom cape cards with unified click-to-equip interaction and clean presentation thumbnails
+- Clarified unauthenticated account status pill to indicate "Not Signed In"
 
 ### Fixed
 
-- Restored official brand colors for Modrinth and CurseForge API integration badges
-- Resolved Linux build warning and enabled desktop application icon syncing across standard user desktop paths
+- Resolved issue where custom capes created in preview mode were lost upon logging into a Microsoft account
+- Fixed custom cape 3D viewer rendering on player model stand in guest and preview sessions
+- Removed redundant cape equip tooltip and thumbnail hover outline on custom cape cards
+
