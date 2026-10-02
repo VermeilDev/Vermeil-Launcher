@@ -1675,19 +1675,16 @@ const Skins: Component = () => {
                           <div
                             class="skins-custom-cape-card"
                             classList={{ active: isEquipped() }}
+                            onClick={() => {
+                              if (busy() === null && !ingameBusy()) {
+                                handleEquipCustomCape(cape.id);
+                              }
+                            }}
                           >
-                            <button
-                              class="skins-custom-cape-equip tip-below tip-right"
-                              onClick={() => handleEquipCustomCape(cape.id)}
-                              disabled={busy() !== null || ingameBusy()}
-                              data-tip={isEquipped() ? "Unequip cape" : "Equip in-game cape"}
-                            >
+                            <div class="skins-custom-cape-thumb">
                               <CapeChipThumb texture={cape.texture} />
-                            </button>
-                            <div
-                              class="skins-custom-cape-info"
-                              onClick={() => handleEquipCustomCape(cape.id)}
-                            >
+                            </div>
+                            <div class="skins-custom-cape-info">
                               <div class="skins-custom-cape-name">{cape.name}</div>
                               <div class="skins-custom-cape-meta">
                                 <Show when={cape.transform?.animated}>
@@ -1700,7 +1697,10 @@ const Skins: Component = () => {
                                 </Show>
                               </div>
                             </div>
-                            <div class="skins-custom-cape-actions">
+                            <div
+                              class="skins-custom-cape-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 class="skins-lib-btn tip-right"
                                 onClick={() => openEditCape(cape)}

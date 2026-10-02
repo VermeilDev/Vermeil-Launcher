@@ -887,6 +887,7 @@
   box-shadow: var(--btn-depth);
   transition: background 0.12s, border-color 0.12s, transform 0.12s;
   position: relative;
+  cursor: pointer;
 }
 .skins-custom-cape-card:hover {
   background: var(--surface-raised);
@@ -899,25 +900,17 @@
   background: color-mix(in srgb, var(--accent) 10%, var(--surface-panel));
 }
 
-.skins-custom-cape-equip {
+.skins-custom-cape-thumb {
   width: 34px;
   height: 38px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  cursor: pointer;
   padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: border-color 0.12s;
-}
-.skins-custom-cape-equip:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-.skins-custom-cape-equip:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .skins-custom-cape-info {
@@ -926,7 +919,6 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  cursor: pointer;
 }
 
 .skins-custom-cape-name {
