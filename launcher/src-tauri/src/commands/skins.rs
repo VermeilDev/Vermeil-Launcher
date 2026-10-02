@@ -151,11 +151,10 @@ pub async fn remove_local_skin(hash: String) -> Result<(), String> {
 
 // ───────────────────────── Custom capes ─────────────────────────────────
 
-/// List the account's local custom capes (display-only, never sent to Mojang).
+/// List the unified custom capes (display-only, never sent to Mojang).
 #[tauri::command]
 pub async fn list_custom_capes() -> Result<Vec<CustomCape>, String> {
-    let account = active_any_account()?;
-    Ok(skins::list_custom_capes(&account.id))
+    Ok(skins::list_custom_capes())
 }
 
 /// Create or update a custom cape. `id` is `None` for a new cape, or the
@@ -172,9 +171,7 @@ pub async fn save_custom_cape(
 ) -> Result<CustomCape, String> {
     let texture_png = decode_base64(&texture_png_base64)?;
     let source_bytes = decode_base64(&source_bytes_base64)?;
-    let account = active_any_account()?;
     skins::save_custom_cape(
-        &account.id,
         id,
         &name,
         &texture_png,
@@ -187,15 +184,13 @@ pub async fn save_custom_cape(
 /// Delete a custom cape and its backing files.
 #[tauri::command]
 pub async fn remove_custom_cape(id: String) -> Result<(), String> {
-    let account = active_any_account()?;
-    skins::remove_custom_cape(&account.id, &id)
+    skins::remove_custom_cape(&id)
 }
 
 /// Read a custom cape's original uploaded image (data URL) for re-editing.
 #[tauri::command]
 pub async fn read_custom_cape_source(id: String) -> Result<String, String> {
-    let account = active_any_account()?;
-    skins::read_custom_cape_source(&account.id, &id)
+    skins::read_custom_cape_source(&id)
 }
 
 /// Fetch the current skin head for any Microsoft account on file (not just

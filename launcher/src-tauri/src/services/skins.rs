@@ -1064,30 +1064,122 @@ struct CapeLibraryFile {
     capes: Vec<CustomCapeEntry>,
 }
 
-fn capes_dir(account_id: &str) -> PathBuf {
-    paths::data_dir().join("capes").join(account_id)
+fn capes_dir() -> PathBuf {
+    paths::data_dir().join("capes")
 }
 
-fn cape_library_path(account_id: &str) -> PathBuf {
-    capes_dir(account_id).join("capes.json")
+fn cape_library_path() -> PathBuf {
+    capes_dir().join("capes.json")
 }
 
-fn load_cape_library(account_id: &str) -> CapeLibraryFile {
-    let p = cape_library_path(account_id);
-    if !p.exists() {
-        return CapeLibraryFile::default();
+/// Migrate any legacy per-account cape folders (e.g. `offline-guest/` or `<uuid>/`)
+/// into the unified root capes directory. Preserves textures, source files, and
+/// library entries with zero data loss.
+fn migrate_legacy_capes(root_dir: &std::path::Path, lib: &mut CapeLibraryFile) -> bool {
+    let mut modified = false;
+    let Ok(entries) = fs::read_dir(root_dir) else {
+        return false;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        let legacy_json = path.join("capes.json");
+        if legacy_json.exists() {
+            if let Ok(raw) = fs::read_to_string(&legacy_json) {
+                if let Ok(legacy_lib) = serde_json::from_str::<CapeLibraryFile>(&raw) {
+                    for mut cape in legacy_lib.capes {
+                        let new_tex = root_dir.join(format!("{}.png", cape.id));
+                        let new_src = root_dir.join(format!("{}.src", cape.id));
+
+                        let old_tex_in_subdir = path.join(format!("{}.png", cape.id));
+                        let old_tex = if old_tex_in_subdir.exists() {
+                            old_tex_in_subdir
+                        } else {
+                            PathBuf::from(&cape.texture_path)
+                        };
+
+                        let old_src_in_subdir = path.join(format!("{}.src", cape.id));
+                        let old_src = if old_src_in_subdir.exists() {
+                            old_src_in_subdir
+                        } else {
+                            PathBuf::from(&cape.source_path)
+                        };
+
+                        if old_tex.exists() && !new_tex.exists() {
+                            let _ = fs::rename(&old_tex, &new_tex)
+                                .or_else(|_| fs::copy(&old_tex, &new_tex).map(|_| ()));
+                        }
+                        if old_src.exists() && !new_src.exists() {
+                            let _ = fs::rename(&old_src, &new_src)
+                                .or_else(|_| fs::copy(&old_src, &new_src).map(|_| ()));
+                        }
+
+                        cape.texture_path = new_tex.to_string_lossy().to_string();
+                        cape.source_path = new_src.to_string_lossy().to_string();
+
+                        if !lib.capes.iter().any(|c| c.id == cape.id) {
+                            lib.capes.push(cape);
+                        }
+                    }
+                }
+            }
+            let _ = fs::remove_dir_all(&path);
+            modified = true;
+        }
     }
-    fs::read_to_string(&p)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+
+    modified
 }
 
-fn save_cape_library(account_id: &str, lib: &CapeLibraryFile) -> Result<(), String> {
-    let dir = capes_dir(account_id);
+fn load_cape_library() -> CapeLibraryFile {
+    let dir = capes_dir();
+    let p = cape_library_path();
+    let mut lib: CapeLibraryFile = if p.exists() {
+        fs::read_to_string(&p)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    } else {
+        CapeLibraryFile::default()
+    };
+
+    let mut modified = false;
+
+    if dir.exists() && migrate_legacy_capes(&dir, &mut lib) {
+        modified = true;
+    }
+
+    // Path self-healing: if texture_path or source_path points to an old/moved location
+    // but the file exists in canonical capes dir, update the entry.
+    for cape in &mut lib.capes {
+        let canonical_tex = dir.join(format!("{}.png", cape.id));
+        if !std::path::Path::new(&cape.texture_path).exists() && canonical_tex.exists() {
+            cape.texture_path = canonical_tex.to_string_lossy().to_string();
+            modified = true;
+        }
+        let canonical_src = dir.join(format!("{}.src", cape.id));
+        if !std::path::Path::new(&cape.source_path).exists() && canonical_src.exists() {
+            cape.source_path = canonical_src.to_string_lossy().to_string();
+            modified = true;
+        }
+    }
+
+    if modified {
+        let _ = save_cape_library(&lib);
+    }
+
+    lib
+}
+
+fn save_cape_library(lib: &CapeLibraryFile) -> Result<(), String> {
+    let dir = capes_dir();
     fs::create_dir_all(&dir).map_err(|e| format!("Create capes dir: {}", e))?;
     let json = serde_json::to_string_pretty(lib).map_err(|e| e.to_string())?;
-    fs::write(cape_library_path(account_id), json).map_err(|e| format!("Write cape library: {}", e))
+    fs::write(cape_library_path(), json).map_err(|e| format!("Write cape library: {}", e))
 }
 
 /// Build the frontend-facing cape (texture inlined as a data URL). The source
@@ -1109,9 +1201,9 @@ fn cape_entry_to_custom_cape(entry: &CustomCapeEntry) -> Option<CustomCape> {
 /// Used only by the editor when re-opening an existing cape — kept out of the
 /// list payload so a library of HD capes doesn't pin every source image in
 /// memory at once.
-pub fn read_custom_cape_source(account_id: &str, id: &str) -> Result<String, String> {
+pub fn read_custom_cape_source(id: &str) -> Result<String, String> {
     validate_cape_id(id)?;
-    let lib = load_cape_library(account_id);
+    let lib = load_cape_library();
     let entry = lib
         .capes
         .iter()
@@ -1121,17 +1213,17 @@ pub fn read_custom_cape_source(account_id: &str, id: &str) -> Result<String, Str
     Ok(bytes_to_data_url_mime(&bytes, &entry.source_mime))
 }
 
-/// List every custom cape for an account, pruning entries whose backing files
+/// List every custom cape, pruning entries whose backing files
 /// have gone missing (manual deletion, partial copy, etc.).
-pub fn list_custom_capes(account_id: &str) -> Vec<CustomCape> {
-    let mut lib = load_cape_library(account_id);
+pub fn list_custom_capes() -> Vec<CustomCape> {
+    let mut lib = load_cape_library();
     let before = lib.capes.len();
     lib.capes.retain(|c| {
         std::path::Path::new(&c.texture_path).exists()
             && std::path::Path::new(&c.source_path).exists()
     });
     if lib.capes.len() != before {
-        let _ = save_cape_library(account_id, &lib);
+        let _ = save_cape_library(&lib);
     }
     lib.capes.iter().filter_map(cape_entry_to_custom_cape).collect()
 }
@@ -1141,7 +1233,6 @@ pub fn list_custom_capes(account_id: &str) -> Vec<CustomCape> {
 /// Returns the resulting [`CustomCape`] so the frontend can render it without
 /// a follow-up list call.
 pub fn save_custom_cape(
-    account_id: &str,
     id: Option<String>,
     name: &str,
     texture_png: &[u8],
@@ -1170,10 +1261,10 @@ pub fn save_custom_cape(
         return Err("Cape name can't be empty.".to_string());
     }
 
-    let dir = capes_dir(account_id);
+    let dir = capes_dir();
     fs::create_dir_all(&dir).map_err(|e| format!("Create capes dir: {}", e))?;
 
-    let mut lib = load_cape_library(account_id);
+    let mut lib = load_cape_library();
 
     // Reuse the id when re-editing an existing cape so we overwrite its files
     // instead of orphaning them. `validate_cape_id` guards against a
@@ -1214,7 +1305,7 @@ pub fn save_custom_cape(
     } else {
         lib.capes.push(entry.clone());
     }
-    save_cape_library(account_id, &lib)?;
+    save_cape_library(&lib)?;
 
     cape_entry_to_custom_cape(
         lib.capes.iter().find(|c| c.id == cape_id).unwrap_or(&entry),
@@ -1223,12 +1314,12 @@ pub fn save_custom_cape(
 }
 
 /// Remove a custom cape and its backing files.
-pub fn remove_custom_cape(account_id: &str, id: &str) -> Result<(), String> {
+pub fn remove_custom_cape(id: &str) -> Result<(), String> {
     validate_cape_id(id)?;
-    let mut lib = load_cape_library(account_id);
+    let mut lib = load_cape_library();
     if let Some(pos) = lib.capes.iter().position(|c| c.id == id) {
         let entry = lib.capes.remove(pos);
-        save_cape_library(account_id, &lib)?;
+        save_cape_library(&lib)?;
         for p in [&entry.texture_path, &entry.source_path] {
             if std::path::Path::new(p).exists() {
                 let _ = fs::remove_file(p);
@@ -1320,3 +1411,92 @@ fn validate_cape_id(id: &str) -> Result<(), String> {
         Err(format!("Invalid cape id: {}", id))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_cape_id() {
+        assert!(validate_cape_id("c1b3f9b2-7c3a-4a2e-9d2a-1b2c3d4e5f6a").is_ok());
+        assert!(validate_cape_id("custom-cape-1").is_ok());
+        assert!(validate_cape_id("").is_err());
+        assert!(validate_cape_id("../escape").is_err());
+        assert!(validate_cape_id("cape/slash").is_err());
+        assert!(validate_cape_id("cape\\backslash").is_err());
+    }
+
+    #[test]
+    fn test_sniff_image_mime() {
+        assert_eq!(sniff_image_mime(b"\x89PNG\r\n\x1a\n1234"), Some("image/png"));
+        assert_eq!(sniff_image_mime(&[0xFF, 0xD8, 0xFF, 0xE0, 0, 0, 0, 0, 0, 0, 0, 0]), Some("image/jpeg"));
+        assert_eq!(sniff_image_mime(b"GIF89a123456"), Some("image/gif"));
+        assert_eq!(sniff_image_mime(b"RIFF\0\0\0\0WEBP"), Some("image/webp"));
+        assert_eq!(sniff_image_mime(b"BM1234567890"), Some("image/bmp"));
+        assert_eq!(sniff_image_mime(b"corrupt-data"), None);
+    }
+
+    #[test]
+    fn test_validate_cape_texture() {
+        // Valid 64x32 mock PNG header
+        let mut valid_png = vec![0u8; 32];
+        valid_png[..8].copy_from_slice(b"\x89PNG\r\n\x1a\n");
+        valid_png[16..20].copy_from_slice(&64u32.to_be_bytes());
+        valid_png[20..24].copy_from_slice(&32u32.to_be_bytes());
+        assert!(validate_cape_texture(&valid_png).is_ok());
+
+        // Invalid ratio (e.g. 64x64)
+        let mut square_png = valid_png.clone();
+        square_png[20..24].copy_from_slice(&64u32.to_be_bytes());
+        assert!(validate_cape_texture(&square_png).is_err());
+
+        // Non-PNG bytes
+        assert!(validate_cape_texture(b"not-a-png").is_err());
+    }
+
+    #[test]
+    fn test_migrate_legacy_capes() {
+        let temp = std::env::temp_dir().join(format!("vermeil_test_capes_{}", uuid::Uuid::new_v4()));
+        let legacy_subdir = temp.join("offline-guest");
+        fs::create_dir_all(&legacy_subdir).unwrap();
+
+        let cape_id = "test-legacy-cape-1";
+        let legacy_tex = legacy_subdir.join(format!("{}.png", cape_id));
+        let legacy_src = legacy_subdir.join(format!("{}.src", cape_id));
+        fs::write(&legacy_tex, b"mock-texture-bytes").unwrap();
+        fs::write(&legacy_src, b"mock-source-bytes").unwrap();
+
+        let legacy_lib = CapeLibraryFile {
+            capes: vec![CustomCapeEntry {
+                id: cape_id.to_string(),
+                name: "Legacy Cape".to_string(),
+                texture_path: legacy_tex.to_string_lossy().to_string(),
+                source_path: legacy_src.to_string_lossy().to_string(),
+                source_mime: "image/png".to_string(),
+                transform: serde_json::json!({}),
+                created_at: 1000,
+            }],
+        };
+        fs::write(legacy_subdir.join("capes.json"), serde_json::to_string(&legacy_lib).unwrap()).unwrap();
+
+        let mut root_lib = CapeLibraryFile::default();
+        let migrated = migrate_legacy_capes(&temp, &mut root_lib);
+
+        assert!(migrated);
+        assert_eq!(root_lib.capes.len(), 1);
+        assert_eq!(root_lib.capes[0].id, cape_id);
+
+        let new_tex = temp.join(format!("{}.png", cape_id));
+        let new_src = temp.join(format!("{}.src", cape_id));
+        assert!(new_tex.exists());
+        assert!(new_src.exists());
+        assert_eq!(root_lib.capes[0].texture_path, new_tex.to_string_lossy().to_string());
+        assert_eq!(root_lib.capes[0].source_path, new_src.to_string_lossy().to_string());
+
+        // Verify the legacy subdirectory was cleaned up
+        assert!(!legacy_subdir.exists());
+
+        let _ = fs::remove_dir_all(&temp);
+    }
+}
+

@@ -400,24 +400,30 @@ const Skins: Component = () => {
   const isOfflineAccount = () => !account();
   const [loggingIn, setLoggingIn] = createSignal(false);
 
-  const [profile, { refetch: refetchProfile }] = createResource<PlayerProfile | null>(async () => {
-    try {
-      return await getSkinProfile();
-    } catch (e) {
-      if (account()) {
-        showToast({ title: "Couldn't load profile", message: String(e), type: "error" });
+  const [profile, { refetch: refetchProfile }] = createResource(
+    () => account(),
+    async (): Promise<PlayerProfile | null> => {
+      try {
+        return await getSkinProfile();
+      } catch (e) {
+        if (account()) {
+          showToast({ title: "Couldn't load profile", message: String(e), type: "error" });
+        }
+        return null;
       }
-      return null;
     }
-  });
+  );
 
-  const [localSkins, { refetch: refetchLocal }] = createResource<LocalSkin[]>(async () => {
-    try {
-      return await listLocalSkins();
-    } catch {
-      return [];
+  const [localSkins, { refetch: refetchLocal }] = createResource(
+    () => account(),
+    async () => {
+      try {
+        return await listLocalSkins();
+      } catch {
+        return [];
+      }
     }
-  });
+  );
 
   // Selected skin variant. Starts `null` (unknown) rather than defaulting to
   // a concrete value: the screen fully remounts on every navigation, and the
@@ -693,7 +699,7 @@ const Skins: Component = () => {
     const customId = activeCustomCapeId();
     const caps = customCapes();
     const p = profile();
-    if (!viewer || !p) return;
+    if (!viewer) return;
 
     const cc = customId ? (caps ?? []).find((c) => c.id === customId) : undefined;
 
@@ -728,7 +734,7 @@ const Skins: Component = () => {
       return;
     }
 
-    const activeCape = p.capes.find((c) => c.state === "ACTIVE");
+    const activeCape = p?.capes.find((c) => c.state === "ACTIVE");
     if (activeCape) {
       try {
         viewer.loadCape(activeCape.texture, {
@@ -792,6 +798,7 @@ const Skins: Component = () => {
       await refetchAccount();
       await refetchProfile();
       await refetchLocal();
+      await refetchCustomCapes();
       showToast({ title: "Account connected", message: "Signed in with Microsoft", type: "success" });
     } catch (e: any) {
       const msg = typeof e === "string" ? e : e?.message || "Login failed";
