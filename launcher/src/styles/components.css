@@ -4578,18 +4578,9 @@ select.field-input[size] { appearance: none; }
   border: none;
   border-radius: 0;
   cursor: pointer;
-  transition: transform 0.1s ease, filter 0.1s ease;
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
   margin-top: 0;
-}
-.slider::-webkit-slider-thumb:hover,
-.concurrency-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  filter: brightness(1.1);
-}
-.slider::-webkit-slider-thumb:active,
-.concurrency-slider::-webkit-slider-thumb:active {
-  transform: scale(1.05);
 }
 
 /* Firefox / WebKitGTK range thumb (must remain a standalone rule) */
@@ -4601,17 +4592,8 @@ select.field-input[size] { appearance: none; }
   border: none;
   border-radius: 0;
   cursor: pointer;
-  transition: transform 0.1s ease, filter 0.1s ease;
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
-}
-.slider::-moz-range-thumb:hover,
-.concurrency-slider::-moz-range-thumb:hover {
-  transform: scale(1.15);
-  filter: brightness(1.1);
-}
-.slider::-moz-range-thumb:active,
-.concurrency-slider::-moz-range-thumb:active {
-  transform: scale(1.05);
 }
 
 /* Synchronize 2px thumb gap with setting row hover */
@@ -4626,6 +4608,53 @@ select.field-input[size] { appearance: none; }
 .settings-cell:hover .slider::-moz-range-thumb,
 .settings-cell:hover .concurrency-slider::-moz-range-thumb {
   box-shadow: 0 0 0 2px var(--surface-raised), var(--btn-depth);
+}
+
+/* Tactile press-down: on hover or active/drag, remove 3D depth lip matching .tactile-switch */
+.slider::-webkit-slider-thumb:hover,
+.slider:hover::-webkit-slider-thumb,
+.slider:active::-webkit-slider-thumb,
+.slider::-webkit-slider-thumb:active,
+.concurrency-slider::-webkit-slider-thumb:hover,
+.concurrency-slider:hover::-webkit-slider-thumb,
+.concurrency-slider:active::-webkit-slider-thumb,
+.concurrency-slider::-webkit-slider-thumb:active,
+.card-section-body .setting-row:hover .slider::-webkit-slider-thumb:hover,
+.card-section-body .setting-row:hover .slider:hover::-webkit-slider-thumb,
+.card-section-body .setting-row:hover .slider:active::-webkit-slider-thumb,
+.card-section-body .setting-row:hover .concurrency-slider::-webkit-slider-thumb:hover,
+.card-section-body .setting-row:hover .concurrency-slider:hover::-webkit-slider-thumb,
+.card-section-body .setting-row:hover .concurrency-slider:active::-webkit-slider-thumb,
+.settings-cell:hover .slider::-webkit-slider-thumb:hover,
+.settings-cell:hover .slider:hover::-webkit-slider-thumb,
+.settings-cell:hover .slider:active::-webkit-slider-thumb,
+.settings-cell:hover .concurrency-slider::-webkit-slider-thumb:hover,
+.settings-cell:hover .concurrency-slider:hover::-webkit-slider-thumb,
+.settings-cell:hover .concurrency-slider:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--surface-raised);
+}
+
+.slider::-moz-range-thumb:hover,
+.slider:hover::-moz-range-thumb,
+.slider:active::-moz-range-thumb,
+.slider::-moz-range-thumb:active,
+.concurrency-slider::-moz-range-thumb:hover,
+.concurrency-slider:hover::-moz-range-thumb,
+.concurrency-slider:active::-moz-range-thumb,
+.concurrency-slider::-moz-range-thumb:active,
+.card-section-body .setting-row:hover .slider::-moz-range-thumb:hover,
+.card-section-body .setting-row:hover .slider:hover::-moz-range-thumb,
+.card-section-body .setting-row:hover .slider:active::-moz-range-thumb,
+.card-section-body .setting-row:hover .concurrency-slider::-moz-range-thumb:hover,
+.card-section-body .setting-row:hover .concurrency-slider:hover::-moz-range-thumb,
+.card-section-body .setting-row:hover .concurrency-slider:active::-moz-range-thumb,
+.settings-cell:hover .slider::-moz-range-thumb:hover,
+.settings-cell:hover .slider:hover::-moz-range-thumb,
+.settings-cell:hover .slider:active::-moz-range-thumb,
+.settings-cell:hover .concurrency-slider::-moz-range-thumb:hover,
+.settings-cell:hover .concurrency-slider:hover::-moz-range-thumb,
+.settings-cell:hover .concurrency-slider:active::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--surface-raised);
 }
 
 .slider:disabled,

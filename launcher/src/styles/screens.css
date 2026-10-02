@@ -4935,10 +4935,12 @@
   background: var(--accent);
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: box-shadow 0.12s ease;
 }
-.cape-slider-plate input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
+.cape-slider-plate input[type="range"]::-webkit-slider-thumb:hover,
+.cape-slider-plate input[type="range"]:hover::-webkit-slider-thumb,
+.cape-slider-plate input[type="range"]::-webkit-slider-thumb:active {
+  box-shadow: 0 0 0 2px var(--surface-panel);
 }
 .cape-slider-plate input[type="range"]::-moz-range-thumb {
   width: 14px;
@@ -4948,10 +4950,12 @@
   background: var(--accent);
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: box-shadow 0.12s ease;
 }
-.cape-slider-plate input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.15);
+.cape-slider-plate input[type="range"]::-moz-range-thumb:hover,
+.cape-slider-plate input[type="range"]:hover::-moz-range-thumb,
+.cape-slider-plate input[type="range"]::-moz-range-thumb:active {
+  box-shadow: 0 0 0 2px var(--surface-panel);
 }
 
 
@@ -5093,14 +5097,12 @@
   background: var(--text);
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
   cursor: pointer;
-  transition: transform 0.1s ease, filter 0.1s ease;
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
 }
-.color-chan input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  filter: brightness(1.1);
-}
+.color-chan input[type="range"]::-webkit-slider-thumb:hover,
+.color-chan input[type="range"]:hover::-webkit-slider-thumb,
 .color-chan input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--surface-panel);
 }
 .color-chan input[type="range"]::-moz-range-thumb {
   width: 14px;
@@ -5110,14 +5112,12 @@
   background: var(--text);
   box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
   cursor: pointer;
-  transition: transform 0.1s ease, filter 0.1s ease;
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
 }
-.color-chan input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.15);
-  filter: brightness(1.1);
-}
+.color-chan input[type="range"]::-moz-range-thumb:hover,
+.color-chan input[type="range"]:hover::-moz-range-thumb,
 .color-chan input[type="range"]::-moz-range-thumb:active {
-  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--surface-panel);
 }
 
 .color-chan-value {
