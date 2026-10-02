@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-alpha.2",
-  "notes": "## 0.1.0 (Alpha Build 2)\n\n### Added\n\n- Official Neon Aurora application icon across desktop (ICO, ICNS, PNG 16-512px), web (SVG, WebP), iOS, Android, and Win32 COM theme embeds\n- Secret, credential, and private token leak scanner guarding against unintended credential exposure\n\n### Changed\n\n- Tactile Bento design system token alignment across interactive buttons and setting plates (`--btn-depth`)\n- Decoupled updater manifest generation from release asset bundles to preserve genuine download metrics\n\n### Fixed\n\n- Fixed Google Cloud Settings Sync OAuth token exchange with updated desktop client credentials\n- Render empty slot placeholders in dual-deck servers column when fewer than two servers are configured\n- Removed redundant sign-in action button from active identity hero card in Account view",
-  "pub_date": "2026-10-02T02:08:25.442Z",
+  "version": "0.1.0-alpha.3",
+  "notes": "## 0.1.0 (Alpha Build 3)\n\n### Added\n\n- Custom CurseForge and Modrinth API credential inputs in Settings with live in-place verification and test feedback\n- Freedesktop.org Linux desktop launcher and icon theme synchronization when switching themes\n\n### Changed\n\n- Enhanced range slider thumb ergonomics to press down on hover and active states matching tactile toggles\n\n### Fixed\n\n- Restored official brand colors for Modrinth and CurseForge API integration badges\n- Resolved Linux build warning and enabled desktop application icon syncing across standard user desktop paths",
+  "pub_date": "2026-10-02T15:33:54.768Z",
   "platforms": {
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkhCbk9CQTNKa1NRUEwxZC95SkVuMWxXODU1ZnNiZWtKcXdJVDJUVHd5ZnhoWThtZTZWdE4xTmNJNDQ0emxiWnlhbUp0T3BvQUZ2SzhmMXozY1ZhVndnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTA2Nzg1CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4yX2FtZDY0LkFwcEltYWdlCnlxQWxxS0MzM0JOcTdVYnVMN2dvdHptQTN3THVYT1NnZU5FT3BzMjJ0c3luQmdsSks3UjJMRlpPN0J4YmlRQjJ2bDI3TnJuVVZaZS80ZEFhRDFBUURRPT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.2/Vermeil_0.1.0-alpha.2_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5KZVNzcnFSUS9jT0RmejdVL2dUTVNmUndTZHBOdUExOXZGVHYzeVpBM0p1c0pnZkxGeDZXTGx4bkhRVm9ZNzJNbGJqRFpiZDI4NGVuRVdlb0ZOY3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MTc5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX2FtZDY0LkFwcEltYWdlCnhtSDhlR0NacG5xdC9rM1diS1lFZm5NaEJ3RnhvcTN1MDVsNmdzb0k1eDFxN2NTR1Zncjk1cTg4em5pMjg5K0haWCtsY240WDMwdUJqdE50cndDV0J3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_amd64.AppImage"
     },
     "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkhCbk9CQTNKa1NRUEwxZC95SkVuMWxXODU1ZnNiZWtKcXdJVDJUVHd5ZnhoWThtZTZWdE4xTmNJNDQ0emxiWnlhbUp0T3BvQUZ2SzhmMXozY1ZhVndnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTA2Nzg1CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4yX2FtZDY0LkFwcEltYWdlCnlxQWxxS0MzM0JOcTdVYnVMN2dvdHptQTN3THVYT1NnZU5FT3BzMjJ0c3luQmdsSks3UjJMRlpPN0J4YmlRQjJ2bDI3TnJuVVZaZS80ZEFhRDFBUURRPT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.2/Vermeil_0.1.0-alpha.2_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5KZVNzcnFSUS9jT0RmejdVL2dUTVNmUndTZHBOdUExOXZGVHYzeVpBM0p1c0pnZkxGeDZXTGx4bkhRVm9ZNzJNbGJqRFpiZDI4NGVuRVdlb0ZOY3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MTc5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX2FtZDY0LkFwcEltYWdlCnhtSDhlR0NacG5xdC9rM1diS1lFZm5NaEJ3RnhvcTN1MDVsNmdzb0k1eDFxN2NTR1Zncjk1cTg4em5pMjg5K0haWCtsY240WDMwdUJqdE50cndDV0J3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_amd64.AppImage"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkJLdms2Q0ZXUS8wVVZUMWl4TjVvZkIrMmFJTGMwRWE1c2VkVFJyNXpvNlpJV0hUSkc1Vys3RTZvdDhOMXVsOUxhRGc4bFU2RHdQWnNaTmhCVE4xcndBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTA2OTAzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4yX3g2NC1zZXR1cC5leGUKWUVJdis0ejd4Q0FOakZhdGNKdTduZGoxK2dSTVFHVEFtRUkrSHBmM2RLcmhOTjg2WFp5Y3pSM2RwampLU0paUXJHbGVTTHppV216RS9JckVMbkFmQXc9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.2/Vermeil_0.1.0-alpha.2_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkU4ZURvS051STRObG52U2VYdndkVVAwUUdWTUhHY2hSUjFIUWloUEJncjgvRmdNZENjNC9SUTFySUJUdkxqbHF6NmdGOTRqUTVqRGtwY2RiWDgxZVE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MjMyCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX3g2NC1zZXR1cC5leGUKdjZXSVFxWU1CWDh1TkEybVVjNzlqa3pJeWl5ZUVEbHNLeDlxdWJESDBOV0hDcTJ2enozVFRoU3U5R2hod0I3cm9ISlRIL2JFczQvMkNrTUFIeHFJQkE9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_x64-setup.exe"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkJLdms2Q0ZXUS8wVVZUMWl4TjVvZkIrMmFJTGMwRWE1c2VkVFJyNXpvNlpJV0hUSkc1Vys3RTZvdDhOMXVsOUxhRGc4bFU2RHdQWnNaTmhCVE4xcndBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTA2OTAzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4yX3g2NC1zZXR1cC5leGUKWUVJdis0ejd4Q0FOakZhdGNKdTduZGoxK2dSTVFHVEFtRUkrSHBmM2RLcmhOTjg2WFp5Y3pSM2RwampLU0paUXJHbGVTTHppV216RS9JckVMbkFmQXc9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.2/Vermeil_0.1.0-alpha.2_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkU4ZURvS051STRObG52U2VYdndkVVAwUUdWTUhHY2hSUjFIUWloUEJncjgvRmdNZENjNC9SUTFySUJUdkxqbHF6NmdGOTRqUTVqRGtwY2RiWDgxZVE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkwOTU1MjMyCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4zX3g2NC1zZXR1cC5leGUKdjZXSVFxWU1CWDh1TkEybVVjNzlqa3pJeWl5ZUVEbHNLeDlxdWJESDBOV0hDcTJ2enozVFRoU3U5R2hod0I3cm9ISlRIL2JFczQvMkNrTUFIeHFJQkE9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.3/Vermeil_0.1.0-alpha.3_x64-setup.exe"
     }
   }
 }
