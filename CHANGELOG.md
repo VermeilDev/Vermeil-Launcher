@@ -1,28 +1,17 @@
-## 0.1.0 (Alpha Build 1)
+## 0.1.0 (Alpha Build 2)
 
 ### Added
 
-- Aggregated cross-instance in-game screenshot filmstrip in Library with isolated horizontal scroll, full-height widescreen thumbnails, single-slot [F2] ghost slot, and built-in lightbox viewer
-- Active instance storage footprint calculation, total installed content tracking, and auto-managed companion mod status telemetry
-- Redesigned Account view into tactile bento panels with bifurcated Google Cloud Settings Sync token lifecycle and one-click cloud backup/restore
-- Multi-vendor Java runtime auto-provisioning for Adoptium, Corretto, Microsoft OpenJDK, and Zulu with live streaming download progress, cancellation, and download queue integration
-- Emerald theme palette with automated Win32 COM shell shortcut and taskbar icon synchronization
-- Home screen dual-deck 2-box hero grid in Worlds and Servers tabs with live server status pinging, MOTD sanitization, and online player readouts
-- Redesigned Create Custom Instance and Import Instance screen layouts with tactile bento cards and recessed input wells
+- Official Neon Aurora application icon across desktop (ICO, ICNS, PNG 16-512px), web (SVG, WebP), iOS, Android, and Win32 COM theme embeds
+- Secret, credential, and private token leak scanner guarding against unintended credential exposure
 
 ### Changed
 
-- Symmetrical 56px sub-tile and 76px hero deck height with top badge integration and isolated action triggers
-- Floating pagination dock with subtle page indicator and idle state styling
-- Streamlined header meta pills with unified borders and tactile hover transitions
+- Tactile Bento design system token alignment across interactive buttons and setting plates (`--btn-depth`)
+- Decoupled updater manifest generation from release asset bundles to preserve genuine download metrics
 
 ### Fixed
 
-- Deduplicated download speed limiter updates with atomic limit tracking, eliminating redundant mutex resets and log spam
-- Hardened authentication session persistence and centralized token expiry synchronization in load_accounts with 4s pre-flight probe bounds and encrypted vault fallback
-- Elevated modal overlay z-indices to prevent stacking collision and boundary-aware tooltip alignment
-- Resolved automated Java detection scanning across nested vendor directories
-
-### Documentation
-
-- [Tactile Design & UI Architecture](docs/UI.md): Design system, modal restraint, layout invariants, and styling architecture
+- Fixed Google Cloud Settings Sync OAuth token exchange with updated desktop client credentials
+- Render empty slot placeholders in dual-deck servers column when fewer than two servers are configured
+- Removed redundant sign-in action button from active identity hero card in Account view
