@@ -26,6 +26,7 @@ export interface DropdownProps {
   /** Enable search filtering within options list */
   searchable?: boolean;
   searchPlaceholder?: string;
+  emptyMessage?: string;
 }
 
 /**
@@ -102,7 +103,12 @@ const Dropdown: Component<DropdownProps> = (props) => {
               value={searchQuery()}
               onInput={(e) => setSearchQuery(e.currentTarget.value)}
               onKeyDown={(e) => {
-                if (e.key === "Escape") setOpen(false);
+                if (e.key === "Escape") {
+                  setOpen(false);
+                } else if (e.key === "Enter" && filteredOptions().length > 0) {
+                  props.onChange(filteredOptions()[0].value);
+                  setOpen(false);
+                }
               }}
               onClick={(e) => e.stopPropagation()}
             />
@@ -113,6 +119,7 @@ const Dropdown: Component<DropdownProps> = (props) => {
                 <div
                   class="custom-dropdown-option"
                   classList={{ selected: props.value === opt.value }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { props.onChange(opt.value); setOpen(false); }}
                   style={opt.badge ? "display:flex; justify-content:space-between; align-items:center;" : undefined}
                 >
@@ -126,7 +133,7 @@ const Dropdown: Component<DropdownProps> = (props) => {
               )}
             </For>
             <Show when={filteredOptions().length === 0}>
-              <div class="custom-dropdown-empty">No matching versions</div>
+              <div class="custom-dropdown-empty">{props.emptyMessage || "No matching options"}</div>
             </Show>
           </div>
         </div>

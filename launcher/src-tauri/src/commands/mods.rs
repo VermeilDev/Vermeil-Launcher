@@ -100,6 +100,7 @@ pub async fn search_modpacks(
     limit: Option<u32>,
     sort: Option<String>,
     loader: Option<String>,
+    game_version: Option<String>,
 ) -> Result<ModSearchResult, String> {
     let result = modrinth::search_modpacks(
         &query,
@@ -107,6 +108,7 @@ pub async fn search_modpacks(
         limit.unwrap_or(10),
         &sort.unwrap_or_else(|| "relevance".to_string()),
         &loader.unwrap_or_default(),
+        &game_version.unwrap_or_default(),
     ).await?;
 
     Ok(ModSearchResult {

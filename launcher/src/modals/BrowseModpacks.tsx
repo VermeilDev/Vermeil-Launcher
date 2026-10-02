@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, createSignal, createEffect, onMount, onCleanup, For, Show } from "solid-js";
+import { Component, createSignal, createEffect, createResource, createMemo, onMount, onCleanup, For, Show } from "solid-js";
 import {
   setActiveScreen,
   instances,
@@ -15,9 +15,11 @@ import {
   searchCurseforge,
   installModpack,
   installCfModpack,
+  getGameVersions,
+  getSettings,
   ModHit,
 } from "../ipc/commands";
-import Dropdown from "../components/Dropdown";
+import Dropdown, { DropdownOption } from "../components/Dropdown";
 import {
   IconModrinth,
   IconCurseForge,
@@ -66,7 +68,26 @@ const BrowseModpacks: Component = () => {
   const [totalHits, setTotalHits] = createSignal(0);
   const [sortBy, setSortBy] = createSignal("relevance");
   const [loaderFilter, setLoaderFilter] = createSignal("");
+  const [versionFilter, setVersionFilter] = createSignal("");
   const [modSource, setModSource] = createSignal<"modrinth" | "curseforge">("modrinth");
+
+  const [gameVersionsList] = createResource(async () => {
+    try {
+      const s = await getSettings();
+      return await getGameVersions(s.show_snapshots);
+    } catch {
+      return [];
+    }
+  });
+
+  const versionOptions = createMemo((): DropdownOption[] => {
+    const list = gameVersionsList() || [];
+    const opts: DropdownOption[] = [{ value: "", label: "All" }];
+    for (const v of list) {
+      opts.push({ value: v.id, label: v.id });
+    }
+    return opts;
+  });
 
   let searchTimeout: number | undefined;
   let searchToken = 0;
@@ -89,8 +110,8 @@ const BrowseModpacks: Component = () => {
       const source = modSource();
       const result =
         source === "curseforge"
-          ? await searchCurseforge(q, loaderFilter(), "", offset, PAGE_SIZE, sortBy(), "modpack")
-          : await searchModpacks(q, offset, PAGE_SIZE, sortBy(), loaderFilter());
+          ? await searchCurseforge(q, loaderFilter(), versionFilter(), offset, PAGE_SIZE, sortBy(), "modpack")
+          : await searchModpacks(q, offset, PAGE_SIZE, sortBy(), loaderFilter(), versionFilter());
 
       if (token !== searchToken) return;
       setResults(result.hits);
@@ -283,13 +304,14 @@ const BrowseModpacks: Component = () => {
             </Show>
           </div>
 
-          <Show when={query() || loaderFilter() || sortBy() !== "relevance"}>
+          <Show when={query() || loaderFilter() || versionFilter() || sortBy() !== "relevance"}>
             <button
               type="button"
               class="btn inst-panel-btn inst-action-btn tip-right"
               onClick={() => {
                 setQuery("");
                 setLoaderFilter("");
+                setVersionFilter("");
                 setSortBy("relevance");
                 handleFilterChange();
               }}
@@ -300,7 +322,7 @@ const BrowseModpacks: Component = () => {
           </Show>
         </div>
 
-        {/* Row 2: Status Metadata on left · Loader & Sort Dropdowns on right */}
+        {/* Row 2: Status Metadata on left · Loader, Version & Sort Dropdowns on right */}
         <div class="inst-meta-row">
           <div class="inst-meta-left">
             Showing modpacks for{" "}
@@ -313,6 +335,12 @@ const BrowseModpacks: Component = () => {
                 ? loaderFilter().charAt(0).toUpperCase() + loaderFilter().slice(1)
                 : "All Loaders"}
             </strong>
+            <Show when={versionFilter()}>
+              <span class="inst-meta-sep">·</span>
+              <strong class="inst-meta-highlight">
+                {versionFilter()}
+              </strong>
+            </Show>
             <Show when={totalHits() > 0}>
               <span class="inst-meta-sep">—</span>
               <span class="inst-meta-count">{totalHits().toLocaleString()} available</span>
@@ -328,7 +356,20 @@ const BrowseModpacks: Component = () => {
                 setLoaderFilter(v);
                 handleFilterChange();
               }}
-              width="140px"
+              width="135px"
+            />
+            <Dropdown
+              prefix="Version: "
+              value={versionFilter()}
+              options={versionOptions()}
+              searchable={true}
+              searchPlaceholder="Search versions..."
+              emptyMessage="No matching versions"
+              onChange={(v) => {
+                setVersionFilter(v);
+                handleFilterChange();
+              }}
+              width="155px"
             />
             <Dropdown
               prefix="Sort: "
@@ -338,7 +379,7 @@ const BrowseModpacks: Component = () => {
                 setSortBy(v);
                 handleFilterChange();
               }}
-              width="160px"
+              width="155px"
             />
           </div>
         </div>

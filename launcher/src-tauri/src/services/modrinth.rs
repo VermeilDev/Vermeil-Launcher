@@ -263,13 +263,18 @@ pub async fn search_modpacks(
     limit: u32,
     sort: &str,
     loader: &str,
+    game_version: &str,
 ) -> Result<ModrinthSearchResult, String> {
-    // Build facets: always filter to modpacks, optionally filter by loader
-    let facets = if loader.is_empty() {
-        "[[\"project_type:modpack\"]]".to_string()
-    } else {
-        format!("[[\"project_type:modpack\"],[\"categories:{}\"]]", loader)
-    };
+    // Build facets: always filter to modpacks, optionally filter by loader and game version
+    let clean_version = game_version.trim().trim_end_matches('.');
+    let mut facet_parts = vec!["[\"project_type:modpack\"]".to_string()];
+    if !loader.is_empty() {
+        facet_parts.push(format!("[\"categories:{}\"]", loader));
+    }
+    if !clean_version.is_empty() {
+        facet_parts.push(format!("[\"versions:{}\"]", clean_version));
+    }
+    let facets = format!("[{}]", facet_parts.join(","));
 
     let url = format!(
         "{}/search?query={}&facets={}&offset={}&limit={}&index={}",
