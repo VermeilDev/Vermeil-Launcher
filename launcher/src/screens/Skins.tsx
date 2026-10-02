@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Component, createSignal, createResource, createEffect, onCleanup, onMount, Show, For } from "solid-js";
-import { account, refetchAccount, showToast, refreshActiveSkin, setActiveSkinUrl, getDummySkinDataUrl, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, setDockHidden, setActiveScreen } from "../App";
+import { account, refetchAccount, showToast, refreshActiveSkin, setActiveSkinUrl, getDummySkinDataUrl, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, setDockHidden, setActiveScreen, currentTheme } from "../App";
+import { getThemeDefinition } from "../lib/theme";
 import {
   getSkinProfile,
   uploadSkin,
@@ -132,6 +133,17 @@ const [ingameEnabled, setIngameEnabled] = createSignal(false);
 let ingameStateLoaded = false;
 
 /**
+ * Read a CSS variable from document.documentElement or fall back to a known theme value.
+ */
+const getThemeHex = (varName: string, fallback: string): string => {
+  try {
+    const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    if (val.startsWith("#")) return val;
+  } catch {}
+  return fallback;
+};
+
+/**
  * High-performance square voxel ember particle background for the Character Studio.
  * Features 3 depth parallax tiers, vertical edge fading, and responsive cursor repulsion.
  */
@@ -150,7 +162,9 @@ function initStageParticles(canvas: HTMLCanvasElement, container: HTMLElement): 
   const COUNT = 85;
   const getThemeParticleColors = (): string[] => {
     try {
-      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      const theme = currentTheme();
+      const def = getThemeDefinition(theme);
+      const accent = getThemeHex("--accent", def.primaryColor);
       if (accent.startsWith("#")) {
         const hex = accent.replace("#", "");
         const r = parseInt(hex.substring(0, 2), 16);
@@ -478,6 +492,8 @@ const Skins: Component = () => {
   let particleCanvas: HTMLCanvasElement | undefined;
   let viewer: SkinViewer | undefined;
   let stageEl: HTMLDivElement | undefined;
+  let baseMaterial: MeshBasicMaterial | undefined;
+  let rimMaterial: MeshBasicMaterial | undefined;
 
   // Manual zoom for the player model. skinview3d's `zoom` is a camera-distance
   // factor (higher = closer / bigger model). We keep wheel-zoom off the
@@ -596,16 +612,23 @@ const Skins: Component = () => {
     // down, so the FEET BOTTOM lands at scene Y ≈ -16. Y=0 is chest/waist
     // height (which is why a platform at y≈0 floated at the chest). Place the
     // pedestal so the rim's top surface meets the foot plane at -16.
+    const theme = currentTheme();
+    const def = getThemeDefinition(theme);
+    const accent = getThemeHex("--accent", def.primaryColor);
+    const panel = getThemeHex("--surface-panel", "#1d1b24");
+
     const platform = new Group();
+    baseMaterial = new MeshBasicMaterial({ color: panel });
     const base = new Mesh(
       // radiusTop, radiusBottom, height, 6 sides for a chunky hex pedestal
       new CylinderGeometry(7, 8, 1.5, 6),
-      new MeshBasicMaterial({ color: 0x1d1b24 }),
+      baseMaterial,
     );
     base.position.y = -17.0; // top surface at -16.25, just below the feet
+    rimMaterial = new MeshBasicMaterial({ color: accent });
     const rim = new Mesh(
       new CylinderGeometry(8.2, 8.2, 0.3, 6),
-      new MeshBasicMaterial({ color: 0x8b5cf6 }),
+      rimMaterial,
     );
     rim.position.y = -16.1; // sits on the base, top surface ≈ foot plane (-16)
     platform.add(base);
@@ -623,6 +646,17 @@ const Skins: Component = () => {
     }
   });
 
+  // Dynamically synchronize the 3D pedestal base and accent rim with the active theme.
+  createEffect(() => {
+    const theme = currentTheme();
+    if (!baseMaterial || !rimMaterial) return;
+    const def = getThemeDefinition(theme);
+    const accent = getThemeHex("--accent", def.primaryColor);
+    const panel = getThemeHex("--surface-panel", "#1d1b24");
+    rimMaterial.color.set(accent);
+    baseMaterial.color.set(panel);
+  });
+
   // Auto-hide the floating dock while on the Skins screen so the Character Studio
   // and pedestal remain unobstructed. Reveals when the cursor nears bottom.
   createEffect(() => {
@@ -632,6 +666,10 @@ const Skins: Component = () => {
 
   onCleanup(() => {
     stopCapeAnimation();
+    baseMaterial?.dispose();
+    rimMaterial?.dispose();
+    baseMaterial = undefined;
+    rimMaterial = undefined;
     viewer?.dispose();
     viewer = undefined;
   });
