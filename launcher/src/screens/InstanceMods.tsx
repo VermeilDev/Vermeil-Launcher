@@ -7,14 +7,13 @@ import { setActiveScreen, instances, activeInstanceId, setActiveInstanceId, refe
 import { reportDependencyIssues, DependencyIssue } from "../components/DependencyIssuesModal";
 import { contentVersion } from "../lib/contentVersion";
 import { loaderLabel, loaderBadgeClass, loaderBannerColor } from "../lib/loader";
-import { createGridPageSize } from "../lib/gridPageSize";
 import Dropdown, { DropdownOption } from "../components/Dropdown";
 import ModDetailModal from "../modals/ModDetailModal";
 import ChangeLoaderModal, { openChangeLoaderModal } from "../modals/ChangeLoaderModal";
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
 import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
 import { searchMods, installModToInstance, installCfModToInstance, listInstanceFiles, listInstanceWorlds, openInstanceFolder, deleteInstance, renameInstance, updateInstanceOptions, toggleModInInstance, removeModFromInstance, removeModsFromInstance, checkModUpdates, applyModUpdate, ModUpdate, cloneInstance, getSettings, saveSettings, setInstanceIcon, clearInstanceIcon, searchCurseforge, getPresetJvmArgs, getKnownPresetArgs, getSystemMemory, getEffectiveMemory, EffectiveMemory, ModHit, FileEntry, WorldEntry, closeLogsWindow, syncInstanceMods, setInstanceCompanionEnabled, getInstance, exportShareCode, getModVersions, getCfModFiles, launchInstance, stopInstance, getGameVersions } from "../ipc/commands";
-import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh } from "../components/Icons";
+import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconGrid, IconList } from "../components/Icons";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
 
 import { resolveAssetUrl } from "../lib/assets";
@@ -116,6 +115,7 @@ function formatPlaytime(seconds: number): string {
 
 const InstanceMods: Component = () => {
   const [mainTab, setMainTab] = createSignal<InstanceTab>(initialInstanceTab() as InstanceTab || "content");
+  const [viewMode, setViewMode] = createSignal<"grid" | "compact">("grid");
 
   const instance = () => {
     const list = instances();
@@ -457,11 +457,9 @@ const InstanceMods: Component = () => {
   const [totalHits, setTotalHits] = createSignal(0);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [sortBy, setSortBy] = createSignal("relevance");
-  // Browse is server-paged against rate-limited APIs. Max 4 columns by 3 rows
-  // (12 items per page) for a balanced, spacious card layout without cognitive overload.
-  const browsePageSize = createGridPageSize({ track: 280, gap: 14, rowHeight: 200, maxRows: 3, maxCols: 4 });
-  // Installed content pagination. 4 columns by 3 rows with debounceMs: 0 for instant reflow.
-  const installedPageSize = createGridPageSize({ track: 280, gap: 14, rowHeight: 200, maxRows: 3, maxCols: 4, debounceMs: 0 });
+  // Browse and Installed are paged at a fixed 4 columns by 3 rows
+  // (12 items per page) matching BrowseModpacks for consistency and visual unity.
+  const PAGE_SIZE = 12;
   const [installedPage, setInstalledPage] = createSignal(1);
   const [modSource, setModSource] = createSignal<"modrinth" | "curseforge">("modrinth");
   /** Browse result shown in the detail overlay, if any. */
@@ -849,7 +847,7 @@ const InstanceMods: Component = () => {
     }
   };
 
-  const totalPages = () => Math.max(1, Math.ceil(totalHits() / browsePageSize.size()));
+  const totalPages = () => Math.max(1, Math.ceil(totalHits() / PAGE_SIZE));
 
   // Load files when tab switches
   createEffect(() => {
@@ -900,7 +898,6 @@ const InstanceMods: Component = () => {
   createEffect(() => {
     if (mainTab() !== "content" || contentTab() !== "browse") return;
     browseFilter();
-    browsePageSize.size();
     activeInstanceId();
     untrack(() => {
       if (instance()) {
@@ -973,7 +970,7 @@ const InstanceMods: Component = () => {
     }
 
     const p = page || currentPage();
-    const offset = (p - 1) * browsePageSize.size();
+    const offset = (p - 1) * PAGE_SIZE;
     const token = ++searchToken;
     setSearching(true);
     try {
@@ -989,8 +986,8 @@ const InstanceMods: Component = () => {
 
       const source = modSource();
       const result = source === "curseforge"
-        ? await searchCurseforge(searchQuery(), inst.loader.type, version, offset, browsePageSize.size(), sortBy(), filter)
-        : await searchMods(searchQuery(), inst.loader.type, version, offset, browsePageSize.size(), sortBy(), filter);
+        ? await searchCurseforge(searchQuery(), inst.loader.type, version, offset, PAGE_SIZE, sortBy(), filter)
+        : await searchMods(searchQuery(), inst.loader.type, version, offset, PAGE_SIZE, sortBy(), filter);
 
       if (token !== searchToken) return; // superseded by a newer request
       setSearchResults(result.hits);
@@ -1093,7 +1090,7 @@ const InstanceMods: Component = () => {
   };
 
   const totalInstalledCount = () => (showCompanion() ? 1 : 0) + installedFiltered().length;
-  const installedTotalPages = () => Math.max(1, Math.ceil(totalInstalledCount() / installedPageSize.size()));
+  const installedTotalPages = () => Math.max(1, Math.ceil(totalInstalledCount() / PAGE_SIZE));
 
   const goToInstalledPage = (page: number) => {
     if (page < 1 || page > installedTotalPages()) return;
@@ -1119,7 +1116,7 @@ const InstanceMods: Component = () => {
 
   const pagedInstalledMods = (): any[] => {
     const mods = installedFiltered();
-    const size = installedPageSize.size();
+    const size = PAGE_SIZE;
     const page = installedPage();
     const hasComp = showCompanion();
 
@@ -1779,7 +1776,7 @@ const InstanceMods: Component = () => {
 
       {/* ═══ INSTANCE SETTINGS TAB ═══ */}
       <Show when={mainTab() === "settings"}>
-        <div class="cards-container" style="padding-bottom:var(--space-6)">
+        <div class="cards-container" style="padding-top:var(--space-4);padding-bottom:var(--space-6)">
           {/* Section 1: Identity & Display */}
           <div class="card-gamemode-section">
             <div class="card-section-header">
@@ -2254,127 +2251,234 @@ const InstanceMods: Component = () => {
 
       {/* ═══ CONTENT TAB ═══ */}
       <Show when={mainTab() === "content"}>
-        {/* Mode toggle */}
-        <div class="inst-mode-segmented">
-          <button class={`inst-mode-tab ${contentTab() === "installed" ? "active" : ""}`} onClick={() => { setContentTab("installed"); refetchInstances(); refetchDetail(); }}>Installed</button>
-          <button class={`inst-mode-tab ${contentTab() === "browse" ? "active" : ""}`} onClick={() => setContentTab("browse")}>Browse</button>
-        </div>
+        <div class="inst-content-deck">
+          {/* Sticky Controls Deck: Mode Toggle + Category Navigation + Filter Toolbar Box */}
+          <div class="inst-content-sticky-deck">
+            {/* Category Navigation: pure text links with active underline at the top */}
+            <Show when={contentTab() === "installed"}>
+              <div class="inst-category-nav inst-category-nav--installed">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${installedFilter() === "all" ? "active" : ""}`} onClick={() => setInstalledFilter("all")}>All</button>
+                  <button class={`inst-category-item ${installedFilter() === "mod" ? "active" : ""}`} onClick={() => setInstalledFilter("mod")}>Mods</button>
+                  <button class={`inst-category-item ${installedFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setInstalledFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${installedFilter() === "shader" ? "active" : ""}`} onClick={() => setInstalledFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${installedFilter() === "datapack" ? "active" : ""}`} onClick={() => setInstalledFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <span class="inst-count-text">
+                    <strong class="inst-count-bold">{installedSearch().trim() ? totalInstalledCount() : installedActiveCount()}</strong> {installedSearch().trim() ? "found" : "installed"}
+                  </span>
+                </div>
+              </div>
+            </Show>
 
-        {/* Category filter */}
-        <Show when={contentTab() === "installed"}>
-          <div class="inst-category-nav inst-category-nav--installed">
-            <div class="inst-category-links">
-              <button class={`inst-category-item ${installedFilter() === "all" ? "active" : ""}`} onClick={() => setInstalledFilter("all")}>All</button>
-              <button class={`inst-category-item ${installedFilter() === "mod" ? "active" : ""}`} onClick={() => setInstalledFilter("mod")}>Mods</button>
-              <button class={`inst-category-item ${installedFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setInstalledFilter("resourcepack")}>Resources</button>
-              <button class={`inst-category-item ${installedFilter() === "shader" ? "active" : ""}`} onClick={() => setInstalledFilter("shader")}>Shaders</button>
-              <button class={`inst-category-item ${installedFilter() === "datapack" ? "active" : ""}`} onClick={() => setInstalledFilter("datapack")}>Datapacks</button>
-            </div>
-            {/* Batch-delete select mode toggle button */}
-            <button
-              type="button"
-              class={`btn btn-danger-icon tip-below tip-right ${installedSelectMode() ? "active" : ""}`}
-              data-tip={installedSelectMode() ? "Exit select mode" : "Select multiple to delete"}
-              disabled={(() => {
-                const mods = instanceMods();
-                if (installedFilter() === "all") return mods.length === 0;
-                return mods.filter((m: any) => ((m as any).category || "mod") === installedFilter()).length === 0;
-              })()}
-              onClick={() => {
-                const next = !installedSelectMode();
-                setInstalledSelectMode(next);
-                setSelectedInstalled(new Set<string>());
-              }}
-            >
-              <Show when={installedSelectMode()} fallback={<IconTrash />}>
-                <IconX />
-              </Show>
-            </button>
-          </div>
-          {/* Unified Search & Filter Panel Box (Image 3 Reference) */}
-          <div class="inst-search-panel">
-            {/* Row 1: Open Folder · Search Input · Check Updates */}
-            <div class="inst-search-row">
-              <button
-                class="btn inst-panel-btn tip-left"
-                onClick={() => { if (instance()) openInstanceFolder(instance()!.id); }}
-                data-tip="Open instance folder"
-              >
-                <IconFolderOpen />
-              </button>
-              <div class="inst-search-input-wrap">
-                <span class="inst-search-icon"><IconSearch /></span>
-                <input
-                  class="field-control inst-search-input"
-                  placeholder="Search installed content..."
-                  value={installedSearch()}
-                  onInput={(e) => setInstalledSearch(e.currentTarget.value)}
-                />
-                <Show when={installedSearch().length > 0}>
-                  <button class="inst-search-clear" onClick={() => setInstalledSearch("")} aria-label="Clear search">
-                    <IconX />
+            <Show when={contentTab() === "browse"}>
+              <div class="inst-category-nav inst-category-nav--browse">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${browseFilter() === "all" ? "active" : ""}`} onClick={() => setBrowseFilter("all")}>All</button>
+                  <button class={`inst-category-item ${browseFilter() === "mod" ? "active" : ""}`} onClick={() => setBrowseFilter("mod")}>
+                    Mods
+                    <Show when={instance()?.loader?.type === "vanilla"}>
+                      <span class="category-unsupported-tag">unsupported</span>
+                    </Show>
+                  </button>
+                  <button class={`inst-category-item ${browseFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setBrowseFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${browseFilter() === "datapack" ? "active" : ""}`} onClick={() => setBrowseFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <Show when={searching()}>
+                    <span class="inst-count-text">Searching...</span>
+                  </Show>
+                  <Show when={!searching() && totalHits() > 0 && !(instance()?.loader?.type === "vanilla" && browseFilter() === "mod")}>
+                    <span class="inst-count-text"><strong class="inst-count-bold">{totalHits().toLocaleString()}</strong> results</span>
+                  </Show>
+                </div>
+              </div>
+            </Show>
+
+            {/* Filter & Search Toolbar (1-Row Solid Panel Box) */}
+            <div class="inst-unified-toolbar">
+              <div class="inst-toolbar-left">
+                {/* Mode Segmented Toggle: Installed vs Browse */}
+                <div class="inst-mode-segmented">
+                  <button class={`inst-mode-tab ${contentTab() === "installed" ? "active" : ""}`} onClick={() => { setContentTab("installed"); refetchInstances(); refetchDetail(); }}>Installed</button>
+                  <button class={`inst-mode-tab ${contentTab() === "browse" ? "active" : ""}`} onClick={() => setContentTab("browse")}>Browse</button>
+                </div>
+
+                <Show when={contentTab() === "installed"}>
+                  <button
+                    class="btn inst-panel-btn tip-below"
+                    onClick={() => { if (instance()) openInstanceFolder(instance()!.id); }}
+                    data-tip="Open instance folder"
+                  >
+                    <IconFolderOpen />
+                  </button>
+                  <div class="inst-search-input-wrap">
+                    <span class="inst-search-icon"><IconSearch /></span>
+                    <input
+                      class="field-control inst-search-input"
+                      placeholder="Search installed..."
+                      value={installedSearch()}
+                      onInput={(e) => setInstalledSearch(e.currentTarget.value)}
+                    />
+                    <Show when={installedSearch().length > 0}>
+                      <button class="inst-search-clear tip-below" onClick={() => setInstalledSearch("")} data-tip="Clear search" aria-label="Clear search">
+                        <IconX />
+                      </button>
+                    </Show>
+                  </div>
+                </Show>
+
+                <Show when={contentTab() === "browse"}>
+                  <button
+                    class={`btn inst-panel-btn mod-source-toggle ${modSource() === "modrinth" ? "mr" : "cf"} tip-below`}
+                    onClick={handleSourceToggle}
+                    data-tip={modSource() === "modrinth" ? "Source: Modrinth (click for CurseForge)" : "Source: CurseForge (click for Modrinth)"}
+                  >
+                    <Show when={modSource() === "modrinth"} fallback={<IconCurseForge />}>
+                      <IconModrinth />
+                    </Show>
+                  </button>
+                  <div class="inst-search-input-wrap">
+                    <span class="inst-search-icon"><IconSearch /></span>
+                    <input
+                      class="field-control inst-search-input"
+                      placeholder={modSource() === "modrinth" ? "Search Modrinth..." : "Search CurseForge..."}
+                      value={searchQuery()}
+                      onInput={(e) => handleSearch(e.currentTarget.value)}
+                    />
+                    <Show when={searchQuery().length > 0}>
+                      <button class="inst-search-clear tip-below" onClick={() => handleSearch("")} data-tip="Clear search" aria-label="Clear search">
+                        <IconX />
+                      </button>
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+
+              <div class="inst-toolbar-right">
+                <Show when={contentTab() === "installed"}>
+                  <Dropdown
+                    prefix="Sort: "
+                    value={installedSort()}
+                    options={[
+                      { value: "newest", label: "Newest first" },
+                      { value: "oldest", label: "Oldest first" },
+                    ]}
+                    onChange={(val) => setInstalledSort(val as "newest" | "oldest")}
+                    width="155px"
+                  />
+                  {/* View Mode Toggle: Grid vs Compact */}
+                  <div class="view-mode-tabs view-mode-toggle">
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
+                      onClick={() => setViewMode("grid")}
+                      data-tip="Grid view (Bento cards)"
+                      aria-label="Grid view"
+                    >
+                      <IconGrid />
+                    </button>
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
+                      onClick={() => setViewMode("compact")}
+                      data-tip="Compact view (Cassette tiles)"
+                      aria-label="Compact view"
+                    >
+                      <IconList />
+                    </button>
+                  </div>
+                  <button
+                    class="btn inst-panel-btn inst-action-btn tip-below"
+                    disabled={checkingUpdates() || (instance()?.mod_count ?? 0) === 0}
+                    onClick={() => refreshUpdates(true)}
+                    data-tip="Check for newer versions"
+                  >
+                    <span class={checkingUpdates() ? "spin-icon" : ""}>
+                      <IconRefresh />
+                    </span>
+                    <span>{checkingUpdates() ? "Checking..." : "Updates"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class={`btn inst-panel-btn inst-trash-btn tip-below ${installedSelectMode() ? "active" : ""}`}
+                    data-tip={installedSelectMode() ? "Exit select mode" : "Select multiple to delete"}
+                    disabled={(() => {
+                      const mods = instanceMods();
+                      if (installedFilter() === "all") return mods.length === 0;
+                      return mods.filter((m: any) => ((m as any).category || "mod") === installedFilter()).length === 0;
+                    })()}
+                    onClick={() => {
+                      const next = !installedSelectMode();
+                      setInstalledSelectMode(next);
+                      setSelectedInstalled(new Set<string>());
+                    }}
+                  >
+                    <Show when={installedSelectMode()} fallback={<IconTrash />}>
+                      <IconX />
+                    </Show>
+                  </button>
+                </Show>
+
+                <Show when={contentTab() === "browse"}>
+                  <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod")}>
+                    <Show when={browseFilter() === "resourcepack" || browseFilter() === "shader"}>
+                      <Dropdown
+                        prefix="Version: "
+                        value={browseVersion()}
+                        options={browseVersionOptions()}
+                        onChange={handleBrowseVersionChange}
+                        searchable={true}
+                        searchPlaceholder="Search versions..."
+                        width="145px"
+                      />
+                    </Show>
+                    <Dropdown prefix="Sort: " value={sortBy()} options={SORT_OPTIONS} onChange={handleSortChange} width="155px" />
+                  </Show>
+                  {/* View Mode Toggle: Grid vs Compact */}
+                  <div class="view-mode-tabs view-mode-toggle">
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
+                      onClick={() => setViewMode("grid")}
+                      data-tip="Grid view (Bento cards)"
+                      aria-label="Grid view"
+                    >
+                      <IconGrid />
+                    </button>
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
+                      onClick={() => setViewMode("compact")}
+                      data-tip="Compact view (Cassette tiles)"
+                      aria-label="Compact view"
+                    >
+                      <IconList />
+                    </button>
+                  </div>
+                  <button
+                    class={`btn inst-panel-btn inst-action-btn tip-below ${selectMode() ? "active" : ""}`}
+                    data-tip="Bulk install"
+                    onClick={() => { setSelectMode(!selectMode()); if (selectMode()) setSelectedItems(new Map()); }}
+                  >
+                    {selectMode() ? `Cancel (${selectedItems().size})` : "Select"}
                   </button>
                 </Show>
               </div>
-              <button
-                class="btn inst-panel-btn inst-action-btn tip-right"
-                disabled={checkingUpdates() || (instance()?.mod_count ?? 0) === 0}
-                onClick={() => refreshUpdates(true)}
-                data-tip="Check for newer versions"
-              >
-                <span class={checkingUpdates() ? "spin-icon" : ""}>
-                  <IconRefresh />
-                </span>
-                <span>{checkingUpdates() ? "Checking..." : "Check updates"}</span>
-              </button>
-            </div>
-            {/* Row 2: Status Metadata on left · Sort Dropdown on right */}
-            <div class="inst-meta-row">
-              <div class="inst-meta-left">
-                Showing installed for <strong class="inst-meta-highlight">{instance()?.loader?.type}</strong> <span class="inst-meta-sep">·</span> <strong class="inst-meta-highlight">{instance()?.game_version}</strong>
-                <span class="inst-meta-sep">—</span>
-                <span class="inst-meta-count">{installedActiveCount() || "0"} installed</span>
-              </div>
-              <div class="inst-meta-sort-wrap">
-                <Dropdown
-                  prefix="Sort: "
-                  value={installedSort()}
-                  options={[
-                    { value: "newest", label: "Newest first" },
-                    { value: "oldest", label: "Oldest first" },
-                  ]}
-                  onChange={(val) => setInstalledSort(val as "newest" | "oldest")}
-                />
-              </div>
             </div>
           </div>
-        </Show>
-        <Show when={contentTab() === "browse"}>
-          {/* Browse category tabs. Clean text links with active underline */}
-          <div class="inst-category-nav">
-            <div class="inst-category-links">
-              <button class={`inst-category-item ${browseFilter() === "all" ? "active" : ""}`} onClick={() => setBrowseFilter("all")}>All</button>
-              <button class={`inst-category-item ${browseFilter() === "mod" ? "active" : ""}`} onClick={() => setBrowseFilter("mod")}>
-                Mods
-                <Show when={instance()?.loader?.type === "vanilla"}>
-                  <span class="category-unsupported-tag">unsupported</span>
-                </Show>
-              </button>
-              <button class={`inst-category-item ${browseFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setBrowseFilter("resourcepack")}>Resources</button>
-              <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>Shaders</button>
-              <button class={`inst-category-item ${browseFilter() === "datapack" ? "active" : ""}`} onClick={() => setBrowseFilter("datapack")}>Datapacks</button>
-            </div>
-          </div>
-        </Show>
 
-        <Show when={contentTab() === "installed"}>
-          <Show when={(instance()?.mod_count || 0) === 0}>
+          {/* ═══ INSTALLED CONTENT TAB ═══ */}
+          <Show when={contentTab() === "installed"}>
+            <Show when={(instance()?.mod_count || 0) === 0}>
             <div style="text-align:center;color:var(--muted);padding:30px;font-size:var(--fs-xs)">No content installed. Switch to "Browse mods" to find some.</div>
           </Show>
           <Show when={(instance()?.mod_count || 0) > 0 && totalInstalledCount() === 0}>
             <div style="text-align:center;color:var(--muted);padding:30px;font-size:var(--fs-xs)">No installed content matches your search.</div>
           </Show>
-          <div class="inst-card-grid" ref={installedPageSize.setEl}>
+          <div class={`inst-card-grid ${viewMode() === "compact" ? "compact" : ""}`}>
             {/* Managed-mod entry for the Vermeil companion mod. Shown on page 1 of
                 supported instances; the toggle here turns Vermeil's in-game
                 features on/off for this instance (the jar is disabled in place,
@@ -2383,8 +2487,8 @@ const InstanceMods: Component = () => {
             <Show when={showCompanion() && installedPage() === 1}>
               <div class="card card--mod" style={(instance()?.companion_enabled === false || installedSelectMode()) ? "opacity:0.45" : ""}>
                 <div class="mod-card-header">
-                  <div class="mod-card-icon" style="background:var(--accent-soft);display:flex;align-items:center;justify-content:center">
-                    <img src="/logo.png" alt="" draggable={false} style="width:24px;height:24px;object-fit:contain" />
+                  <div class="mod-card-icon mod-card-icon--companion">
+                    <img src="/logo.png" alt="" draggable={false} />
                   </div>
                   <div class="mod-card-name-wrap">
                     <div class="mod-card-name">Vermeil companion mod</div>
@@ -2465,7 +2569,6 @@ const InstanceMods: Component = () => {
                           src={resolveIconUrl(mod as any)!}
                           alt=""
                           draggable={false}
-                          style="width:100%;height:100%;border-radius:0;object-fit:cover"
                           onError={(e) => {
                             const fallback = (mod as any).icon_url;
                             if (fallback && e.currentTarget.src !== fallback) {
@@ -2651,90 +2754,7 @@ const InstanceMods: Component = () => {
 
         <Show when={contentTab() === "browse"}>
           <div class="browse-wrapper">
-            {/* Unified Search & Filter Panel Box (Image 3 Reference) */}
-            <div class="inst-search-panel">
-              {/* Row 1: Source Toggle · Search Input · Select */}
-              <div class="inst-search-row">
-                <button
-                  class={`btn inst-panel-btn mod-source-toggle ${modSource() === "modrinth" ? "mr" : "cf"} tip-left`}
-                  onClick={handleSourceToggle}
-                  data-tip={modSource() === "modrinth" ? "Source: Modrinth (click for CurseForge)" : "Source: CurseForge (click for Modrinth)"}
-                >
-                  <Show when={modSource() === "modrinth"} fallback={<IconCurseForge />}>
-                    <IconModrinth />
-                  </Show>
-                </button>
-                <div class="inst-search-input-wrap">
-                  <span class="inst-search-icon"><IconSearch /></span>
-                  <input
-                    class="field-control inst-search-input"
-                    placeholder={modSource() === "modrinth" ? "Search Modrinth..." : "Search CurseForge..."}
-                    value={searchQuery()}
-                    onInput={(e) => handleSearch(e.currentTarget.value)}
-                  />
-                  <Show when={searchQuery().length > 0}>
-                    <button class="inst-search-clear" onClick={() => handleSearch("")} aria-label="Clear search">
-                      <IconX />
-                    </button>
-                  </Show>
-                </div>
-                <button
-                  class={`btn inst-panel-btn inst-action-btn tip-right ${selectMode() ? "active" : ""}`}
-                  data-tip="Bulk install"
-                  onClick={() => { setSelectMode(!selectMode()); if (selectMode()) setSelectedItems(new Map()); }}
-                >
-                  {selectMode() ? `Cancel (${selectedItems().size})` : "Select"}
-                </button>
-              </div>
-              {/* Row 2: Status Metadata on left · Sort & Version Dropdowns on right */}
-              <div class="inst-meta-row">
-                <div class="inst-meta-left">
-                  <Show when={instance()?.loader?.type === "vanilla" && browseFilter() === "mod"} fallback={
-                    <>
-                      <Show when={browseFilter() === "resourcepack" || browseFilter() === "shader"} fallback={
-                        <>Showing results for <strong class="inst-meta-highlight">{instance()?.loader?.type}</strong> <span class="inst-meta-sep">·</span> <strong class="inst-meta-highlight">{instance()?.game_version}</strong></>
-                      }>
-                        <>
-                          Showing results for{" "}
-                          <strong class="inst-meta-highlight">
-                            {browseFilter() === "resourcepack" ? "Resource Packs" : "Shaders"}
-                          </strong>
-                          <span class="inst-meta-sep">·</span>
-                          <span class="inst-meta-sub">
-                            {browseVersion() ? `Targeting ${browseVersion()}` : "Any version"}
-                          </span>
-                        </>
-                      </Show>
-                      <Show when={totalHits() > 0}>
-                        <span class="inst-meta-sep">—</span>
-                        <span class="inst-meta-count">{totalHits().toLocaleString()} results</span>
-                      </Show>
-                    </>
-                  }>
-                    <span class="inst-meta-vanilla-badge">Vanilla Instance</span>
-                    <span class="inst-meta-sep">·</span>
-                    <span class="inst-meta-sub">Mods are not supported on vanilla</span>
-                  </Show>
-                </div>
-                <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod")}>
-                  <div class="inst-meta-sort-wrap" style="display: flex; gap: 8px; align-items: center;">
-                    <Show when={browseFilter() === "resourcepack" || browseFilter() === "shader"}>
-                      <Dropdown
-                        prefix="Version: "
-                        value={browseVersion()}
-                        options={browseVersionOptions()}
-                        onChange={handleBrowseVersionChange}
-                        searchable={true}
-                        searchPlaceholder="Search versions..."
-                        width="160px"
-                      />
-                    </Show>
-                    <Dropdown prefix="Sort: " value={sortBy()} options={SORT_OPTIONS} onChange={handleSortChange} />
-                  </div>
-                </Show>
-              </div>
-            </div>
-            <div class="browse-results" ref={browsePageSize.setEl}>
+            <div class="browse-results">
               <Show when={instance()?.loader?.type === "vanilla" && browseFilter() === "mod"}>
                 <div class="vanilla-unsupported-panel">
                   <div class="vanilla-unsupported-art-wrap">
@@ -2814,16 +2834,15 @@ const InstanceMods: Component = () => {
               </Show>
 
               <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod") && !searching() && displayBrowseResults().length > 0}>
-                <div class="inst-card-grid">
+                <div class={`inst-card-grid ${viewMode() === "compact" ? "compact" : ""}`}>
                 <For each={displayBrowseResults()}>
                 {(mod) => (
                   <div class={`card card--mod ${selectMode() && selectedItems().has(mod.project_id) ? "mod-item-selected" : ""}`}
-                    onClick={() => handleCardClick(mod)}
-                    style="cursor:pointer">
+                    onClick={() => handleCardClick(mod)}>
                     <div class="mod-card-header">
-                      <div class="mod-card-icon" style="background:var(--accent-soft)">
+                      <div class="mod-card-icon">
                         <Show when={mod.icon_url} fallback={<IconBolt />}>
-                          <img src={mod.icon_url!} style="width:100%;height:100%;border-radius:0;object-fit:cover" />
+                          <img src={mod.icon_url!} />
                         </Show>
                       </div>
                       <div class="mod-card-name-wrap">
@@ -3075,11 +3094,12 @@ const InstanceMods: Component = () => {
             </Show>
           </div>
         </Show>
+        </div>
       </Show>
 
       {/* ═══ FILES TAB ═══ */}
       <Show when={mainTab() === "files"}>
-        <div>
+        <div style="padding-top:var(--space-4)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
             <Show when={filePath()}>
               <button class="btn btn--sm btn--subtle" onClick={navigateUp}>
@@ -3121,7 +3141,7 @@ const InstanceMods: Component = () => {
 
       {/* ═══ WORLDS TAB ═══ */}
       <Show when={mainTab() === "worlds"}>
-        <div>
+        <div style="padding-top:var(--space-4)">
           <Show when={worlds().length === 0}>
             <div style="text-align:center;color:var(--muted);padding:30px;font-size:var(--fs-xs)">No worlds yet. Play the game to create one.</div>
           </Show>
@@ -3162,7 +3182,7 @@ const InstanceMods: Component = () => {
             </div>
           }
         >
-          <div class="inst-logs-tab">
+          <div class="inst-logs-tab" style="margin-top:var(--space-4)">
             <div class="log-toolbar">
               {/* Filter chips on the left */}
               <div class="log-toolbar-filters">
