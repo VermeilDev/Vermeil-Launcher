@@ -188,19 +188,34 @@ pub fn atomic_write<P: AsRef<std::path::Path>>(path: P, contents: &[u8]) -> std:
 
     std::fs::write(&tmp, contents)?;
 
-    // On Windows, `rename` fails if the target exists. Use a remove-then-rename
-    // dance — there's a brief window where the file is missing, but readers
-    // that fail can retry, which is far better than getting a truncated file.
+    // Attempt direct atomic rename first. On POSIX and modern Windows (via
+    // MoveFileExW with MOVEFILE_REPLACE_EXISTING), this replaces existing files
+    // atomically without leaving a window where the destination is missing.
+    let mut rename_result = std::fs::rename(&tmp, path);
+
     #[cfg(windows)]
-    {
-        if path.exists() {
-            // Best-effort: if remove fails (e.g. another writer already replaced
-            // it), the rename below will fail and we'll surface that error.
-            let _ = std::fs::remove_file(path);
+    if rename_result.is_err() {
+        // On Windows, if another process (antivirus, file watcher, indexer) momentarily
+        // opened a read handle, retry with short exponential backoff before falling back.
+        for attempt in 1..=5 {
+            std::thread::sleep(std::time::Duration::from_millis(10 * attempt));
+            if attempt >= 3 && path.exists() {
+                // Last-resort fallback for legacy FAT or locked filesystems
+                let _ = std::fs::remove_file(path);
+            }
+            rename_result = std::fs::rename(&tmp, path);
+            if rename_result.is_ok() {
+                break;
+            }
         }
     }
 
-    std::fs::rename(&tmp, path)?;
+    if let Err(e) = rename_result {
+        // Clean up temporary file on failure so orphan .tmp files never leak
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
+
     Ok(())
 }
 

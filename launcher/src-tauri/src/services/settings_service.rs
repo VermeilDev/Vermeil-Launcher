@@ -7,15 +7,61 @@ use std::fs;
 
 pub async fn load() -> Result<LauncherSettings, Box<dyn std::error::Error + Send + Sync>> {
     let config_path = paths::data_dir().join("config.json");
+    let backup_path = paths::data_dir().join("config.json.bak");
 
-    if !config_path.exists() {
-        let defaults = LauncherSettings::default();
-        save(&defaults).await?;
-        return Ok(defaults);
-    }
+    // Attempt to load and parse primary config.json
+    let primary_result = if config_path.exists() {
+        match fs::read_to_string(&config_path) {
+            Ok(content) => match serde_json::from_str::<LauncherSettings>(&content) {
+                Ok(s) => Some(s),
+                Err(e) => {
+                    tracing::warn!("Failed to parse config.json: {}", e);
+                    None
+                }
+            },
+            Err(e) => {
+                tracing::warn!("Failed to read config.json: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
 
-    let content = fs::read_to_string(&config_path)?;
-    let mut settings: LauncherSettings = serde_json::from_str(&content)?;
+    let mut settings = match primary_result {
+        Some(s) => s,
+        None => {
+            // Primary missing or unparseable: attempt recovery from backup
+            let recovered = if backup_path.exists() {
+                if let Ok(bak_content) = fs::read_to_string(&backup_path) {
+                    if let Ok(bak_settings) = serde_json::from_str::<LauncherSettings>(&bak_content) {
+                        tracing::warn!("Recovered settings from config.json.bak");
+                        Some(bak_settings)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
+            match recovered {
+                Some(bak) => {
+                    // Re-persist recovered backup as primary
+                    let _ = save(&bak).await;
+                    bak
+                }
+                None => {
+                    // First run or truly unrecoverable: initialize fresh defaults
+                    let defaults = LauncherSettings::default();
+                    save(&defaults).await?;
+                    defaults
+                }
+            }
+        }
+    };
 
     // Self-heal `sidebar_pinned_instances` — drop any IDs whose instance
     // folder no longer exists on disk. Without this, deleting an instance
@@ -50,7 +96,12 @@ pub async fn load() -> Result<LauncherSettings, Box<dyn std::error::Error + Send
         version_changed = true;
     }
 
-    if !content.contains("\"update_channel\"") {
+    if settings.update_channel.is_empty() {
+        settings.update_channel = if is_experimental {
+            "experimental".to_string()
+        } else {
+            "stable".to_string()
+        };
         version_changed = true;
     }
 
@@ -143,6 +194,9 @@ pub async fn save(settings: &LauncherSettings) -> Result<(), Box<dyn std::error:
 
     let json = serde_json::to_string_pretty(&to_save)?;
     paths::atomic_write(&config_path, json.as_bytes())?;
+    // Mirror to backup file for self-healing resilience against mid-write crashes or sudden restarts
+    let backup_path = data_dir.join("config.json.bak");
+    let _ = paths::atomic_write(&backup_path, json.as_bytes());
     Ok(())
 }
 
