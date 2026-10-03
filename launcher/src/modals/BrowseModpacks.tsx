@@ -30,11 +30,13 @@ import {
   IconSearch,
   IconX,
   IconCheck,
+  IconGrid,
+  IconList,
 } from "../components/Icons";
 import { formatDownloads, formatVersionRange } from "../lib/format";
 import ModpackDetailModal from "./ModpackDetailModal";
 
-const PAGE_SIZE = 12; // Strictly 4 columns x 3 rows
+const PAGE_SIZE = 12;
 
 const LOADER_ORDER = ["fabric", "quilt", "neoforge", "forge"];
 function extractLoaders(hit: ModHit): string[] {
@@ -62,6 +64,7 @@ const BrowseModpacks: Component = () => {
   const [query, setQuery] = createSignal("");
   const [results, setResults] = createSignal<ModHit[]>([]);
   const [searching, setSearching] = createSignal(false);
+  const [viewMode, setViewMode] = createSignal<"grid" | "cassette">("grid");
   const [confirmPack, setConfirmPack] = createSignal<{ pack: ModHit; versionId?: string } | null>(null);
   const [detailPack, setDetailPack] = createSignal<ModHit | null>(null);
   const [page, setPage] = createSignal(1);
@@ -216,47 +219,29 @@ const BrowseModpacks: Component = () => {
 
   return (
     <div class="screen-enter browse-modpacks-screen">
-      {/* Header plate */}
-      <div class="modpack-header-bar">
-        <div class="modpack-header-left">
-          <button
-            type="button"
-            class="btn modpack-back-btn"
-            onClick={() => setActiveScreen("create-choose")}
-          >
-            <IconArrowLeft /> Back
-          </button>
-          <div class="modpack-title-wrap">
+      {/* Sticky Top Deck: Pinned Header Line + Unified 1-Row Toolbar */}
+      <div class="modpack-sticky-deck">
+        <div class="modpack-header-bar">
+          <div class="modpack-header-left">
+            <button
+              type="button"
+              class="btn modpack-back-btn"
+              onClick={() => setActiveScreen("create-choose")}
+            >
+              <IconArrowLeft /> Back
+            </button>
             <div class="modpack-title-line">
               <h1 class="modpack-title">Browse Modpacks</h1>
               <span class="tag-badge tag-badge--modpack">CURATED EXPERIENCES</span>
             </div>
-            <p class="modpack-subtitle">
-              Discover and install community-crafted Minecraft modpacks from Modrinth and CurseForge.
-            </p>
+          </div>
+          <div class="modpack-header-count">
+            <strong class="modpack-count-bold">{totalHits().toLocaleString()}</strong> modpacks found
           </div>
         </div>
 
-        <div class="modpack-header-right">
-          <Show when={totalHits() > 0}>
-            <div class="modpack-header-badges">
-              <span class="modpack-total-pill">
-                {totalHits().toLocaleString()} {totalHits() === 1 ? "pack" : "packs"} available
-              </span>
-              <Show when={totalPages() > 1}>
-                <span class="modpack-page-pill">
-                  Page {page()} of {totalPages()}
-                </span>
-              </Show>
-            </div>
-          </Show>
-        </div>
-      </div>
-
-      {/* Chunky 2-Row Control Panel (Matching Installed Content View) */}
-      <div class="inst-search-panel">
-        {/* Row 1: Source Toggle Tabs + Full-width Search Input + Optional Reset */}
-        <div class="inst-search-row">
+        {/* Unified Sleek 1-Row Control Toolbar */}
+        <div class="modpack-unified-toolbar">
           <div class="modpack-source-tabs">
             <button
               type="button"
@@ -285,7 +270,7 @@ const BrowseModpacks: Component = () => {
               class="field-control inst-search-input"
               placeholder={
                 modSource() === "modrinth"
-                  ? "Search Modrinth modpacks by name, category, or author..."
+                  ? "Search Modrinth modpacks..."
                   : "Search CurseForge modpacks..."
               }
               value={query()}
@@ -304,50 +289,7 @@ const BrowseModpacks: Component = () => {
             </Show>
           </div>
 
-          <Show when={query() || loaderFilter() || versionFilter() || sortBy() !== "relevance"}>
-            <button
-              type="button"
-              class="btn inst-panel-btn inst-action-btn tip-right"
-              onClick={() => {
-                setQuery("");
-                setLoaderFilter("");
-                setVersionFilter("");
-                setSortBy("relevance");
-                handleFilterChange();
-              }}
-              data-tip="Reset search and filters"
-            >
-              Reset
-            </button>
-          </Show>
-        </div>
-
-        {/* Row 2: Status Metadata on left · Loader, Version & Sort Dropdowns on right */}
-        <div class="inst-meta-row">
-          <div class="inst-meta-left">
-            Showing modpacks for{" "}
-            <strong class="inst-meta-highlight">
-              {modSource() === "curseforge" ? "CurseForge" : "Modrinth"}
-            </strong>
-            <span class="inst-meta-sep">·</span>
-            <strong class="inst-meta-highlight">
-              {loaderFilter()
-                ? loaderFilter().charAt(0).toUpperCase() + loaderFilter().slice(1)
-                : "All Loaders"}
-            </strong>
-            <Show when={versionFilter()}>
-              <span class="inst-meta-sep">·</span>
-              <strong class="inst-meta-highlight">
-                {versionFilter()}
-              </strong>
-            </Show>
-            <Show when={totalHits() > 0}>
-              <span class="inst-meta-sep">—</span>
-              <span class="inst-meta-count">{totalHits().toLocaleString()} available</span>
-            </Show>
-          </div>
-
-          <div class="inst-meta-sort-wrap" style="gap: 8px">
+          <div class="modpack-toolbar-filters">
             <Dropdown
               prefix="Loader: "
               value={loaderFilter()}
@@ -356,7 +298,7 @@ const BrowseModpacks: Component = () => {
                 setLoaderFilter(v);
                 handleFilterChange();
               }}
-              width="135px"
+              width="125px"
             />
             <Dropdown
               prefix="Version: "
@@ -369,7 +311,7 @@ const BrowseModpacks: Component = () => {
                 setVersionFilter(v);
                 handleFilterChange();
               }}
-              width="155px"
+              width="140px"
             />
             <Dropdown
               prefix="Sort: "
@@ -379,8 +321,46 @@ const BrowseModpacks: Component = () => {
                 setSortBy(v);
                 handleFilterChange();
               }}
-              width="155px"
+              width="140px"
             />
+
+            <div class="view-mode-tabs">
+              <button
+                type="button"
+                class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+                data-tip="Grid view (Bento cards)"
+                aria-label="Grid view"
+              >
+                <IconGrid />
+              </button>
+              <button
+                type="button"
+                class={`view-mode-btn tip-below ${viewMode() === "cassette" ? "active" : ""}`}
+                onClick={() => setViewMode("cassette")}
+                data-tip="Compact view (Cassette tiles)"
+                aria-label="Compact view"
+              >
+                <IconList />
+              </button>
+            </div>
+
+            <Show when={query() || loaderFilter() || versionFilter() || sortBy() !== "relevance"}>
+              <button
+                type="button"
+                class="btn inst-panel-btn inst-action-btn tip-right"
+                onClick={() => {
+                  setQuery("");
+                  setLoaderFilter("");
+                  setVersionFilter("");
+                  setSortBy("relevance");
+                  handleFilterChange();
+                }}
+                data-tip="Reset search and filters"
+              >
+                Reset
+              </button>
+            </Show>
           </div>
         </div>
       </div>
@@ -418,31 +398,45 @@ const BrowseModpacks: Component = () => {
         </div>
       </Show>
 
-      {/* 4x3 Results Grid */}
+      {/* Results Container (Bento Grid or Bento Cassette) */}
       <div class="modpack-grid-container">
         <Show when={searching()}>
-          <div class="modpack-grid-4x3">
-            <For each={Array.from({ length: 12 })}>
+          <div class={viewMode() === "grid" ? "modpack-bento-grid" : "modpack-bento-cassette"}>
+            <For each={Array.from({ length: PAGE_SIZE })}>
               {() => (
-                <div class="modpack-card-skeleton">
-                  <div class="skeleton-header">
-                    <div class="skeleton-icon" />
-                    <div class="skeleton-title-wrap">
-                      <div class="skeleton-line skeleton-title" />
-                      <div class="skeleton-line skeleton-author" />
+                <Show
+                  when={viewMode() === "grid"}
+                  fallback={
+                    <div class="modpack-cassette-skeleton">
+                      <div class="skeleton-icon" style="width: 44px; height: 44px;" />
+                      <div class="skeleton-title-wrap" style="flex: 1;">
+                        <div class="skeleton-line skeleton-title" />
+                        <div class="skeleton-line skeleton-desc-1" />
+                      </div>
+                      <div class="skeleton-btn" style="width: 60px; height: 26px;" />
+                    </div>
+                  }
+                >
+                  <div class="modpack-card-skeleton">
+                    <div class="skeleton-header">
+                      <div class="skeleton-icon" />
+                      <div class="skeleton-title-wrap">
+                        <div class="skeleton-line skeleton-title" />
+                        <div class="skeleton-line skeleton-author" />
+                      </div>
+                    </div>
+                    <div class="skeleton-line skeleton-desc-1" />
+                    <div class="skeleton-line skeleton-desc-2" />
+                    <div class="skeleton-tags">
+                      <div class="skeleton-tag" />
+                      <div class="skeleton-tag" />
+                    </div>
+                    <div class="skeleton-footer">
+                      <div class="skeleton-meta" />
+                      <div class="skeleton-btn" />
                     </div>
                   </div>
-                  <div class="skeleton-line skeleton-desc-1" />
-                  <div class="skeleton-line skeleton-desc-2" />
-                  <div class="skeleton-tags">
-                    <div class="skeleton-tag" />
-                    <div class="skeleton-tag" />
-                  </div>
-                  <div class="skeleton-footer">
-                    <div class="skeleton-meta" />
-                    <div class="skeleton-btn" />
-                  </div>
-                </div>
+                </Show>
               )}
             </For>
           </div>
@@ -457,19 +451,20 @@ const BrowseModpacks: Component = () => {
             <p class="modpack-empty-desc">
               <Show
                 when={query()}
-                fallback={<>No results found for the selected loader filter.</>}
+                fallback={<>No results found for the selected loader and version filters.</>}
               >
                 No modpacks match "<strong>{query()}</strong>". Try checking for spelling errors or
                 removing filters.
               </Show>
             </p>
-            <Show when={query() || loaderFilter()}>
+            <Show when={query() || loaderFilter() || versionFilter()}>
               <button
                 type="button"
                 class="btn btn--neutral btn--sm modpack-empty-reset"
                 onClick={() => {
                   setQuery("");
                   setLoaderFilter("");
+                  setVersionFilter("");
                   handleFilterChange();
                 }}
               >
@@ -480,93 +475,157 @@ const BrowseModpacks: Component = () => {
         </Show>
 
         <Show when={!searching() && results().length > 0}>
-          <div class="modpack-grid-4x3">
+          <div class={viewMode() === "grid" ? "modpack-bento-grid" : "modpack-bento-cassette"}>
             <For each={results()}>
               {(pack) => {
                 const count = () => getInstallCount(pack.project_id);
                 const loaders = extractLoaders(pack);
 
                 return (
-                  <div
-                    class="modpack-card"
-                    onClick={() => setDetailPack(pack)}
-                  >
-                    {/* Top card header */}
-                    <div class="modpack-card-top">
-                      <div class="modpack-card-icon">
-                        <Show when={pack.icon_url} fallback={<IconLayers />}>
-                          <img
-                            src={pack.icon_url!}
-                            alt=""
-                            draggable={false}
-                            class="modpack-card-img"
-                          />
-                        </Show>
-                      </div>
-                      <div class="modpack-card-info">
-                        <div class="modpack-card-title">
-                          {pack.title}
+                  <Show
+                    when={viewMode() === "grid"}
+                    fallback={
+                      <div
+                        class="modpack-cassette-card"
+                        onClick={() => setDetailPack(pack)}
+                      >
+                        <div class="modpack-cassette-art">
+                          <Show when={pack.icon_url} fallback={<IconLayers />}>
+                            <img
+                              src={pack.icon_url!}
+                              alt=""
+                              draggable={false}
+                            />
+                          </Show>
                         </div>
-                        <Show when={pack.author}>
-                          <div class="modpack-card-author">
-                            by <span>{pack.author}</span>
+                        <div class="modpack-cassette-content">
+                          <div class="modpack-cassette-top">
+                            <span class="modpack-cassette-title">{pack.title}</span>
+                            <Show when={pack.author}>
+                              <span class="modpack-cassette-author">by {pack.author}</span>
+                            </Show>
+                            <Show when={count() > 0}>
+                              <span class="badge badge--installed modpack-card-installed-badge">
+                                <IconCheck /> Installed{count() > 1 ? ` (${count()})` : ""}
+                              </span>
+                            </Show>
                           </div>
+                          <div class="modpack-cassette-desc">{pack.description}</div>
+                          <div class="modpack-cassette-meta">
+                            <For each={loaders}>
+                              {(l) => (
+                                <span class={`badge badge--loader badge--${l}`}>
+                                  {l.charAt(0).toUpperCase() + l.slice(1)}
+                                </span>
+                              )}
+                            </For>
+                            <Show when={formatVersionRange(pack.versions)}>
+                              <span class="badge badge--version">
+                                {formatVersionRange(pack.versions)}
+                              </span>
+                            </Show>
+                          </div>
+                        </div>
+                        <div class="modpack-cassette-actions">
+                          <div class="modpack-cassette-stats tip-left" data-tip="Total Downloads">
+                            <IconDownload /> {formatDownloads(pack.downloads)}
+                          </div>
+                          <button
+                            type="button"
+                            class="btn btn--primary btn--sm modpack-card-install-btn"
+                            disabled={isModpackQueuedOrActive(pack.project_id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInstallClick(pack);
+                            }}
+                          >
+                            {isModpackQueuedOrActive(pack.project_id) ? "Queued" : "Install"}
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <div
+                      class="modpack-card"
+                      onClick={() => setDetailPack(pack)}
+                    >
+                      {/* Top card header */}
+                      <div class="modpack-card-top">
+                        <div class="modpack-card-icon">
+                          <Show when={pack.icon_url} fallback={<IconLayers />}>
+                            <img
+                              src={pack.icon_url!}
+                              alt=""
+                              draggable={false}
+                              class="modpack-card-img"
+                            />
+                          </Show>
+                        </div>
+                        <div class="modpack-card-info">
+                          <div class="modpack-card-title">
+                            {pack.title}
+                          </div>
+                          <Show when={pack.author}>
+                            <div class="modpack-card-author">
+                              by <span>{pack.author}</span>
+                            </div>
+                          </Show>
+                        </div>
+                        <Show when={count() > 0}>
+                          <span class="badge badge--installed modpack-card-installed-badge">
+                            <IconCheck /> Installed{count() > 1 ? ` (${count()})` : ""}
+                          </span>
                         </Show>
                       </div>
-                      <Show when={count() > 0}>
-                        <span class="badge badge--installed modpack-card-installed-badge">
-                          <IconCheck /> Installed{count() > 1 ? ` (${count()})` : ""}
-                        </span>
-                      </Show>
-                    </div>
 
-                    {/* Description */}
-                    <div class="modpack-card-desc">{pack.description}</div>
+                      {/* Description */}
+                      <div class="modpack-card-desc">{pack.description}</div>
 
-                    {/* Loader & version tags */}
-                    <div class="modpack-card-tags">
-                      <For each={loaders}>
-                        {(l) => (
-                          <span class={`badge badge--loader badge--${l}`}>
-                            {l.charAt(0).toUpperCase() + l.slice(1)}
+                      {/* Loader & version tags */}
+                      <div class="modpack-card-tags">
+                        <For each={loaders}>
+                          {(l) => (
+                            <span class={`badge badge--loader badge--${l}`}>
+                              {l.charAt(0).toUpperCase() + l.slice(1)}
+                            </span>
+                          )}
+                        </For>
+                        <Show when={formatVersionRange(pack.versions)}>
+                          <span class="badge badge--version">{formatVersionRange(pack.versions)}</span>
+                        </Show>
+                        <Show when={pack.version_name}>
+                          <span class="badge badge--vnum tip-below" data-tip={`Latest build: ${pack.version_name!}`}>
+                            {pack.version_name}
                           </span>
-                        )}
-                      </For>
-                      <Show when={formatVersionRange(pack.versions)}>
-                        <span class="badge badge--version">{formatVersionRange(pack.versions)}</span>
-                      </Show>
-                      <Show when={pack.version_name}>
-                        <span class="badge badge--vnum tip-below" data-tip={`Latest build: ${pack.version_name!}`}>
-                          {pack.version_name}
-                        </span>
-                      </Show>
-                    </div>
+                        </Show>
+                      </div>
 
-                    {/* Footer */}
-                    <div class="modpack-card-footer">
-                      <div class="modpack-card-meta">
-                        <span class="modpack-stat-item tip-below" data-tip="Total Downloads">
-                          <IconDownload /> {formatDownloads(pack.downloads)}
-                        </span>
-                        <span class="modpack-stat-item tip-below" data-tip="Followers / Favorites">
-                          <IconHeart /> {formatDownloads(pack.follows)}
-                        </span>
-                      </div>
-                      <div class="modpack-card-actions">
-                        <button
-                          type="button"
-                          class="btn btn--primary btn--sm modpack-card-install-btn"
-                          disabled={isModpackQueuedOrActive(pack.project_id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInstallClick(pack);
-                          }}
-                        >
-                          {isModpackQueuedOrActive(pack.project_id) ? "Queued" : "Install"}
-                        </button>
+                      {/* Footer */}
+                      <div class="modpack-card-footer">
+                        <div class="modpack-card-meta">
+                          <span class="modpack-stat-item tip-below" data-tip="Total Downloads">
+                            <IconDownload /> {formatDownloads(pack.downloads)}
+                          </span>
+                          <span class="modpack-stat-item tip-below" data-tip="Followers / Favorites">
+                            <IconHeart /> {formatDownloads(pack.follows)}
+                          </span>
+                        </div>
+                        <div class="modpack-card-actions">
+                          <button
+                            type="button"
+                            class="btn btn--primary btn--sm modpack-card-install-btn"
+                            disabled={isModpackQueuedOrActive(pack.project_id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInstallClick(pack);
+                            }}
+                          >
+                            {isModpackQueuedOrActive(pack.project_id) ? "Queued" : "Install"}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Show>
                 );
               }}
             </For>

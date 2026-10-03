@@ -4122,22 +4122,22 @@
 
 
 /* Mod source toggle button — switches between Modrinth and CurseForge
-   in the Browse tab search bar. Tactile 36x36 button with brand icon. */
+   in the Browse tab search bar. Tactile 34x34 button with brand icon. */
 .mod-source-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
   padding: 0 !important;
-  border-radius: var(--radius-xs);
+  border-radius: 0 !important;
   flex-shrink: 0;
   transition: background 0.12s, transform 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
 .mod-source-toggle svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .mod-source-toggle.mr {
   color: #1bd96a;
@@ -6704,32 +6704,48 @@
    Browse Modpacks Screen — Tactile 3D Layout
    ============================================================ */
 .browse-modpacks-screen {
-  padding: 0 0 40px;
+  padding: 0 0 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  max-width: 1720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Sticky Top Deck: Pinned Header Line + Unified 1-Row Toolbar */
+.modpack-sticky-deck {
+  position: sticky;
+  top: calc(-1 * var(--space-5));
+  margin-top: calc(-1 * var(--space-5));
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-2);
+  background: var(--bg);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .modpack-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) 0 var(--space-2);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+  padding: 0 0 4px;
 }
 
 .modpack-header-left {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .modpack-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
   background: var(--surface-panel);
@@ -6755,8 +6771,8 @@
 
 .modpack-title-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
 }
 
 .modpack-title-line {
@@ -6767,8 +6783,8 @@
 
 .modpack-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: var(--text);
   letter-spacing: -0.01em;
 }
@@ -6784,50 +6800,101 @@
   text-transform: uppercase;
 }
 
-.modpack-subtitle {
-  margin: 0;
+.modpack-header-count {
   font-size: 12px;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.modpack-count-bold {
+  color: #ffffff;
+  font-weight: 700;
 }
 
-.modpack-header-badges {
+/* Unified 1-Row Toolbar */
+.modpack-unified-toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.modpack-total-pill {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  background: var(--surface-sunken);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
-  padding: 4px 10px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  flex-wrap: wrap;
 }
 
-.modpack-page-pill {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--accent);
-  background: var(--surface-sunken);
+.modpack-unified-toolbar:has(.custom-dropdown-options) {
+  position: relative;
+  z-index: 100;
+}
+
+.modpack-toolbar-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.modpack-toolbar-filters .custom-dropdown-selected {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-panel);
   border: 1px solid var(--border);
-  padding: 4px 10px;
-}
-
-/* Source Toggle Tabs (Row 1 of inst-search-panel) */
-.modpack-source-tabs {
+  box-shadow: var(--btn-depth);
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+.modpack-toolbar-filters .custom-dropdown-selected:hover {
+  background: var(--surface-raised);
+  border-color: var(--border-hover);
+  color: #ffffff;
+}
+.modpack-toolbar-filters .custom-dropdown-selected:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.modpack-toolbar-filters .custom-dropdown-selected span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modpack-toolbar-filters .custom-dropdown-options {
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+}
+
+.modpack-toolbar-filters .inst-action-btn {
+  height: 32px;
+  min-width: 60px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+/* Source Toggle Tabs */
+.modpack-source-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
 }
 .modpack-source-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 12px;
-  font-size: 12px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 11.5px;
   font-weight: 600;
   background: var(--surface-panel);
   border: 1px solid var(--border);
@@ -6858,7 +6925,7 @@
   border-color: #f16436;
   color: #f97316;
 }
-.modpack-source-tab svg { width: 14px; height: 14px; }
+.modpack-source-tab svg { width: 13px; height: 13px; }
 
 /* Confirmation banner */
 .modpack-confirm-banner {
@@ -6878,20 +6945,64 @@
 .modpack-confirm-inst-tag { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
 .modpack-confirm-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-/* 4x3 Results Grid */
-.modpack-grid-container { min-height: 480px; }
+/* Bento Results Grid (4 Columns Desktop Baseline x 3 Rows = 12 Cards) */
+.modpack-grid-container {
+  min-height: auto;
+  padding-top: 6px;
+  padding-bottom: 0;
+}
 
+.modpack-bento-grid,
 .modpack-grid-4x3 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
   width: 100%;
 }
-@media (max-width: 1240px) { .modpack-grid-4x3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 880px) { .modpack-grid-4x3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 580px) { .modpack-grid-4x3 { grid-template-columns: 1fr; } }
+@media (min-width: 1200px) {
+  .modpack-bento-grid,
+  .modpack-grid-4x3 {
+    gap: 16px;
+  }
+}
+@media (max-width: 960px) {
+  .modpack-bento-grid,
+  .modpack-grid-4x3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 680px) {
+  .modpack-bento-grid,
+  .modpack-grid-4x3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .modpack-bento-grid,
+  .modpack-grid-4x3 {
+    grid-template-columns: 1fr;
+  }
+}
 
-/* Modpack card — styling matching installed content view with SHARP CORNERS and tactile button depth */
+/* Compact Bento Cassette Deck (2 Columns Desktop Baseline x 6 Rows = 12 Cards) */
+.modpack-bento-cassette {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+@media (min-width: 1200px) {
+  .modpack-bento-cassette {
+    gap: 14px;
+  }
+}
+@media (max-width: 780px) {
+  .modpack-bento-cassette {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modpack Bento Card — Tactile Bento styling with sharp corners, 3px left rail, and uniform locked heights */
 .modpack-card {
   position: relative;
   display: flex;
@@ -6899,33 +7010,48 @@
   background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: 0;
-  padding: 14px 16px;
-  min-height: 155px;
+  padding: 10px 12px;
+  min-height: 176px;
   box-sizing: border-box;
-  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+.modpack-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.15s ease;
 }
 .modpack-card:hover {
   border-color: var(--accent);
-  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.55);
+  background: var(--surface-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   transform: translateY(-2px);
+  z-index: 2;
+}
+.modpack-card:hover::before {
+  background: var(--accent);
 }
 .modpack-card:active {
   transform: translateY(1px);
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
 }
 
 .modpack-card-top {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 6px;
 }
 
 .modpack-card-icon {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   border-radius: 0;
   background: var(--surface-sunken);
@@ -6940,8 +7066,14 @@
 .modpack-card-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 0; }
 
 .modpack-card-info { flex: 1; min-width: 0; }
+.modpack-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .modpack-card-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.3;
@@ -6960,26 +7092,28 @@
 .modpack-card-author span { color: var(--text); font-weight: 500; }
 
 .modpack-card-installed-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
   border-radius: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.35);
   color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .modpack-card-installed-badge svg { width: 10px; height: 10px; }
 
 .modpack-card-desc {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--muted);
   line-height: 1.45;
   height: 34px;
-  margin: 6px 0 8px;
+  margin: 0 0 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -6989,19 +7123,21 @@
 
 .modpack-card-tags {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .modpack-card-tags .badge {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 0;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 .modpack-card-tags .badge--loader {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
@@ -7014,9 +7150,8 @@
   color: var(--text-muted);
 }
 .modpack-card-tags .badge--vnum {
-  background: var(--surface-sunken);
-  border-color: var(--border);
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
 }
 
 .modpack-card-footer {
@@ -7041,10 +7176,170 @@
 .modpack-stat-item svg { width: 12px; height: 12px; color: #635d75; }
 
 .modpack-card-install-btn {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   padding: 4px 12px;
   border-radius: 0;
+  box-shadow: var(--btn-depth);
+  transition: all 0.12s;
+}
+.modpack-card-install-btn:hover:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Compact Bento Cassette Card (Horizontal Tile) */
+.modpack-cassette-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  min-height: 72px;
+  box-sizing: border-box;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+.modpack-cassette-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.modpack-cassette-card:hover {
+  background: var(--surface-raised);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+.modpack-cassette-card:hover::before {
+  background: var(--accent);
+}
+.modpack-cassette-card:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.modpack-cassette-art {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modpack-cassette-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.modpack-cassette-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.modpack-cassette-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modpack-cassette-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modpack-cassette-author {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.modpack-cassette-desc {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.modpack-cassette-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+}
+.modpack-cassette-meta .badge {
+  font-size: 9.5px;
+  padding: 1px 5px;
+}
+.modpack-cassette-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.modpack-cassette-actions .modpack-card-install-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+}
+.modpack-cassette-stats {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.modpack-cassette-stats svg { width: 11px; height: 11px; color: #635d75; }
+
+/* In-Page View Mode Density Tabs */
+.view-mode-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-sunken);
+  padding: 2px;
+  border: 1px solid var(--border);
+  height: 32px;
+  box-sizing: border-box;
+}
+.view-mode-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  height: 26px;
+  padding: 0 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  transition: all 0.12s;
+}
+.view-mode-btn svg { width: 13px; height: 13px; }
+.view-mode-btn:hover { color: var(--text); }
+.view-mode-btn.active {
+  background: var(--surface-raised);
+  border-color: var(--border-hover);
+  color: var(--accent);
+  box-shadow: var(--btn-depth);
 }
 
 /* Skeleton Loading Cards */
@@ -7052,16 +7347,26 @@
   background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.25);
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 155px;
+  gap: 8px;
+  min-height: 180px;
+  box-sizing: border-box;
+}
+.modpack-cassette-skeleton {
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
   box-sizing: border-box;
 }
 .skeleton-header { display: flex; gap: 12px; align-items: center; }
-.skeleton-icon { width: 44px; height: 44px; border-radius: 0; background: var(--surface-raised); flex-shrink: 0; animation: shimmer 1.5s infinite linear; }
+.skeleton-icon { width: 46px; height: 46px; border-radius: 0; background: var(--surface-raised); flex-shrink: 0; animation: shimmer 1.5s infinite linear; }
 .skeleton-title-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
 .skeleton-line { height: 12px; background: var(--surface-raised); border-radius: 0; animation: shimmer 1.5s infinite linear; }
 .skeleton-title { width: 70%; height: 14px; }
@@ -7078,6 +7383,114 @@
   0% { opacity: 0.35; }
   50% { opacity: 0.75; }
   100% { opacity: 0.35; }
+}
+
+/* Widescreen & Maximized Scaling (>= 1200px) — Expands card height, padding, icons & description depth to comfortably fill large displays without adding overwhelming columns */
+@media (min-width: 1200px) {
+  .modpack-card {
+    min-height: 232px;
+    padding: 16px 18px;
+  }
+  .modpack-card-top {
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .modpack-card-icon {
+    width: 50px;
+    height: 50px;
+  }
+  .modpack-card-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  .modpack-card-title {
+    font-size: 14.5px;
+  }
+  .modpack-card-desc {
+    font-size: 12px;
+    height: 52px;
+    -webkit-line-clamp: 3;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .modpack-card-tags .badge {
+    font-size: 11px;
+    padding: 2.5px 8px;
+  }
+  .modpack-card-footer {
+    padding-top: 10px;
+  }
+  .modpack-card-install-btn {
+    font-size: 12px;
+    padding: 5px 14px;
+  }
+
+  .modpack-cassette-card {
+    min-height: 100px;
+    padding: 14px 18px;
+    gap: 16px;
+  }
+  .modpack-cassette-art {
+    width: 56px;
+    height: 56px;
+  }
+  .modpack-cassette-top {
+    gap: 10px;
+  }
+  .modpack-cassette-title {
+    font-size: 14px;
+  }
+  .modpack-cassette-author {
+    font-size: 12px;
+  }
+  .modpack-cassette-desc {
+    font-size: 12px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    height: 34px;
+    line-height: 1.4;
+  }
+  .modpack-cassette-meta {
+    gap: 8px;
+  }
+  .modpack-cassette-meta .badge {
+    font-size: 10.5px;
+    padding: 2px 7px;
+  }
+  .modpack-cassette-actions {
+    gap: 8px;
+  }
+  .modpack-cassette-actions .modpack-card-install-btn {
+    padding: 4px 14px;
+    font-size: 12px;
+  }
+  .modpack-cassette-stats {
+    font-size: 11px;
+  }
+  .modpack-cassette-stats svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .modpack-card-skeleton {
+    min-height: 232px;
+    padding: 16px 18px;
+  }
+  .modpack-card-skeleton .skeleton-icon {
+    width: 50px;
+    height: 50px;
+  }
+  .modpack-cassette-skeleton {
+    min-height: 100px;
+    padding: 14px 18px;
+    gap: 16px;
+  }
+  .modpack-cassette-skeleton .skeleton-icon {
+    width: 56px;
+    height: 56px;
+  }
 }
 
 /* Empty Panel */
