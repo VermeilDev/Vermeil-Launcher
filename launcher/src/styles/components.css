@@ -1001,23 +1001,14 @@
   z-index: 1;
 }
 
-.empty-logo-box {
-  width: 68px;
-  height: 68px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--btn-depth-strong);
-  margin-bottom: 20px;
-}
-
 .empty-logo-glow {
-  width: 36px;
-  height: 36px;
-  filter: drop-shadow(0 0 10px var(--accent-glow));
+  width: 48px;
+  height: 48px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 0 16px var(--accent-glow));
   transition: transform 0.25s ease;
+  user-select: none;
+  pointer-events: none;
 }
 
 .empty-launchpad-card:hover .empty-logo-glow {

@@ -545,10 +545,8 @@ const Library: Component = () => {
             </div>
 
             <div class="empty-launchpad-body">
-              {/* Sleek tactile logo box (clean, solid, no dashed outline) */}
-              <div class="empty-logo-box">
-                <img src={currentThemeLogo()} alt="Vermeil" class="empty-logo-glow" draggable={false} />
-              </div>
+              {/* Ambient floating theme logo emblem */}
+              <img src={currentThemeLogo()} alt="Vermeil" class="empty-logo-glow" draggable={false} />
 
               {/* Content with Animated Ellipsis */}
               <div class="empty-hero-content">
