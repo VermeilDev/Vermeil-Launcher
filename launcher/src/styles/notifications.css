@@ -6,30 +6,6 @@
 /* Instance card selected state */
 .inst-card-selected { border-color: var(--danger) !important; background: var(--danger-soft) !important; }
 
-/* Floating delete confirmation bar — appears above the dock when instances
-   are selected and the user clicks Delete. Same glassmorphism layer as the
-   dock for visual consistency. */
-.library-delete-bar {
-  position: fixed;
-  bottom: calc(var(--dock-clearance) + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-  background: rgba(21, 20, 26, 0.92);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--danger);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
-  z-index: 150;
-  animation: slideUpIn 0.2s ease-out;
-}
-@keyframes slideUpIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
 
 /* Toast notification system (Tactile design) */
 .toast-container {

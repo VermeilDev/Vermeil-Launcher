@@ -4154,28 +4154,6 @@
 }
 .select-check.checked { border-color: var(--accent); background: var(--accent); color: var(--text); }
 .btn-active { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--text) !important; }
-.bulk-install-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 360px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  padding: var(--space-3) var(--space-4);
-  box-shadow: var(--btn-depth), 0 12px 36px rgba(0, 0, 0, 0.6);
-  z-index: 60;
-  animation: fadeIn .15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-.bulk-install-bar .install-btn {
-  font-size: 11px;
-  padding: var(--space-1) var(--space-3);
-}
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }

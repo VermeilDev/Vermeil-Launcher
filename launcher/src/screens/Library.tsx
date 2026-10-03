@@ -50,6 +50,7 @@ import {
   IconHardDrive,
 } from "../components/Icons";
 import Dropdown from "../components/Dropdown";
+import SelectionDock from "../components/SelectionDock";
 import { loaderBadgeClass, loaderLabel } from "../lib/loader";
 import { resolveAssetUrl } from "../lib/assets";
 import { formatSize } from "../lib/format";
@@ -936,56 +937,46 @@ const Library: Component = () => {
 
       {/* Floating action bar — appears at bottom-center when in select mode. */}
       <Show when={selectMode()}>
-        <div class="library-delete-bar">
-          <span style="font-size:var(--fs-xs);color:var(--text)">{selected().size} selected</span>
-          <Show when={!showDeleteConfirm()} fallback={
-            <>
-              <input
-                class="field-control field-control--text"
-                style="max-width:120px;border-color:var(--danger)"
-                placeholder="Type Confirm"
-                value={deleteInput()}
-                onInput={(e) => setDeleteInput(e.currentTarget.value)}
-              />
-              <button
-                class="btn btn--danger"
-                disabled={deleteInput() !== "Confirm" || isDeleting()}
-                onClick={deleteSelected}
-              >
-                {isDeleting() ? "Deleting..." : "Delete All"}
-              </button>
-              <button
-                class="btn btn--ghost"
-                disabled={isDeleting()}
-                onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
-              >
-                Cancel
-              </button>
-            </>
-          }>
-            <button
-              class="btn btn--danger"
-              disabled={selected().size === 0 || isDeleting()}
-              onClick={async () => {
-                const settings = await getSettings();
-                if (settings.force_delete) {
-                  await deleteSelected();
-                } else {
-                  setShowDeleteConfirm(true);
-                }
-              }}
-            >
-              {isDeleting() ? "Deleting..." : `Delete (${selected().size})`}
-            </button>
-            <button
-              class="btn btn--ghost"
-              disabled={isDeleting()}
-              onClick={() => { setSelectMode(false); setSelected(new Set<string>()); }}
-            >
-              Cancel
-            </button>
+        <SelectionDock
+          count={selected().size}
+          mode="delete"
+          primaryLabel={isDeleting() ? "Deleting..." : (showDeleteConfirm() ? "Delete All" : `Delete (${selected().size})`)}
+          primaryDisabled={showDeleteConfirm() ? (deleteInput() !== "Confirm" || isDeleting()) : (selected().size === 0 || isDeleting())}
+          primaryLoading={isDeleting()}
+          onPrimary={async () => {
+            if (showDeleteConfirm()) {
+              await deleteSelected();
+            } else {
+              const settings = await getSettings();
+              if (settings.force_delete) {
+                await deleteSelected();
+              } else {
+                setShowDeleteConfirm(true);
+              }
+            }
+          }}
+          onClear={() => {
+            if (showDeleteConfirm()) {
+              setShowDeleteConfirm(false);
+              setDeleteInput("");
+            } else {
+              setSelectMode(false);
+              setSelected(new Set<string>());
+            }
+          }}
+          clearLabel="Cancel"
+          icon={<IconTrash2 />}
+        >
+          <Show when={showDeleteConfirm()}>
+            <input
+              class="field-control field-control--text"
+              style="max-width:110px;height:28px;font-size:12px;border-color:var(--danger);padding:2px 8px;"
+              placeholder="Type Confirm"
+              value={deleteInput()}
+              onInput={(e) => setDeleteInput(e.currentTarget.value)}
+            />
           </Show>
-        </div>
+        </SelectionDock>
       </Show>
 
       {/* ═══ SCREENSHOT LIGHTBOX OVERLAY ═══ */}

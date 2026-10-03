@@ -13,7 +13,8 @@ import ChangeLoaderModal, { openChangeLoaderModal } from "../modals/ChangeLoader
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
 import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
 import { searchMods, installModToInstance, installCfModToInstance, listInstanceFiles, listInstanceWorlds, openInstanceFolder, deleteInstance, renameInstance, updateInstanceOptions, toggleModInInstance, removeModFromInstance, removeModsFromInstance, checkModUpdates, applyModUpdate, ModUpdate, cloneInstance, getSettings, saveSettings, setInstanceIcon, clearInstanceIcon, searchCurseforge, getPresetJvmArgs, getKnownPresetArgs, getSystemMemory, getEffectiveMemory, EffectiveMemory, ModHit, FileEntry, WorldEntry, closeLogsWindow, syncInstanceMods, setInstanceCompanionEnabled, getInstance, exportShareCode, getModVersions, getCfModFiles, launchInstance, stopInstance, getGameVersions } from "../ipc/commands";
-import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconGrid, IconList } from "../components/Icons";
+import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconGrid, IconList } from "../components/Icons";
+import SelectionDock from "../components/SelectionDock";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
 
 import { resolveAssetUrl } from "../lib/assets";
@@ -2683,12 +2684,49 @@ const InstanceMods: Component = () => {
             </For>
           </div>
 
-          {/* Floating delete bar — appears when in select mode */}
+          {/* Floating delete dock — appears when in select mode */}
           <Show when={installedSelectMode()}>
-            <div class="library-delete-bar">
-              <span style="font-size:var(--fs-xs);color:var(--text)">
-                {selectedInstalled().size} selected
-              </span>
+            <SelectionDock
+              count={selectedInstalled().size}
+              mode="delete"
+              primaryLabel={isDeletingInstalled() ? "Deleting..." : `Delete (${selectedInstalled().size})`}
+              primaryDisabled={selectedInstalled().size === 0 || isDeletingInstalled()}
+              primaryLoading={isDeletingInstalled()}
+              onPrimary={async () => {
+                const inst = instance();
+                if (!inst || selectedInstalled().size === 0) return;
+                setIsDeletingInstalled(true);
+                try {
+                  const ids = Array.from(selectedInstalled());
+                  const count = await removeModsFromInstance(inst.id, ids);
+                  setSelectedInstalled(new Set<string>());
+                  setInstalledSelectMode(false);
+                  await refetchInstances();
+                  await refetchDetail();
+                  showToast({
+                    title: "Content deleted",
+                    message: `Removed ${count} ${count === 1 ? "entry" : "entries"}`,
+                    type: "success",
+                    autoCloseMs: 3000,
+                  });
+                } catch (e: any) {
+                  showToast({
+                    title: "Delete failed",
+                    message: typeof e === "string" ? e : (e?.message || "Unknown error"),
+                    type: "error",
+                    autoCloseMs: 5000,
+                  });
+                } finally {
+                  setIsDeletingInstalled(false);
+                }
+              }}
+              onClear={() => {
+                setInstalledSelectMode(false);
+                setSelectedInstalled(new Set<string>());
+              }}
+              clearLabel="Cancel"
+              icon={<IconTrash2 />}
+            >
               <button
                 class="btn btn--secondary btn--sm"
                 onClick={() => {
@@ -2704,51 +2742,7 @@ const InstanceMods: Component = () => {
                   ? "Deselect All"
                   : "Select All"}
               </button>
-              <button
-                class="btn btn--danger btn--sm"
-                disabled={selectedInstalled().size === 0 || isDeletingInstalled()}
-                onClick={async () => {
-                  const inst = instance();
-                  if (!inst || selectedInstalled().size === 0) return;
-                  setIsDeletingInstalled(true);
-                  try {
-                    const ids = Array.from(selectedInstalled());
-                    const count = await removeModsFromInstance(inst.id, ids);
-                    setSelectedInstalled(new Set<string>());
-                    setInstalledSelectMode(false);
-                    await refetchInstances();
-                    await refetchDetail();
-                    showToast({
-                      title: "Content deleted",
-                      message: `Removed ${count} ${count === 1 ? "entry" : "entries"}`,
-                      type: "success",
-                      autoCloseMs: 3000,
-                    });
-                  } catch (e: any) {
-                    showToast({
-                      title: "Delete failed",
-                      message: typeof e === "string" ? e : (e?.message || "Unknown error"),
-                      type: "error",
-                      autoCloseMs: 5000,
-                    });
-                  } finally {
-                    setIsDeletingInstalled(false);
-                  }
-                }}
-              >
-                {isDeletingInstalled() ? "Deleting..." : `Delete (${selectedInstalled().size})`}
-              </button>
-              <button
-                class="btn btn--ghost btn--sm"
-                disabled={isDeletingInstalled()}
-                onClick={() => {
-                  setInstalledSelectMode(false);
-                  setSelectedInstalled(new Set<string>());
-                }}
-              >
-                Cancel
-              </button>
-            </div>
+            </SelectionDock>
           </Show>
         </Show>
 
@@ -3082,15 +3076,16 @@ const InstanceMods: Component = () => {
                 </div>
               )}
             </Show>
-            {/* Bulk install floating bar */}
+            {/* Bulk install floating dock */}
             <Show when={selectMode() && selectedItems().size > 0 && !bulkInstalling()}>
-              <div class="bulk-install-bar">
-                <span style="font-size:var(--fs-xs);color:var(--text)">{selectedItems().size} selected</span>
-                <button class="btn btn--primary" onClick={handleBulkInstall}>
-                  Install {selectedItems().size} items
-                </button>
-                <button class="btn btn--ghost btn--sm" onClick={() => setSelectedItems(new Map())}>Clear</button>
-              </div>
+              <SelectionDock
+                count={selectedItems().size}
+                mode="install"
+                primaryLabel={`Install ${selectedItems().size} ${selectedItems().size === 1 ? "Item" : "Items"}`}
+                onPrimary={handleBulkInstall}
+                onClear={() => setSelectedItems(new Map())}
+                icon={<IconDownload />}
+              />
             </Show>
           </div>
         </Show>
