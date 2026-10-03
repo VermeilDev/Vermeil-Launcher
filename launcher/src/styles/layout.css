@@ -238,6 +238,14 @@ body:not(:has(.modal-overlay)):not(:has(.news-modal-overlay)) *:has(> [data-tip]
   scroll-padding-bottom: 0;
 }
 
+/* The Library screen uses flex column flow so the secondary bento deck (Screenshots + Hub)
+   anchors cleanly to the bottom of the viewport on tall/widescreen displays without leaving empty space. */
+.content:has(.library-screen) {
+  display: flex;
+  flex-direction: column;
+}
+
+
 /* =====================================================================
    Responsive_Layout (Requirements 8.1, 8.2, 8.3, 8.4, 8.6)
    ---------------------------------------------------------------------

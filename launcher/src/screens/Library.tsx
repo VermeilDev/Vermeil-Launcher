@@ -522,7 +522,7 @@ const Library: Component = () => {
   );
 
   return (
-    <div class="screen-enter">
+    <div class="screen-enter library-screen">
       {/* ═══ EMPTY STATE: Shown when 0 instances exist in the entire launcher ═══ */}
       <Show when={allList().length === 0}>
         <div class="library-header" style="margin-bottom: 16px;">

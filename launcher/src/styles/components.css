@@ -580,12 +580,19 @@
 }
 
 /* ═══ BENTO SECONDARY DECK (SCREENSHOTS + TELEMETRY) ═══ */
+.library-screen {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 .library-bento-grid {
   display: grid;
   grid-template-columns: 8fr 4fr;
   gap: var(--space-4);
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-top: auto;
+  margin-bottom: var(--space-4);
 }
 
 @media (max-width: 900px) {
