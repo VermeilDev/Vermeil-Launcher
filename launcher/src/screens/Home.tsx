@@ -667,7 +667,7 @@ const Home: Component = () => {
             class="header-meta-pill tip-below"
             style="cursor: pointer;"
             onClick={() => setActiveScreen("account")}
-            data-tip="Manage account and identity"
+            data-tip="Account settings"
           >
             <Show
               when={account()}
@@ -687,7 +687,7 @@ const Home: Component = () => {
             class="header-meta-pill tip-below tip-right"
             style="cursor: pointer;"
             onClick={() => setActiveScreen("account")}
-            data-tip="Google Cloud Settings Sync"
+            data-tip="Cloud sync"
           >
             <Show
               when={cloudConnected()}
@@ -854,7 +854,7 @@ const Home: Component = () => {
                           class="sym-sub-tile"
                           style="opacity: 0.6;"
                           onClick={() => setActiveScreen("library")}
-                          data-tip="Launch an instance in your Library to play a world"
+                          data-tip="Go to Library"
                         >
                           <div class="sym-sub-left">
                             <div class="sym-sub-thumb"><IconPlus /></div>
@@ -918,7 +918,7 @@ const Home: Component = () => {
                           class="sym-sub-tile"
                           style="opacity: 0.6;"
                           onClick={() => setActiveScreen("library")}
-                          data-tip="Launch an instance in your Library to play a world"
+                          data-tip="Go to Library"
                         >
                           <div class="sym-sub-left">
                             <div class="sym-sub-thumb"><IconPlus /></div>
@@ -1072,7 +1072,6 @@ const Home: Component = () => {
                         <div
                           class="sym-sub-tile"
                           style="opacity: 0.6;"
-                          data-tip="Use the input below to add servers"
                         >
                           <div class="sym-sub-left">
                             <div class="sym-sub-thumb"><IconPlus /></div>
@@ -1156,7 +1155,6 @@ const Home: Component = () => {
                         <div
                           class="sym-sub-tile"
                           style="opacity: 0.6;"
-                          data-tip="Use the input below to add servers"
                         >
                           <div class="sym-sub-left">
                             <div class="sym-sub-thumb"><IconPlus /></div>
@@ -1311,7 +1309,7 @@ const Home: Component = () => {
                         class="sym-hero-tile tile--world"
                         style="opacity: 0.6;"
                         onClick={() => setActiveScreen("library")}
-                        data-tip="Launch an instance in your Library to play a world"
+                        data-tip="Go to Library"
                       >
                         <div class="sym-thumb"><IconPlus /></div>
                         <div class="sym-meta">
@@ -1417,7 +1415,7 @@ const Home: Component = () => {
                         class="sym-sub-tile"
                         style="opacity: 0.6;"
                         onClick={() => setActiveScreen("library")}
-                        data-tip="Launch an instance in your Library to play a world"
+                        data-tip="Go to Library"
                       >
                         <div class="sym-sub-left">
                           <div class="sym-sub-thumb"><IconPlus /></div>
@@ -1530,7 +1528,6 @@ const Home: Component = () => {
                       <div
                         class="sym-hero-tile tile--server"
                         style="opacity: 0.6;"
-                        data-tip="Use the input below to add servers"
                       >
                         <div class="sym-thumb"><IconPlus /></div>
                         <div class="sym-meta">
@@ -1678,7 +1675,6 @@ const Home: Component = () => {
                       <div
                         class="sym-sub-tile"
                         style="opacity: 0.6;"
-                        data-tip="Use the input below to add servers"
                       >
                         <div class="sym-sub-left">
                           <div class="sym-sub-thumb"><IconPlus /></div>
@@ -1718,7 +1714,7 @@ const Home: Component = () => {
                 </button>
 
                 <div class="direct-connect-inline">
-                  <span class="direct-icon tip-below tip-left" data-tip="Add Server IP">
+                  <span class="direct-icon">
                     <IconServer />
                   </span>
                   <input
@@ -1740,7 +1736,7 @@ const Home: Component = () => {
                     type="button"
                     class="direct-btn"
                     disabled={quickServers().length >= 6}
-                    data-tip={quickServers().length >= 6 ? "Deck full (6/6)" : "Add Server IP"}
+                    data-tip={quickServers().length >= 6 ? "Deck full (6/6)" : undefined}
                     onClick={handleAddServer}
                   >
                     <IconPlus />

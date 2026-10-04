@@ -1315,18 +1315,16 @@ const Skins: Component = () => {
           </div>
           <div class="skins-offline-actions">
             <button
-              class="skins-banner-btn skins-banner-btn--primary tip-below"
+              class="skins-banner-btn skins-banner-btn--primary"
               onClick={handleStartLogin}
               disabled={loggingIn()}
-              data-tip="Sign in to sync skins and capes with Mojang"
             >
               <IconMicrosoft />
               <span>{loggingIn() ? "Signing in…" : "Sign in with Microsoft"}</span>
             </button>
             <button
-              class="skins-banner-btn tip-below tip-right"
+              class="skins-banner-btn"
               onClick={() => setActiveScreen("account")}
-              data-tip="Open Account screen"
             >
               <IconUser />
               <span>Manage Accounts</span>
@@ -1355,7 +1353,7 @@ const Skins: Component = () => {
             <div class="skins-panel-actions">
               <button
                 class="skins-mini-btn tip-below"
-                data-tip="Sync previous skins from Crafty.gg"
+                data-tip="Sync from Crafty.gg"
                 onClick={handleSyncHistory}
                 disabled={busy() !== null}
               >
@@ -1363,8 +1361,7 @@ const Skins: Component = () => {
                 <span>{busy() === "sync" ? "Syncing…" : "Sync"}</span>
               </button>
               <button
-                class="skins-mini-btn tip-below tip-right"
-                data-tip="Import skin PNG"
+                class="skins-mini-btn"
                 onClick={handleUpload}
                 disabled={busy() !== null}
               >
@@ -1456,7 +1453,7 @@ const Skins: Component = () => {
                                 handleRemoveLocal(skin);
                               }}
                               disabled={busy() !== null}
-                              data-tip="Delete from library"
+                              data-tip="Delete"
                             >
                               <IconTrash2 />
                             </button>
@@ -1484,20 +1481,18 @@ const Skins: Component = () => {
               <div class="skins-topbar-center">
                 <div class="skins-segmented-switch">
                   <button
-                    class="skins-segment-btn tip-below"
+                    class="skins-segment-btn"
                     classList={{ active: variant() === "CLASSIC" }}
                     disabled={busy() !== null}
                     onClick={() => handleVariantSwitch("CLASSIC")}
-                    data-tip="Classic (4px arms)"
                   >
                     Classic
                   </button>
                   <button
-                    class="skins-segment-btn tip-below"
+                    class="skins-segment-btn"
                     classList={{ active: variant() === "SLIM" }}
                     disabled={busy() !== null}
                     onClick={() => handleVariantSwitch("SLIM")}
-                    data-tip="Slim (3px arms)"
                   >
                     Slim
                   </button>
@@ -1506,28 +1501,25 @@ const Skins: Component = () => {
 
               <div class="skins-topbar-right">
                 <button
-                  class="skins-studio-btn tip-below"
+                  class="skins-studio-btn"
                   onClick={handleReset}
                   disabled={busy() !== null}
-                  data-tip="Reset to default"
                 >
                   <IconRotateCcw />
                   <span>Reset</span>
                 </button>
                 <button
-                  class="skins-studio-btn tip-below"
+                  class="skins-studio-btn"
                   onClick={handleRefresh}
                   disabled={busy() !== null}
-                  data-tip={isOfflineAccount() ? "Refresh character studio" : "Refresh from Mojang"}
                 >
                   <IconReload />
                   <span>Refresh</span>
                 </button>
                 <button
-                  class="skins-studio-btn skins-zen-btn tip-below tip-right"
+                  class="skins-studio-btn skins-zen-btn"
                   classList={{ active: zenMode() }}
                   onClick={() => setZenMode(!zenMode())}
-                  data-tip={zenMode() ? "Exit Zen mode" : "Zen mode (hide panels)"}
                 >
                   {zenMode() ? <IconMinimize2 /> : <IconMaximize2 />}
                   <span>{zenMode() ? "Exit Zen" : "Zen"}</span>
@@ -1598,18 +1590,16 @@ const Skins: Component = () => {
                 <span class="skins-equipment-mode-label">Wear as</span>
                 <div class="skins-segmented-switch skins-segmented-switch--sm">
                   <button
-                    class="skins-segment-btn tip-below"
+                    class="skins-segment-btn"
                     classList={{ active: !showElytra() }}
                     onClick={() => setShowElytra(false)}
-                    data-tip="Show cape on model"
                   >
                     Cape
                   </button>
                   <button
-                    class="skins-segment-btn tip-below tip-right"
+                    class="skins-segment-btn"
                     classList={{ active: showElytra() }}
                     onClick={() => setShowElytra(true)}
-                    data-tip="Show elytra wings on model"
                   >
                     Elytra
                   </button>
@@ -1622,7 +1612,7 @@ const Skins: Component = () => {
                 <div class="skins-cape-grid">
                   {/* No cape */}
                   <button
-                    class="skins-cape-tile tip-below tip-left"
+                    class="skins-cape-tile"
                     classList={{
                       active:
                         !activeCustomCapeId() &&
@@ -1630,7 +1620,6 @@ const Skins: Component = () => {
                     }}
                     onClick={() => handleEquipCape(null)}
                     disabled={busy() !== null}
-                    data-tip="No cape"
                   >
                     <div class="skins-cape-none-icon">
                       <IconX />
@@ -1679,8 +1668,7 @@ const Skins: Component = () => {
                     In-Game Capes <span class="skins-subhead-badge">Companion</span>
                   </div>
                   <button
-                    class="skins-mini-btn tip-below tip-right"
-                    data-tip="New custom cape"
+                    class="skins-mini-btn"
                     onClick={openNewCape}
                     disabled={busy() !== null}
                   >
@@ -1743,7 +1731,7 @@ const Skins: Component = () => {
                                 class="skins-lib-btn tip-right"
                                 onClick={() => openEditCape(cape)}
                                 disabled={busy() !== null}
-                                data-tip="Edit cape"
+                                data-tip="Edit"
                               >
                                 <IconEdit />
                               </button>
@@ -1751,7 +1739,7 @@ const Skins: Component = () => {
                                 class="skins-lib-btn-delete tip-right"
                                 onClick={() => handleRemoveCustomCape(cape.id)}
                                 disabled={busy() !== null}
-                                data-tip="Delete cape"
+                                data-tip="Delete"
                               >
                                 <IconTrash2 />
                               </button>

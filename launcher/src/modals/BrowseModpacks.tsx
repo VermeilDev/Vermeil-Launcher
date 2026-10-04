@@ -329,7 +329,7 @@ const BrowseModpacks: Component = () => {
                 type="button"
                 class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
                 onClick={() => setViewMode("grid")}
-                data-tip="Grid view (Bento cards)"
+                data-tip="Grid view"
                 aria-label="Grid view"
               >
                 <IconGrid />
@@ -338,7 +338,7 @@ const BrowseModpacks: Component = () => {
                 type="button"
                 class={`view-mode-btn tip-below ${viewMode() === "cassette" ? "active" : ""}`}
                 onClick={() => setViewMode("cassette")}
-                data-tip="Compact view (Cassette tiles)"
+                data-tip="Compact view"
                 aria-label="Compact view"
               >
                 <IconList />
@@ -348,7 +348,7 @@ const BrowseModpacks: Component = () => {
             <Show when={query() || loaderFilter() || versionFilter() || sortBy() !== "relevance"}>
               <button
                 type="button"
-                class="btn inst-panel-btn inst-action-btn tip-right"
+                class="btn inst-panel-btn inst-action-btn"
                 onClick={() => {
                   setQuery("");
                   setLoaderFilter("");
@@ -356,7 +356,6 @@ const BrowseModpacks: Component = () => {
                   setSortBy("relevance");
                   handleFilterChange();
                 }}
-                data-tip="Reset search and filters"
               >
                 Reset
               </button>
@@ -527,7 +526,7 @@ const BrowseModpacks: Component = () => {
                           </div>
                         </div>
                         <div class="modpack-cassette-actions">
-                          <div class="modpack-cassette-stats tip-left" data-tip="Total Downloads">
+                          <div class="modpack-cassette-stats tip-left" data-tip="Downloads">
                             <IconDownload /> {formatDownloads(pack.downloads)}
                           </div>
                           <button
@@ -594,7 +593,7 @@ const BrowseModpacks: Component = () => {
                           <span class="badge badge--version">{formatVersionRange(pack.versions)}</span>
                         </Show>
                         <Show when={pack.version_name}>
-                          <span class="badge badge--vnum tip-below" data-tip={`Latest build: ${pack.version_name!}`}>
+                          <span class="badge badge--vnum">
                             {pack.version_name}
                           </span>
                         </Show>
@@ -603,10 +602,10 @@ const BrowseModpacks: Component = () => {
                       {/* Footer */}
                       <div class="modpack-card-footer">
                         <div class="modpack-card-meta">
-                          <span class="modpack-stat-item tip-below" data-tip="Total Downloads">
+                          <span class="modpack-stat-item tip-below" data-tip="Downloads">
                             <IconDownload /> {formatDownloads(pack.downloads)}
                           </span>
-                          <span class="modpack-stat-item tip-below" data-tip="Followers / Favorites">
+                          <span class="modpack-stat-item tip-below" data-tip="Followers">
                             <IconHeart /> {formatDownloads(pack.follows)}
                           </span>
                         </div>

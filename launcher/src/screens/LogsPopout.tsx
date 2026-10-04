@@ -329,7 +329,7 @@ const LogsPopout: Component = () => {
             type="button"
             class={`log-toolbar-jump tip-below ${autoScroll() ? "active" : ""}`}
             onClick={jumpToBottom}
-            data-tip={autoScroll() ? "Auto-scroll active (click to lock)" : "Jump to latest (resume auto-scroll)"}
+            data-tip={autoScroll() ? "Lock scroll" : "Jump to bottom"}
             aria-label="Jump to latest"
           >
             <IconArrowDown />

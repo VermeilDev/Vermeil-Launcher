@@ -145,7 +145,7 @@ const ModVersionPicker: Component<Props> = (props) => {
             class={`btn btn--sm btn--subtle btn--fixed tip-below tip-right ${showAll() ? "btn-active" : ""}`}
             style="--btn-fixed-width:112px"
             onClick={() => setShowAll(!showAll())}
-            data-tip={`${incompatibleCount()} of ${versions().length} listed versions don't match ${props.loader} ${props.gameVersion}`}
+            data-tip={`${incompatibleCount()} incompatible versions`}
           >
             {showAll() ? "Compatible only" : "Show all"}
           </button>

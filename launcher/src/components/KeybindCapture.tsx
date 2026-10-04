@@ -117,8 +117,8 @@ const KeybindCapture: Component<{
         type="button"
         class={`keybind-capture tip-below ${capturing() ? "capturing" : ""}`}
         onClick={startCapture}
-        data-tip={capturing() ? "Press keys or mouse button… (Escape to cancel)" : "Click to change"}
-        aria-label={capturing() ? "Press keys or mouse button… (Escape to cancel)" : "Click to change"}
+        data-tip={capturing() ? "Escape to cancel" : "Click to bind"}
+        aria-label={capturing() ? "Escape to cancel" : "Click to bind"}
       >
         {capturing() ? (
           <span class="keybind-capturing-text">Press keys or mouse button…</span>
@@ -131,8 +131,8 @@ const KeybindCapture: Component<{
         class="keybind-reset tip-right"
         onClick={handleReset}
         disabled={isDefault()}
-        data-tip="Reset to default"
-        aria-label="Reset to default"
+        data-tip="Reset default"
+        aria-label="Reset default"
       >
         <IconRotateCcw />
       </button>

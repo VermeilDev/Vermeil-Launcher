@@ -326,7 +326,7 @@ const Account: Component = () => {
           <div class="page-subtitle">// Manage saved profiles, active identities, and authentication methods</div>
         </div>
         <div class="account-header-meta">
-          <div class="header-meta-pill tip-below" data-tip="Active profile authentication">
+          <div class="header-meta-pill">
             <Show
               when={account()}
               fallback={
@@ -340,7 +340,7 @@ const Account: Component = () => {
               <span>Microsoft: <strong>{account()!.name}</strong></span>
             </Show>
           </div>
-          <div class="header-meta-pill tip-below tip-right" data-tip="Google Cloud Settings Sync">
+          <div class="header-meta-pill">
             <Show
               when={cloudConnected()}
               fallback={
@@ -417,7 +417,7 @@ const Account: Component = () => {
                     <button
                       type="button"
                       class="account-uuid-chip tip-below"
-                      data-tip="Click to copy full UUID"
+                      data-tip="Copy UUID"
                       onClick={() => copyUuid(account()!.id)}
                     >
                       <span>{account()!.id}</span>
@@ -549,9 +549,8 @@ const Account: Component = () => {
                     </button>
                     <button
                       type="button"
-                      class="btn btn--neutral btn--sm tip-right"
+                      class="btn btn--neutral btn--sm"
                       onClick={handleCancelGoogle}
-                      data-tip="Abort cloud operation"
                     >
                       Cancel
                     </button>
@@ -607,7 +606,7 @@ const Account: Component = () => {
                             </Show>
                           }
                         >
-                          <span class="bento-badge bento-badge-warn tip-right" data-tip="Session expired. Re-authenticate with Microsoft.">
+                          <span class="bento-badge bento-badge-warn tip-right" data-tip="Session expired">
                             EXPIRED
                           </span>
                         </Show>

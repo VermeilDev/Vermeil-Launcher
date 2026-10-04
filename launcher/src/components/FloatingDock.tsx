@@ -162,7 +162,7 @@ const DockPaginationIsland: Component = () => {
       onMouseDown={startHold}
       onMouseUp={cancelHold}
       onMouseLeave={cancelHold}
-      data-tip={paginationScrollMode() ? "Scroll Mode: ON (Z to toggle)" : undefined}
+      data-tip={paginationScrollMode() ? "Scroll active (Z)" : undefined}
     >
       <Show when={!holding()}>
         <div class="dock-page-dots">

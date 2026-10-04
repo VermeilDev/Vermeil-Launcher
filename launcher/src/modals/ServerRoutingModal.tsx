@@ -161,7 +161,7 @@ const ServerRoutingModal: Component = () => {
                           <button
                             type="button"
                             class="routing-delete-btn tip-below tip-left"
-                            data-tip={`Remove ${srv.name}`}
+                            data-tip="Remove"
                             aria-label={`Remove ${srv.name}`}
                             onClick={() => handleRemove(srv.address)}
                           >

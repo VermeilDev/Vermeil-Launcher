@@ -80,16 +80,16 @@ export function javaActionButtonTip(
   major: number,
   isManaged?: boolean
 ): string {
-  const targetFull = javaVendorFullName(targetDistro);
+  const targetShort = javaVendorShortName(targetDistro);
   if (!installed) {
-    return `Download and install official ${targetFull} for Java ${major}`;
+    return `Install ${targetShort} for Java ${major}`;
   }
   if (isManaged === false) {
-    return `Download official ${targetFull} into Vermeil AppData (your system installation will remain untouched)`;
+    return `Install isolated ${targetShort} build`;
   }
   const currVendor = detectJavaVendor(currentPath, fullVersion);
   if (currVendor === targetDistro) {
-    return `Reinstall a fresh copy of ${targetFull} for Java ${major}`;
+    return `Reinstall ${targetShort}`;
   }
-  return `Replace current Java with official ${targetFull} for Java ${major}`;
+  return `Switch to ${targetShort}`;
 }

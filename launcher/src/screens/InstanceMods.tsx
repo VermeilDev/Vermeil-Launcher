@@ -1633,13 +1633,13 @@ const InstanceMods: Component = () => {
             </Show>
             <span class="inst-pill-tag inst-pill-version">{instance()?.game_version}</span>
             <Show when={(instance()?.source_platforms || []).includes("modrinth")}>
-              <span class="badge badge--source badge--modrinth tip-below" data-tip="Available on Modrinth"><IconModrinth /></span>
+              <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth"><IconModrinth /></span>
             </Show>
             <Show when={(instance()?.source_platforms || []).includes("curseforge")}>
-              <span class="badge badge--source badge--curseforge tip-below" data-tip="Available on CurseForge"><IconCurseForge /></span>
+              <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge"><IconCurseForge /></span>
             </Show>
             <Show when={instance()?.ingame_cape_supported}>
-              <span class="badge badge--companion tip-below" data-tip="Vermeil companion mod supported">
+              <span class="badge badge--companion tip-below" data-tip="Companion mod">
                 <img src="/logo.png" alt="Vermeil" draggable={false} />
               </span>
             </Show>
@@ -1706,7 +1706,7 @@ const InstanceMods: Component = () => {
                 });
               }
             }}
-            data-tip="Copy instance share code"
+            data-tip="Copy share code"
             aria-label="Copy instance share code"
           >
             <IconShare2 />
@@ -1745,7 +1745,7 @@ const InstanceMods: Component = () => {
                 showToast({ title: "Failed to update pin", message: String(e), type: "error" });
               }
             }}
-            data-tip={pinnedInstanceIds().includes(instance()?.id ?? "") ? "Unpin from quick-launch" : "Pin to quick-launch"}
+            data-tip={pinnedInstanceIds().includes(instance()?.id ?? "") ? "Unpin instance" : "Pin instance"}
             aria-label="Toggle pin"
           >
             <IconPin />
@@ -1922,7 +1922,7 @@ const InstanceMods: Component = () => {
                       const inst = instance();
                       if (inst) openChangeLoaderModal(inst.id);
                     }}
-                    data-tip={gameRunning() ? "Cannot change loader while game is running" : "Change mod loader or version"}
+                    data-tip={gameRunning() ? "Game is running" : undefined}
                   >
                     <IconWand /> Change loader
                   </button>
@@ -2330,13 +2330,6 @@ const InstanceMods: Component = () => {
                 </div>
 
                 <Show when={contentTab() === "installed"}>
-                  <button
-                    class="btn inst-panel-btn tip-below"
-                    onClick={() => { if (instance()) openInstanceFolder(instance()!.id); }}
-                    data-tip="Open instance folder"
-                  >
-                    <IconFolderOpen />
-                  </button>
                   <div class="inst-search-input-wrap">
                     <span class="inst-search-icon"><IconSearch /></span>
                     <input
@@ -2357,7 +2350,7 @@ const InstanceMods: Component = () => {
                   <button
                     class={`btn inst-panel-btn mod-source-toggle ${modSource() === "modrinth" ? "mr" : "cf"} tip-below`}
                     onClick={handleSourceToggle}
-                    data-tip={modSource() === "modrinth" ? "Source: Modrinth (click for CurseForge)" : "Source: CurseForge (click for Modrinth)"}
+                    data-tip={modSource() === "modrinth" ? "Switch to CurseForge" : "Switch to Modrinth"}
                   >
                     <Show when={modSource() === "modrinth"} fallback={<IconCurseForge />}>
                       <IconModrinth />
@@ -2392,32 +2385,10 @@ const InstanceMods: Component = () => {
                     onChange={(val) => setInstalledSort(val as "newest" | "oldest")}
                     width="155px"
                   />
-                  {/* View Mode Toggle: Grid vs Compact */}
-                  <div class="view-mode-tabs view-mode-toggle">
-                    <button
-                      type="button"
-                      class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
-                      onClick={() => setViewMode("grid")}
-                      data-tip="Grid view (Bento cards)"
-                      aria-label="Grid view"
-                    >
-                      <IconGrid />
-                    </button>
-                    <button
-                      type="button"
-                      class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
-                      onClick={() => setViewMode("compact")}
-                      data-tip="Compact view (Cassette tiles)"
-                      aria-label="Compact view"
-                    >
-                      <IconList />
-                    </button>
-                  </div>
                   <button
-                    class="btn inst-panel-btn inst-action-btn tip-below"
+                    class="btn inst-panel-btn inst-action-btn"
                     disabled={checkingUpdates() || (instance()?.mod_count ?? 0) === 0}
                     onClick={() => refreshUpdates(true)}
-                    data-tip="Check for newer versions"
                   >
                     <span class={checkingUpdates() ? "spin-icon" : ""}>
                       <IconRefresh />
@@ -2425,9 +2396,16 @@ const InstanceMods: Component = () => {
                     <span>{checkingUpdates() ? "Checking..." : "Updates"}</span>
                   </button>
                   <button
+                    class="btn inst-panel-btn tip-below"
+                    onClick={() => { if (instance()) openInstanceFolder(instance()!.id); }}
+                    data-tip="Open folder"
+                  >
+                    <IconFolderOpen />
+                  </button>
+                  <button
                     type="button"
                     class={`btn inst-panel-btn inst-trash-btn tip-below ${installedSelectMode() ? "active" : ""}`}
-                    data-tip={installedSelectMode() ? "Exit select mode" : "Select multiple to delete"}
+                    data-tip={installedSelectMode() ? "Cancel" : "Select to delete"}
                     disabled={(() => {
                       const mods = instanceMods();
                       if (installedFilter() === "all") return mods.length === 0;
@@ -2443,6 +2421,27 @@ const InstanceMods: Component = () => {
                       <IconX />
                     </Show>
                   </button>
+                  {/* View Mode Toggle: Grid vs Compact pinned to far right */}
+                  <div class="view-mode-tabs view-mode-toggle">
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
+                      onClick={() => setViewMode("grid")}
+                      data-tip="Grid view"
+                      aria-label="Grid view"
+                    >
+                      <IconGrid />
+                    </button>
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
+                      onClick={() => setViewMode("compact")}
+                      data-tip="Compact view"
+                      aria-label="Compact view"
+                    >
+                      <IconList />
+                    </button>
+                  </div>
                 </Show>
 
                 <Show when={contentTab() === "browse"}>
@@ -2458,13 +2457,19 @@ const InstanceMods: Component = () => {
                     />
                     <Dropdown prefix="Sort: " value={sortBy()} options={SORT_OPTIONS} onChange={handleSortChange} width="155px" />
                   </Show>
-                  {/* View Mode Toggle: Grid vs Compact */}
+                  <button
+                    class={`btn inst-panel-btn inst-action-btn ${selectMode() ? "active" : ""}`}
+                    onClick={() => { setSelectMode(!selectMode()); if (selectMode()) setSelectedItems(new Map()); }}
+                  >
+                    {selectMode() ? `Cancel (${selectedItems().size})` : "Select"}
+                  </button>
+                  {/* View Mode Toggle: Grid vs Compact pinned to far right */}
                   <div class="view-mode-tabs view-mode-toggle">
                     <button
                       type="button"
                       class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
                       onClick={() => setViewMode("grid")}
-                      data-tip="Grid view (Bento cards)"
+                      data-tip="Grid view"
                       aria-label="Grid view"
                     >
                       <IconGrid />
@@ -2473,19 +2478,12 @@ const InstanceMods: Component = () => {
                       type="button"
                       class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
                       onClick={() => setViewMode("compact")}
-                      data-tip="Compact view (Cassette tiles)"
+                      data-tip="Compact view"
                       aria-label="Compact view"
                     >
                       <IconList />
                     </button>
                   </div>
-                  <button
-                    class={`btn inst-panel-btn inst-action-btn tip-below ${selectMode() ? "active" : ""}`}
-                    data-tip="Bulk install"
-                    onClick={() => { setSelectMode(!selectMode()); if (selectMode()) setSelectedItems(new Map()); }}
-                  >
-                    {selectMode() ? `Cancel (${selectedItems().size})` : "Select"}
-                  </button>
                 </Show>
               </div>
             </div>
@@ -2534,7 +2532,7 @@ const InstanceMods: Component = () => {
                     <button
                       type="button"
                       class={`btn btn--sm btn--icon btn--toggle ${(instance()?.companion_enabled ?? true) ? "active" : ""} tip-right`}
-                      data-tip={(instance()?.companion_enabled ?? true) ? "Disable Vermeil features" : "Enable Vermeil features"}
+                      data-tip={(instance()?.companion_enabled ?? true) ? "Disable companion" : "Enable companion"}
                       aria-label="Toggle Vermeil features on this instance"
                       disabled={installedSelectMode()}
                       onClick={async (e) => {
@@ -2633,7 +2631,7 @@ const InstanceMods: Component = () => {
                       <Show when={(mod as any).pinned}>
                         <span
                           class="mod-tag mod-tag-held tip-below"
-                          data-tip="Held at this version because a mod needs this exact build. Update checks skip it."
+                          data-tip="Locked by dependency"
                         >
                           held
                         </span>
@@ -2779,7 +2777,7 @@ const InstanceMods: Component = () => {
                           <IconWand />
                         </Show>
                       </div>
-                      <div class="vanilla-badge-slash" data-tip={browseFilter() === "shader" ? "Shaders unsupported on Vanilla" : "Mods unsupported on Vanilla"}>
+                      <div class="vanilla-badge-slash" data-tip={browseFilter() === "shader" ? "Shaders unsupported" : "Mods unsupported"}>
                         <IconX />
                       </div>
                     </div>
@@ -3286,7 +3284,7 @@ const InstanceMods: Component = () => {
                 type="button"
                 class={`log-toolbar-jump tip-below ${autoScrollLogs() ? "active" : ""}`}
                 onClick={jumpToBottom}
-                data-tip={autoScrollLogs() ? "Auto-scroll active (click to lock)" : "Jump to latest (resume auto-scroll)"}
+                data-tip={autoScrollLogs() ? "Lock scroll" : "Jump to bottom"}
                 aria-label="Jump to latest"
               >
                 <IconArrowDown />

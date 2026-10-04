@@ -558,7 +558,6 @@ const OnboardingWizard: Component = () => {
                     <button
                       class="btn btn--secondary onboarding-cloud-btn"
                       onClick={handleCancelCloud}
-                      data-tip="Click to abort Google sign-in"
                     >
                       Cancel
                     </button>
@@ -699,8 +698,7 @@ const OnboardingWizard: Component = () => {
                           </Show>
                           <div class="java-slot-actions">
                             <button
-                              class={`btn btn--sm ${installed() ? "btn--neutral" : "btn--primary"} tip-below`}
-                              data-tip={installed() ? `Replace with official ${runtimeDisplayName()} build` : `Download official ${runtimeDisplayName()} JDK`}
+                              class={`btn btn--sm ${installed() ? "btn--neutral" : "btn--primary"}`}
                               onClick={() => handleJavaInstall(major)}
                               disabled={busy() !== null}
                             >
@@ -708,8 +706,7 @@ const OnboardingWizard: Component = () => {
                               <span>{javaActionButtonLabel(installed(), path(), det()?.full_version, javaRuntime(), busy() === "install")}</span>
                             </button>
                             <button
-                              class="btn btn--sm btn--neutral tip-below"
-                              data-tip={`Search system for Java ${major}`}
+                              class="btn btn--sm btn--neutral"
                               onClick={() => handleJavaDetect(major)}
                               disabled={busy() !== null}
                             >
@@ -717,8 +714,7 @@ const OnboardingWizard: Component = () => {
                               <span>{busy() === "detect" ? "Detecting..." : "Detect"}</span>
                             </button>
                             <button
-                              class="btn btn--sm btn--neutral tip-below tip-right"
-                              data-tip="Browse filesystem for javaw.exe"
+                              class="btn btn--sm btn--neutral"
                               onClick={() => handleJavaBrowse(major)}
                               disabled={busy() !== null}
                             >

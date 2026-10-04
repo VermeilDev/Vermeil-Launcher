@@ -477,7 +477,7 @@ const ImportInstance: Component = () => {
                             e.stopPropagation();
                             setSelectedPath(null);
                           }}
-                          data-tip="Remove selected file"
+                          data-tip="Remove"
                           aria-label="Remove selected file"
                           style="color: var(--muted); padding: 4px 8px;"
                         >
@@ -519,7 +519,7 @@ const ImportInstance: Component = () => {
                         <button
                           type="button"
                           class="btn btn--neutral tip-right"
-                          data-tip="Paste from clipboard"
+                          data-tip="Paste code"
                           onClick={handlePasteClipboard}
                           disabled={scanning() || importing()}
                           style="display: flex; align-items: center; justify-content: center; width: var(--control-height-md); height: var(--control-height-md); min-width: var(--control-height-md); padding: 0; flex-shrink: 0; align-self: stretch;"

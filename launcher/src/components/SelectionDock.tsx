@@ -65,10 +65,9 @@ export const SelectionDock: Component<SelectionDockProps> = (props) => {
 
       {/* Dismiss / Clear Action */}
       <button
-        class="btn btn--ghost btn--sm tip-below"
+        class="btn btn--ghost btn--sm"
         disabled={props.primaryLoading}
         onClick={() => props.onClear()}
-        data-tip={props.clearLabel || (isDelete() ? "Cancel" : "Clear selection")}
       >
         <IconX />
         <span>{props.clearLabel || (isDelete() ? "Cancel" : "Clear")}</span>

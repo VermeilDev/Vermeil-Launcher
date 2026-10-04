@@ -470,7 +470,7 @@ const Library: Component = () => {
         <div class="inst-card-badges">
           <div class="inst-card-badges-track">
             <Show when={isInstanceInstalling(inst)}>
-              <span class="badge badge--installing tip-below" data-tip="Downloading game files and libraries">
+              <span class="badge badge--installing">
                 <IconDownload />
                 Installing...
               </span>
@@ -478,7 +478,7 @@ const Library: Component = () => {
             <Show when={pinnedSet().has(inst.id)}>
               <span
                 class="badge badge--pinned tip-below"
-                data-tip="Pinned to floating dock (click to manage)"
+                data-tip="Pinned to dock"
                 style="cursor: pointer;"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -496,23 +496,23 @@ const Library: Component = () => {
               {loaderLabel(inst.loader?.type || "vanilla")}
             </span>
             <Show when={inst.source_project_id && inst.source_version}>
-              <span class="badge badge--vnum" data-tip={`Modpack version ${inst.source_version}`}>
+              <span class="badge badge--vnum">
                 {inst.source_version}
               </span>
             </Show>
             <span class="badge badge--ram">{inst.java?.memory_max_mb ?? 4096} MB</span>
             <Show when={(inst.source_platforms || []).includes("modrinth")}>
-              <span class="badge badge--source badge--modrinth tip-below" data-tip="Available on Modrinth">
+              <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth">
                 <IconModrinth />
               </span>
             </Show>
             <Show when={(inst.source_platforms || []).includes("curseforge")}>
-              <span class="badge badge--source badge--curseforge tip-below" data-tip="Available on CurseForge">
+              <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge">
                 <IconCurseForge />
               </span>
             </Show>
             <Show when={inst.ingame_cape_supported}>
-              <span class="badge badge--companion tip-below" data-tip="Vermeil companion mod supported">
+              <span class="badge badge--companion tip-below" data-tip="Companion mod">
                 <img src="/logo.png" alt="Vermeil" draggable={false} />
               </span>
             </Show>
@@ -566,8 +566,7 @@ const Library: Component = () => {
               {/* Single Primary CTA Button */}
               <div class="empty-action-row">
                 <button
-                  class="btn-create-hero tip-below"
-                  data-tip="Opens the Create Instance screen"
+                  class="btn-create-hero"
                   onClick={() => setActiveScreen("create-choose")}
                 >
                   <IconPlus />
@@ -597,7 +596,7 @@ const Library: Component = () => {
                 <span>·</span>
                 <span
                   class="library-meta-link tip-below"
-                  data-tip="Manage quick-launch pins"
+                  data-tip="Manage pins"
                   onClick={openPinInstancesModal}
                 >
                   {pinnedList().length} pinned
@@ -633,7 +632,7 @@ const Library: Component = () => {
 
               <button
                 class="btn tip-below tip-right"
-                data-tip={selectMode() ? "Exit select mode" : "Batch delete"}
+                data-tip={selectMode() ? "Cancel" : "Select to delete"}
                 onClick={() => {
                   setSelectMode(!selectMode());
                   setSelected(new Set<string>());
@@ -707,8 +706,7 @@ const Library: Component = () => {
               </For>
               <Show when={pinnedList().length < 6}>
                 <div
-                  class="add-card tip-below"
-                  data-tip="Choose instances to pin on floating dock"
+                  class="add-card"
                   onClick={openPinInstancesModal}
                 >
                   <div class="add-card-thumb">
@@ -857,8 +855,7 @@ const Library: Component = () => {
                   </For>
                   {/* Single onion-skin ghost slot next to the oldest screenshot inviting new snaps */}
                   <div
-                    class="screenshot-item screenshot-item--placeholder tip-below tip-left"
-                    data-tip="Press F2 in-game to capture more screenshots"
+                    class="screenshot-item screenshot-item--placeholder"
                   >
                     <div class="screenshot-placeholder-box">
                       <IconCamera />
@@ -900,12 +897,7 @@ const Library: Component = () => {
                 <div class={`telemetry-row ${!companionEnabled() ? "telemetry-row--muted" : ""}`}>
                   <span class="telemetry-label">Companion Mod</span>
                   <span
-                    class="telemetry-value tip-below tip-right"
-                    data-tip={
-                      companionEnabled()
-                        ? "Auto-managed in Settings"
-                        : "Disabled in Settings"
-                    }
+                    class="telemetry-value"
                     style={{
                       color: companionEnabled() ? "var(--accent)" : "var(--text-muted)",
                       cursor: "default",
@@ -1003,15 +995,13 @@ const Library: Component = () => {
                 <span>{shot().file_name} · {formatSize(shot().size_bytes)}</span>
                 <div style="display: flex; gap: 8px;">
                   <button
-                    class="btn btn--sm btn--neutral tip-below tip-left"
-                    data-tip="Open in system default viewer"
+                    class="btn btn--sm btn--neutral"
                     onClick={() => openFilePath(shot().path)}
                   >
                     <span>Open Full Size</span>
                   </button>
                   <button
-                    class="btn btn--sm btn--subtle tip-below tip-left"
-                    data-tip="Reveal in screenshots folder"
+                    class="btn btn--sm btn--subtle"
                     onClick={() => openInstanceFolder(shot().instance_id, "screenshots")}
                   >
                     <IconFolderOpen />

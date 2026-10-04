@@ -399,9 +399,8 @@ const CreateCustom: Component = () => {
                   />
                   <button
                     type="button"
-                    class="btn btn--secondary btn--sm tip-right"
+                    class="btn btn--secondary btn--sm"
                     onClick={() => setName(suggestedName())}
-                    data-tip={`Set name to "${suggestedName()}"`}
                     style="white-space: nowrap; height: var(--control-height-md);"
                   >
                     Auto-name
@@ -475,10 +474,7 @@ const CreateCustom: Component = () => {
                       <div class="custom-dropdown-selected" ref={triggerEl} onClick={toggleVersionDrop}>
                         <span>{selectedGameVersion() || "Select version"}{latestVersionId() === selectedGameVersion() ? " (latest)" : ""}</span>
                         <Show when={isCompanionSupported(selectedGameVersion())}>
-                          <span
-                            class="companion-tag tip-below"
-                            data-tip="Vermeil companion mod supported"
-                          >
+                          <span class="companion-tag">
                             <img class="companion-version-mark" src="/logo.png" alt="Vermeil" draggable={false} /> Companion
                           </span>
                         </Show>
@@ -512,7 +508,7 @@ const CreateCustom: Component = () => {
                                         class="companion-version-mark tip-right"
                                         src="/logo.png"
                                         alt="Vermeil"
-                                        data-tip="Vermeil companion mod supported"
+                                        data-tip="Companion mod"
                                         draggable={false}
                                       />
                                     </Show>

@@ -224,8 +224,7 @@ const Downloads: Component = () => {
                   fallback={<span class="dl-cancelling-tag">Cancelling...</span>}
                 >
                   <button
-                    class="dl-active-cancel tip-right"
-                    data-tip="Cancel installation and clean up partial files"
+                    class="dl-active-cancel"
                     onClick={cancelActiveInstall}
                   >
                     Cancel
@@ -530,8 +529,7 @@ const ActiveDownloadCard: Component<{ entry: DownloadEntry; position?: number }>
         </span>
         <button
           type="button"
-          class="dl-queue-cancel tip-right"
-          data-tip="Cancel this queued download"
+          class="dl-queue-cancel"
           onClick={handleCancel}
         >
           Cancel
