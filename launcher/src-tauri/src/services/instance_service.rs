@@ -524,6 +524,11 @@ pub async fn change_loader(
 
     let mods_dir = instance_dir.join(".minecraft").join("mods");
 
+    let has_incompatible_mods = instance.mods.iter().any(|m| {
+        m.category == "mod"
+            && !crate::services::loader_scan::is_mod_compatible_with_loader(&loader_type, &m.loaders)
+    });
+
     if loader_type == LoaderType::Vanilla {
         // Vanilla cannot load mods
         if disable_mods && mods_dir.exists() {
@@ -557,12 +562,19 @@ pub async fn change_loader(
             let json = serde_json::to_string_pretty(&instance)?;
             paths::atomic_write(&meta_path, json.as_bytes())?;
         }
-    } else if loader_changed && convert_mods {
+    } else if (loader_changed || has_incompatible_mods) && convert_mods {
         // Auto-convert compatible mods for the new loader
         let mod_candidates: Vec<ModEntry> = instance
             .mods
             .iter()
-            .filter(|m| m.category == "mod" && m.enabled)
+            .filter(|m| {
+                m.category == "mod"
+                    && (m.enabled
+                        || !crate::services::loader_scan::is_mod_compatible_with_loader(
+                            &loader_type,
+                            &m.loaders,
+                        ))
+            })
             .cloned()
             .collect();
 
@@ -624,6 +636,7 @@ pub async fn change_loader(
                                 .await
                                 {
                                     Ok(_) => {
+                                        enable_single_mod_on_disk_and_meta(&meta_path, &mods_dir, &entry.id, &entry.project_id);
                                         converted_count += 1;
                                         converted_titles.push(title.clone());
                                         emit_progress(app, idx + 1, total, &title, "Converted");
@@ -734,6 +747,7 @@ pub async fn change_loader(
                                 .await
                                 {
                                     Ok(_) => {
+                                        enable_single_mod_on_disk_and_meta(&meta_path, &mods_dir, &entry.id, &entry.project_id);
                                         converted_count += 1;
                                         converted_titles.push(title.clone());
                                         emit_progress(app, idx + 1, total, &title, "Converted");

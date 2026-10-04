@@ -1460,17 +1460,20 @@
 .side-icon svg { width: 100%; height: 100%; }
 .mod-card-actions { display: flex; gap: var(--space-1); align-items: center; }
 .mod-card-actions .btn { align-self: center; }
-.btn--mod-update {
+.btn--mod-update,
+.btn--mod-convert {
   gap: 4px;
   padding: 0 8px;
   font-weight: 600;
   letter-spacing: 0.2px;
 }
-.btn--mod-update svg {
+.btn--mod-update svg,
+.btn--mod-convert svg {
   width: 12px;
   height: 12px;
 }
-.btn--mod-update:disabled {
+.btn--mod-update:disabled,
+.btn--mod-convert:disabled {
   cursor: wait;
 }
 .btn--sm.btn--icon {
@@ -6323,7 +6326,8 @@ select.field-input[size] { appearance: none; }
   }
 }
 
-.inst-card-grid.compact .btn--mod-update {
+.inst-card-grid.compact .btn--mod-update,
+.inst-card-grid.compact .btn--mod-convert {
   height: 24px !important;
   padding: 0 8px !important;
   font-size: 10.5px !important;
@@ -6331,7 +6335,8 @@ select.field-input[size] { appearance: none; }
   border-radius: 0 !important;
 }
 @media (min-width: 1200px) {
-  .inst-card-grid.compact .btn--mod-update {
+  .inst-card-grid.compact .btn--mod-update,
+  .inst-card-grid.compact .btn--mod-convert {
     height: 26px !important;
     padding: 0 10px !important;
     font-size: 11px !important;

@@ -365,7 +365,11 @@ pub async fn get_project_versions(
     // pure waste.
     let mut params: Vec<String> = vec!["include_changelog=false".to_string()];
     if !loader.is_empty() {
-        params.push(format!("loaders=[\"{}\"]", loader));
+        if loader.eq_ignore_ascii_case("quilt") {
+            params.push("loaders=[\"quilt\",\"fabric\"]".to_string());
+        } else {
+            params.push(format!("loaders=[\"{}\"]", loader));
+        }
     }
     if !game_version.is_empty() {
         params.push(format!("game_versions=[\"{}\"]", game_version));

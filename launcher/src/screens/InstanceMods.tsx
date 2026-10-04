@@ -1393,6 +1393,53 @@ const InstanceMods: Component = () => {
     });
   };
 
+  const handleConvertMod = (mod: any) => {
+    const inst = instance();
+    if (!inst) return;
+    const modTitle = mod.title || mod.filename;
+    const isCf = mod.source === "curseforge" || (mod.source === "modpack" && /^\d+$/.test(mod.project_id));
+    const cat = (mod as any).category || "mod";
+    enqueueInstallTask({
+      title: modTitle,
+      projectId: mod.project_id,
+      category: cat,
+      instanceId: inst.id,
+      meta: {
+        loader: inst.loader.type,
+        gameVersion: inst.game_version,
+      },
+      execute: async (dlId: string) => {
+        try {
+          const resultJson = isCf
+            ? await installCfModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat)
+            : await installModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat);
+          try {
+            const result = JSON.parse(resultJson);
+            const depIssues: DependencyIssue[] = result.issues ?? [];
+            const vnum: string | undefined = result.mod_entry?.version_number ?? undefined;
+            completeDownload(dlId, undefined, vnum);
+            if (depIssues.length > 0) {
+              reportDependencyIssues(modTitle, depIssues);
+            }
+          } catch {
+            completeDownload(dlId);
+          }
+          await refetchInstances();
+          await refetchDetail();
+          refreshUpdates();
+        } catch (err: any) {
+          const errStr = typeof err === "string" ? err : (err?.message || String(err));
+          failDownload(dlId, errStr);
+          showToast({
+            title: `Cannot convert ${modTitle}`,
+            message: errStr,
+            type: "error",
+          });
+        }
+      },
+    });
+  };
+
   const handleBulkInstall = () => {
     const inst = instance();
     if (!inst) return;
@@ -2686,7 +2733,7 @@ const InstanceMods: Component = () => {
                   <div class="mod-card-footer">
                     <div class="mod-card-meta">{(mod as any).category || "mod"} · {mod.enabled ? "Enabled" : "Disabled"}</div>
                     <div class="mod-card-actions">
-                      <Show when={modUpdates().has(mod.project_id)}>
+                      <Show when={modUpdates().has(mod.project_id) && isInstalledModCompatible(mod, instance()?.loader.type)}>
                         <button
                           class="btn btn--sm btn--success btn--mod-update tip-right"
                           disabled={installedSelectMode() || isTaskQueuedOrActive(mod.project_id, instance()?.id)}
@@ -2707,6 +2754,7 @@ const InstanceMods: Component = () => {
                         </button>
                       </Show>
                       {(() => {
+                        const isMod = ((mod as any).category || "mod") === "mod";
                         const isCompatible = isInstalledModCompatible(mod, instance()?.loader.type);
                         const isLocked = installedSelectMode() || (!mod.enabled && !isCompatible);
                         const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader.type);
@@ -2717,31 +2765,55 @@ const InstanceMods: Component = () => {
                           ? "Disable mod"
                           : "Enable mod";
                         return (
-                          <button
-                            type="button"
-                            class={`btn btn--sm btn--icon btn--toggle ${mod.enabled ? "active" : ""} tip-right`}
-                            data-tip={toggleTip}
-                            aria-label={toggleTip}
-                            disabled={isLocked}
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              const inst = instance();
-                              if (!inst) return;
-                              try {
-                                await toggleModInInstance(inst.id, mod.id);
-                                await refetchInstances();
-                                await refetchDetail();
-                              } catch (err: any) {
-                                showToast({
-                                  title: "Cannot enable mod",
-                                  message: String(err),
-                                  type: "error",
-                                });
-                              }
-                            }}
-                          >
-                            <IconCheck />
-                          </button>
+                          <>
+                            <Show when={isMod && !isCompatible && mod.project_id}>
+                              <button
+                                type="button"
+                                class="btn btn--sm btn--primary btn--mod-convert tip-right"
+                                disabled={installedSelectMode() || isTaskQueuedOrActive(mod.project_id, instance()?.id)}
+                                data-tip={`Convert to ${instance()!.loader.type}`}
+                                aria-label={`Convert ${mod.title || mod.filename} to ${instance()!.loader.type}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleConvertMod(mod);
+                                }}
+                              >
+                                <IconRefresh />
+                                <span>
+                                  {isTaskActive(mod.project_id, instance()?.id)
+                                    ? "Converting..."
+                                    : isTaskQueued(mod.project_id, instance()?.id)
+                                    ? "Queued"
+                                    : "Convert"}
+                                </span>
+                              </button>
+                            </Show>
+                            <button
+                              type="button"
+                              class={`btn btn--sm btn--icon btn--toggle ${mod.enabled ? "active" : ""} tip-right`}
+                              data-tip={toggleTip}
+                              aria-label={toggleTip}
+                              disabled={isLocked}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const inst = instance();
+                                if (!inst) return;
+                                try {
+                                  await toggleModInInstance(inst.id, mod.id);
+                                  await refetchInstances();
+                                  await refetchDetail();
+                                } catch (err: any) {
+                                  showToast({
+                                    title: "Cannot enable mod",
+                                    message: String(err),
+                                    type: "error",
+                                  });
+                                }
+                              }}
+                            >
+                              <IconCheck />
+                            </button>
+                          </>
                         );
                       })()}
                       <button
