@@ -44,19 +44,31 @@ function resolveIconUrl(item: { local_icon_path?: string | null; icon_url?: stri
   return resolveAssetUrl(item.local_icon_path) || (item.icon_url ? item.icon_url : undefined);
 }
 
+const CODE_LOADERS = new Set(["fabric", "forge", "neoforge", "quilt", "rift", "liteloader", "risugami", "modloader"]);
+
 /**
  * Detect the target install category for a search hit when browsing with the
  * "all" filter active. Checks the explicit `project_type` returned by Modrinth
  * / CurseForge, falling back to category keywords in the hit's metadata.
+ *
+ * Modrinth assigns `project_type: "mod"` to datapacks. On Vanilla instances
+ * (or for projects lacking code loader tags), items tagged with "datapack"
+ * are classified as "datapack" so they render with the correct badge and install
+ * into the world's datapack directory instead of failing as jar mods.
  */
-function detectCategory(mod: ModHit): "mod" | "resourcepack" | "shader" | "datapack" {
-  if (mod.project_type === "resourcepack" || mod.project_type === "shader" || mod.project_type === "datapack" || mod.project_type === "mod") {
+function detectCategory(mod: ModHit, currentLoader?: string): "mod" | "resourcepack" | "shader" | "datapack" {
+  if (mod.project_type === "resourcepack" || mod.project_type === "shader" || mod.project_type === "datapack") {
     return mod.project_type;
   }
   const cats = mod.categories || [];
   if (cats.some(c => c.toLowerCase().includes("shader"))) return "shader";
   if (cats.some(c => c.toLowerCase().includes("resource") || c.toLowerCase().includes("texture"))) return "resourcepack";
-  if (cats.some(c => c.toLowerCase().includes("data") || c.toLowerCase().includes("datapack"))) return "datapack";
+  if (cats.some(c => c.toLowerCase().includes("data") || c.toLowerCase().includes("datapack"))) {
+    const loader = currentLoader?.toLowerCase();
+    if (!loader || loader === "vanilla" || !cats.some(c => CODE_LOADERS.has(c.toLowerCase()))) {
+      return "datapack";
+    }
+  }
   return "mod";
 }
 
@@ -1163,7 +1175,7 @@ const InstanceMods: Component = () => {
   const handleInstallMod = (mod: ModHit, versionId?: string) => {
     const inst = instance();
     if (!inst) return;
-    const cat = browseFilter() === "all" ? detectCategory(mod) : browseFilter();
+    const cat = browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter();
     enqueueInstallTask({
       title: mod.title,
       projectId: mod.project_id,
@@ -1242,7 +1254,7 @@ const InstanceMods: Component = () => {
   const handleCardInstall = async (mod: ModHit, forcePrompt: boolean = false) => {
     const inst = instance();
     if (!inst) return;
-    const cat = browseFilter() === "all" ? detectCategory(mod) : browseFilter();
+    const cat = browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter();
     if (!forcePrompt && checkModCompatibility(mod, inst.game_version, inst.loader.type, cat)) {
       handleInstallMod(mod);
       return;
@@ -1301,7 +1313,7 @@ const InstanceMods: Component = () => {
     if (map.has(mod.project_id)) {
       map.delete(mod.project_id);
     } else {
-      const cat = browseFilter() === "all" ? detectCategory(mod) : browseFilter();
+      const cat = browseFilter() === "all" ? detectCategory(mod, instance()?.loader?.type) : browseFilter();
       map.set(mod.project_id, { mod, category: cat });
     }
     setSelectedItems(map);
@@ -2872,16 +2884,17 @@ const InstanceMods: Component = () => {
                     </div>
                     <div class="mod-card-desc">{mod.description}</div>
                     <div class="mod-card-tags">
-                      <Show when={browseFilter() === "all"}>
-                        <span class={`mod-tag mod-tag-type mod-tag-type--${detectCategory(mod)}`}>
-                          {categoryLabel(detectCategory(mod))}
-                        </span>
-                      </Show>
                       {(() => {
+                        const currentCat = detectCategory(mod, instance()?.loader?.type);
                         const tags = extractCardTags(mod.categories);
                         return (
                           <>
-                            <Show when={tags.loader && detectCategory(mod) === "mod"}>
+                            <Show when={browseFilter() === "all"}>
+                              <span class={`mod-tag mod-tag-type mod-tag-type--${currentCat}`}>
+                                {categoryLabel(currentCat)}
+                              </span>
+                            </Show>
+                            <Show when={tags.loader && currentCat === "mod"}>
                               <span class={`mod-tag mod-tag-loader loader-${tags.loader}`}>
                                 {tags.loader === "vanilla" ? "Vanilla" : tags.loader!.charAt(0).toUpperCase() + tags.loader!.slice(1)}
                               </span>
@@ -2951,7 +2964,7 @@ const InstanceMods: Component = () => {
                  label a version compatible that the installer then resolved
                  differently — or, on CurseForge, silently substituted. */
               gameVersion={instance()?.game_version ?? ""}
-              category={browseFilter() === "all" ? (detailMod() ? detectCategory(detailMod()!) : "mod") : browseFilter()}
+              category={browseFilter() === "all" ? (detailMod() ? detectCategory(detailMod()!, instance()?.loader?.type) : "mod") : browseFilter()}
               loaders={detailMod() ? extractLoaders(detailMod()!.categories) : []}
               installedVersionId={instanceMods().find((m: any) => m.project_id === detailMod()?.project_id)?.version_id}
               busy={isTaskQueuedOrActive(detailMod()?.project_id || "", instance()?.id)}
