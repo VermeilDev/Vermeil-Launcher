@@ -104,8 +104,9 @@ export async function checkForUpdates(
       fallbackChannel;
 
     const effectiveAllowDowngrades = allowDowngrades || channel === "experimental";
-    const update = await checkForAppUpdates(channel, effectiveAllowDowngrades);
-    if (!update) {
+    const result = await checkForAppUpdates(channel, effectiveAllowDowngrades);
+
+    if (result.status === "upToDate") {
       if (!silent) {
         showToast({
           title: "Up to date",
@@ -117,19 +118,31 @@ export async function checkForUpdates(
       return false;
     }
 
+    if (result.status === "building") {
+      if (!silent) {
+        showToast({
+          title: "Release building",
+          message: `Update v${result.version} is currently compiling on GitHub Actions. Installers will be ready in a few minutes.`,
+          type: "info",
+          autoCloseMs: 7000,
+        });
+      }
+      return false;
+    }
+
     // Re-checks (the 5-min interval) shouldn't disrupt the user if we're
     // already showing them this same version. Bail out without touching the
     // banner state — they may be mid-download.
-    if (cachedUpdate && cachedUpdate.version === update.version) {
+    if (cachedUpdate && cachedUpdate.version === result.version) {
       return true;
     }
 
-    cachedUpdate = update;
+    cachedUpdate = result;
     setUpdateAvailable({
-      version: update.version,
-      currentVersion: update.currentVersion,
-      body: update.body ?? "",
-      date: update.date ?? "",
+      version: result.version,
+      currentVersion: result.currentVersion,
+      body: result.body ?? "",
+      date: result.date ?? "",
     });
     return true;
   } catch (e) {

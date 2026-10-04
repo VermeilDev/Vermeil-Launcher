@@ -229,6 +229,7 @@ const Settings: Component = () => {
   const [purging, setPurging] = createSignal(false);
   const [sharedDataSize, setSharedDataSize] = createSignal(0);
   const [purgingShared, setPurgingShared] = createSignal(false);
+  const [checkingUpdate, setCheckingUpdate] = createSignal(false);
 
   // Video settings read straight from the resource — `updateSetting` mutates it
   // optimistically (see below), so reads are always the latest value, no
@@ -512,6 +513,22 @@ const Settings: Component = () => {
       });
     } finally {
       setPurgingShared(false);
+    }
+  };
+
+  const handleManualUpdateCheck = async () => {
+    if (checkingUpdate()) return;
+    setCheckingUpdate(true);
+    try {
+      await checkForUpdates(
+        false,
+        activeChannel() === "experimental" || (activeChannel() === "stable" && isCurrentExperimental()),
+        activeChannel(),
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCheckingUpdate(false);
     }
   };
 
@@ -2616,9 +2633,10 @@ const Settings: Component = () => {
                         <div class="setting-control">
                           <button
                             class="btn btn--sm"
-                            onClick={() => checkForUpdates(false, activeChannel() === "experimental" || (activeChannel() === "stable" && isCurrentExperimental()))}
+                            disabled={checkingUpdate()}
+                            onClick={handleManualUpdateCheck}
                           >
-                            Check now
+                            {checkingUpdate() ? "Checking..." : "Check now"}
                           </button>
                         </div>
                       </div>

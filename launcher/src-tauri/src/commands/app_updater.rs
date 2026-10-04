@@ -26,7 +26,7 @@ pub async fn check_for_updates<R: Runtime>(
     webview: Webview<R>,
     channel: Option<String>,
     allow_downgrades: Option<bool>,
-) -> Result<Option<crate::services::app_updater::UpdateMetadata>, String> {
+) -> Result<crate::services::app_updater::UpdateCheckResponse, String> {
     crate::services::app_updater::check_for_updates(webview, channel, allow_downgrades).await
 }
 

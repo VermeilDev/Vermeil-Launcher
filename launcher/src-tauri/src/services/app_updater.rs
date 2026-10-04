@@ -40,6 +40,35 @@ pub struct UpdateMetadata {
     pub body: Option<String>,
 }
 
+/// Information about an in-flight release build actively compiling on GitHub Actions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InFlightBuild {
+    pub version: String,
+    pub run_name: String,
+    pub html_url: Option<String>,
+    pub started_at: Option<String>,
+}
+
+/// Detailed status returned by `check_for_updates`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "camelCase")]
+pub enum UpdateCheckResponse {
+    #[serde(rename_all = "camelCase")]
+    Available {
+        #[serde(flatten)]
+        metadata: UpdateMetadata,
+    },
+    #[serde(rename_all = "camelCase")]
+    Building {
+        version: String,
+        run_name: String,
+        html_url: Option<String>,
+        started_at: Option<String>,
+    },
+    UpToDate,
+}
+
 /// Resource managed by Tauri so we can hold the downloaded bytes between the
 /// `start_update_download` and `apply_pending_update` calls.
 #[derive(Default)]
@@ -199,6 +228,123 @@ pub fn clear_pending_update<R: Runtime>(app: &AppHandle<R>) {
     slot.take();
 }
 
+/// Query the latest commit SHA of the `updates` branch on GitHub.
+/// An immutable commit SHA bypasses Fastly CDN edge caching on `raw.githubusercontent.com`
+/// (which otherwise forces a 300-second TTL on branch heads).
+async fn fetch_latest_updates_sha() -> Option<String> {
+    #[derive(Deserialize)]
+    struct CommitRef {
+        sha: String,
+    }
+
+    let resp = crate::util::http::HTTP
+        .get("https://api.github.com/repos/VermeilDev/Vermeil-Launcher/commits/updates")
+        .timeout(std::time::Duration::from_secs(4))
+        .send()
+        .await
+        .ok()?;
+
+    if resp.status().is_success() {
+        let commit_data = resp.json::<CommitRef>().await.ok()?;
+        Some(commit_data.sha)
+    } else {
+        None
+    }
+}
+
+/// Resolve the updater manifest URL, querying GitHub API for the latest
+/// commit SHA so edge caches are bypassed. Falls back to the static branch URL if
+/// GitHub API rate limits or network issues occur.
+async fn resolve_updates_endpoint(channel_name: &str) -> String {
+    let manifest_file = if channel_name == "experimental" {
+        "experimental-latest.json"
+    } else {
+        "latest.json"
+    };
+
+    let commit_sha = match fetch_latest_updates_sha().await {
+        Some(sha) if !sha.is_empty() => sha,
+        _ => "updates".to_string(),
+    };
+
+    format!(
+        "https://raw.githubusercontent.com/VermeilDev/Vermeil-Launcher/{}/{}",
+        commit_sha, manifest_file
+    )
+}
+
+/// Check if a release build is actively compiling on GitHub Actions.
+async fn detect_in_flight_build() -> Option<InFlightBuild> {
+    #[derive(Deserialize)]
+    struct WorkflowRun {
+        name: String,
+        head_branch: Option<String>,
+        status: String,
+        html_url: Option<String>,
+        created_at: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct ActionsRunsResponse {
+        workflow_runs: Vec<WorkflowRun>,
+    }
+
+    let resp = crate::util::http::HTTP
+        .get("https://api.github.com/repos/VermeilDev/Vermeil-Launcher/actions/runs?event=push&per_page=5")
+        .timeout(std::time::Duration::from_secs(4))
+        .send()
+        .await
+        .ok()?;
+
+    if !resp.status().is_success() {
+        return None;
+    }
+
+    let data = resp.json::<ActionsRunsResponse>().await.ok()?;
+
+    for run in data.workflow_runs {
+        let is_running = matches!(
+            run.status.as_str(),
+            "in_progress" | "queued" | "waiting" | "requested" | "pending"
+        );
+        if !is_running {
+            continue;
+        }
+
+        let branch = run.head_branch.as_deref().unwrap_or("");
+        let is_release_run = run.name.starts_with("Release") || branch.starts_with('v');
+
+        if is_release_run {
+            let version = if let Some(stripped) = branch.strip_prefix('v') {
+                stripped.to_string()
+            } else if let Some(stripped) = run.name.strip_prefix("Release v") {
+                stripped.to_string()
+            } else if let Some(stripped) = run.name.strip_prefix("Release ") {
+                stripped.strip_prefix('v').unwrap_or(stripped).to_string()
+            } else {
+                branch.to_string()
+            };
+
+            if !version.is_empty() {
+                tracing::info!(
+                    "Detected in-flight release build v{} (run: '{}', status: '{}')",
+                    version,
+                    run.name,
+                    run.status
+                );
+                return Some(InFlightBuild {
+                    version,
+                    run_name: run.name,
+                    html_url: run.html_url,
+                    started_at: run.created_at,
+                });
+            }
+        }
+    }
+
+    None
+}
+
 /// Check for updates on the requested channel ("stable" or "experimental"),
 /// dynamically configuring the updater endpoint and version comparator.
 /// When `allow_downgrades` is true, versions different from current are
@@ -207,17 +353,13 @@ pub async fn check_for_updates<R: Runtime>(
     webview: Webview<R>,
     channel: Option<String>,
     allow_downgrades: Option<bool>,
-) -> Result<Option<UpdateMetadata>, String> {
+) -> Result<UpdateCheckResponse, String> {
     let mut builder = webview.updater_builder();
 
     let channel_name = channel.unwrap_or_else(|| "stable".to_string());
-    let endpoint_url = if channel_name == "experimental" {
-        "https://raw.githubusercontent.com/VermeilDev/Vermeil-Launcher/updates/experimental-latest.json"
-    } else {
-        "https://raw.githubusercontent.com/VermeilDev/Vermeil-Launcher/updates/latest.json"
-    };
+    let endpoint_url = resolve_updates_endpoint(&channel_name).await;
 
-    let url = Url::parse(endpoint_url).map_err(|e| format!("Invalid updater URL: {}", e))?;
+    let url = Url::parse(&endpoint_url).map_err(|e| format!("Invalid updater URL: {}", e))?;
     builder = builder
         .endpoints(vec![url])
         .map_err(|e| format!("Failed to configure updater endpoints: {}", e))?;
@@ -232,21 +374,32 @@ pub async fn check_for_updates<R: Runtime>(
     let update = match updater.check().await {
         Ok(u) => u,
         Err(tauri_plugin_updater::Error::ReleaseNotFound) => None,
-        Err(e) => return Err(format!("Failed to check for updates: {}", e)),
+        Err(e) => {
+            tracing::warn!("Updater check returned error: {}", e);
+            None
+        }
     };
 
     if let Some(update) = update {
         let formatted_date = update.date.map(|d| d.to_string());
         let rid = webview.resources_table().add(update.clone());
-        let metadata = UpdateMetadata {
-            rid,
-            current_version: update.current_version,
-            version: update.version,
-            date: formatted_date,
-            body: update.body,
-        };
-        Ok(Some(metadata))
+        Ok(UpdateCheckResponse::Available {
+            metadata: UpdateMetadata {
+                rid,
+                current_version: update.current_version,
+                version: update.version,
+                date: formatted_date,
+                body: update.body,
+            },
+        })
+    } else if let Some(building) = detect_in_flight_build().await {
+        Ok(UpdateCheckResponse::Building {
+            version: building.version,
+            run_name: building.run_name,
+            html_url: building.html_url,
+            started_at: building.started_at,
+        })
     } else {
-        Ok(None)
+        Ok(UpdateCheckResponse::UpToDate)
     }
 }

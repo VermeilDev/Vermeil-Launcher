@@ -146,11 +146,14 @@ jobs:
           # Store manifest according to release channel
           if [[ "${{ github.ref_name }}" == *-* ]]; then
             cp /tmp/manifest/latest.json experimental-latest.json
-            git add experimental-latest.json
+            # Keep latest.json in sync during pre-release/alpha cycles so users on all channels receive updates
+            cp /tmp/manifest/latest.json latest.json
+            git add experimental-latest.json latest.json
             git commit --no-verify -m "chore(updates): publish experimental manifest for ${{ github.ref_name }} [skip ci]" || echo "No changes to commit"
           else
             cp /tmp/manifest/latest.json latest.json
-            git add latest.json
+            cp /tmp/manifest/latest.json experimental-latest.json
+            git add latest.json experimental-latest.json
             git commit --no-verify -m "chore(updates): publish stable manifest for ${{ github.ref_name }} [skip ci]" || echo "No changes to commit"
           fi
 

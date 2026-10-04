@@ -889,11 +889,26 @@ export interface UpdateMetadata {
   body: string | null;
 }
 
+export type UpdateCheckResult =
+  | ({
+      status: "available";
+    } & UpdateMetadata)
+  | {
+      status: "building";
+      version: string;
+      runName: string;
+      htmlUrl: string | null;
+      startedAt: string | null;
+    }
+  | {
+      status: "upToDate";
+    };
+
 export const checkForAppUpdates = (
   channel?: "stable" | "experimental",
   allowDowngrades?: boolean,
 ) =>
-  invoke<UpdateMetadata | null>("check_for_updates", {
+  invoke<UpdateCheckResult>("check_for_updates", {
     channel,
     allowDowngrades,
   });
