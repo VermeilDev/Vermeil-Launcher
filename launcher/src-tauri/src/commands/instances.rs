@@ -277,11 +277,13 @@ pub async fn rename_instance(id: String, new_name: String) -> Result<(), String>
 
 #[tauri::command]
 pub async fn change_instance_loader(
+    app: tauri::AppHandle,
     id: String,
     loader_type: String,
     loader_version: Option<String>,
-    disable_mods: bool,
-) -> Result<crate::models::instance::Instance, String> {
+    disable_mods: Option<bool>,
+    convert_mods: Option<bool>,
+) -> Result<instance_service::LoaderChangeResult, String> {
     let parsed_loader = match loader_type.to_lowercase().as_str() {
         "fabric" => crate::models::instance::LoaderType::Fabric,
         "forge" => crate::models::instance::LoaderType::Forge,
@@ -291,9 +293,16 @@ pub async fn change_instance_loader(
         other => return Err(format!("Unknown loader type '{}'", other)),
     };
 
-    instance_service::change_loader(&id, parsed_loader, loader_version, disable_mods)
-        .await
-        .map_err(|e| e.to_string())
+    instance_service::change_loader(
+        Some(&app),
+        &id,
+        parsed_loader,
+        loader_version,
+        disable_mods.unwrap_or(true),
+        convert_mods.unwrap_or(false),
+    )
+    .await
+    .map_err(|e| e.to_string())
 }
 
 

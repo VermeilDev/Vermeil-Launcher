@@ -2,8 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::models::instance::*;
+use crate::services::mod_install::{self, ProjectType, find_preferred_version};
+use crate::services::{cf_mod_install, curseforge, modrinth};
 use crate::util::paths;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::fs;
+use tauri::Emitter;
 use uuid::Uuid;
 
 pub async fn list_all() -> Result<Vec<Instance>, Box<dyn std::error::Error + Send + Sync>> {
@@ -273,19 +278,158 @@ fn unique_instance_name(base: &str) -> Result<String, Box<dyn std::error::Error 
 }
 
 
+/// Result of changing an instance's loader, including mod conversion statistics.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoaderChangeResult {
+    pub instance: Instance,
+    pub converted_count: usize,
+    pub disabled_count: usize,
+    pub converted_titles: Vec<String>,
+    pub disabled_titles: Vec<String>,
+}
+
+/// Progress event emitted during mod auto-conversion.
+#[derive(Debug, Clone, Serialize)]
+pub struct ModConversionProgress {
+    pub current: usize,
+    pub total: usize,
+    pub mod_title: String,
+    pub status: String,
+}
+
+fn emit_progress(
+    app: Option<&tauri::AppHandle>,
+    current: usize,
+    total: usize,
+    mod_title: &str,
+    status: &str,
+) {
+    if let Some(app_handle) = app {
+        let _ = app_handle.emit(
+            "mod-conversion-progress",
+            ModConversionProgress {
+                current,
+                total,
+                mod_title: mod_title.to_string(),
+                status: status.to_string(),
+            },
+        );
+    }
+}
+
+async fn resolve_cf_key() -> String {
+    crate::commands::mods::resolve_cf_api_key()
+        .await
+        .unwrap_or_else(|_| crate::commands::mods::DEFAULT_CURSEFORGE_KEY.to_string())
+}
+
+fn disable_single_mod_on_disk_and_meta(
+    meta_path: &std::path::Path,
+    mods_dir: &std::path::Path,
+    entry_id: &str,
+    project_id: &str,
+) {
+    let Ok(content) = fs::read_to_string(meta_path) else { return; };
+    let Ok(mut inst) = serde_json::from_str::<Instance>(&content) else { return; };
+    let mut modified = false;
+
+    for m in &mut inst.mods {
+        if m.id == entry_id || (!project_id.is_empty() && m.project_id == project_id) {
+            let current_path = mods_dir.join(&m.filename);
+            let new_name = if m.filename.ends_with(".disabled") {
+                m.filename.clone()
+            } else {
+                format!("{}.disabled", m.filename)
+            };
+            let new_path = mods_dir.join(&new_name);
+            if current_path.exists() && current_path != new_path {
+                let _ = fs::rename(&current_path, &new_path);
+            }
+            m.filename = new_name;
+            m.enabled = false;
+            modified = true;
+            break;
+        }
+    }
+
+    if modified {
+        if let Ok(json) = serde_json::to_string_pretty(&inst) {
+            let _ = paths::atomic_write(meta_path, json.as_bytes());
+        }
+    }
+}
+
+fn enable_single_mod_on_disk_and_meta(
+    meta_path: &std::path::Path,
+    mods_dir: &std::path::Path,
+    entry_id: &str,
+    project_id: &str,
+) {
+    let Ok(content) = fs::read_to_string(meta_path) else { return; };
+    let Ok(mut inst) = serde_json::from_str::<Instance>(&content) else { return; };
+    let mut modified = false;
+
+    for m in &mut inst.mods {
+        if m.id == entry_id || (!project_id.is_empty() && m.project_id == project_id) {
+            let active_name = if m.filename.ends_with(".disabled") {
+                m.filename.strip_suffix(".disabled").unwrap_or(&m.filename).to_string()
+            } else {
+                m.filename.clone()
+            };
+            let current_path = mods_dir.join(&m.filename);
+            let active_path = mods_dir.join(&active_name);
+            if current_path.exists() && current_path != active_path {
+                let _ = fs::rename(&current_path, &active_path);
+            }
+            m.filename = active_name;
+            m.enabled = true;
+            modified = true;
+            break;
+        }
+    }
+
+    if modified {
+        if let Ok(json) = serde_json::to_string_pretty(&inst) {
+            let _ = paths::atomic_write(meta_path, json.as_bytes());
+        }
+    }
+}
+
+fn disable_loose_jars(mods_dir: &std::path::Path, active_filenames: &HashSet<String>) {
+    if let Ok(dir_entries) = fs::read_dir(mods_dir) {
+        for dir_entry in dir_entries.flatten() {
+            let p = dir_entry.path();
+            if p.is_file() {
+                if let Some(ext) = p.extension() {
+                    if ext == "jar" {
+                        let file_name_lossy = p.file_name().unwrap_or_default().to_string_lossy();
+                        if !file_name_lossy.starts_with("vermeil-")
+                            && !active_filenames.contains(file_name_lossy.as_ref())
+                        {
+                            let new_path = mods_dir.join(format!("{}.disabled", file_name_lossy));
+                            let _ = fs::rename(&p, &new_path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Change an instance's mod loader and/or loader version.
 ///
-/// If `disable_mods` is true, all active entries in `instance.mods` where `category == "mod"`
-/// are renamed from `*.jar` to `*.jar.disabled` on disk and marked `enabled = false` in `instance.json`.
-/// Non-mod content (resourcepacks, shaders, datapacks) is kept intact since those formats
-/// are loader-independent. Any loose unrecorded `.jar` files in `.minecraft/mods` are also
-/// renamed to `.jar.disabled` so incompatible jars cannot crash the newly selected loader.
+/// If `convert_mods` is true, queries Modrinth and CurseForge for compatible builds of installed
+/// mods matching the newly selected loader for the instance's Minecraft version. Compatible builds
+/// are downloaded and replaced in place; mods without a compatible build are disabled (`.disabled`).
+/// If `disable_mods` is true (and `convert_mods` is false), all active mod entries are disabled.
 pub async fn change_loader(
+    app: Option<&tauri::AppHandle>,
     id: &str,
     loader_type: LoaderType,
     loader_version: Option<String>,
     disable_mods: bool,
-) -> Result<Instance, Box<dyn std::error::Error + Send + Sync>> {
+    convert_mods: bool,
+) -> Result<LoaderChangeResult, Box<dyn std::error::Error + Send + Sync>> {
     let instance_dir = paths::instances_dir().join(id);
     let meta_path = instance_dir.join("instance.json");
 
@@ -295,48 +439,6 @@ pub async fn change_loader(
 
     let content = fs::read_to_string(&meta_path)?;
     let mut instance: Instance = serde_json::from_str(&content)?;
-
-    if disable_mods {
-        let mods_dir = instance_dir.join(".minecraft").join("mods");
-        if mods_dir.exists() {
-            // 1. Disable tracked mod entries
-            for entry in &mut instance.mods {
-                if entry.category == "mod" && entry.enabled {
-                    let current_path = mods_dir.join(&entry.filename);
-                    let new_name = if entry.filename.ends_with(".disabled") {
-                        entry.filename.clone()
-                    } else {
-                        format!("{}.disabled", entry.filename)
-                    };
-                    let new_path = mods_dir.join(&new_name);
-                    if current_path.exists() && current_path != new_path {
-                        let _ = fs::rename(&current_path, &new_path);
-                    }
-                    entry.filename = new_name;
-                    entry.enabled = false;
-                }
-            }
-
-            // 2. Also check for any loose *.jar files in mods_dir that aren't yet disabled
-            if let Ok(dir_entries) = fs::read_dir(&mods_dir) {
-                for dir_entry in dir_entries.flatten() {
-                    let p = dir_entry.path();
-                    if p.is_file() {
-                        if let Some(ext) = p.extension() {
-                            if ext == "jar" {
-                                let file_name_lossy = p.file_name().unwrap_or_default().to_string_lossy();
-                                // Ignore Vermeil companion mod jar
-                                if !file_name_lossy.starts_with("vermeil-") {
-                                    let new_path = mods_dir.join(format!("{}.disabled", file_name_lossy));
-                                    let _ = fs::rename(&p, &new_path);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     // Validate loader version
     let cleaned_version = match loader_type {
@@ -356,14 +458,378 @@ pub async fn change_loader(
         }
     };
 
-    // Update loader config
+    let previous_loader = instance.loader.loader_type;
+    let loader_changed = previous_loader != loader_type;
+
+    // Update loader config immediately
     instance.loader.loader_type = loader_type;
     instance.loader.version = cleaned_version;
 
-    // Atomic write
     let json = serde_json::to_string_pretty(&instance)?;
     paths::atomic_write(&meta_path, json.as_bytes())?;
 
-    Ok(instance)
+    let mut converted_count = 0;
+    let mut disabled_count = 0;
+    let mut converted_titles = Vec::new();
+    let mut disabled_titles = Vec::new();
+
+    let mods_dir = instance_dir.join(".minecraft").join("mods");
+
+    if loader_type == LoaderType::Vanilla {
+        // Vanilla cannot load mods
+        if disable_mods && mods_dir.exists() {
+            for entry in &mut instance.mods {
+                if entry.category == "mod" && entry.enabled {
+                    let title = entry.title.clone().unwrap_or_else(|| entry.filename.clone());
+                    let current_path = mods_dir.join(&entry.filename);
+                    let new_name = if entry.filename.ends_with(".disabled") {
+                        entry.filename.clone()
+                    } else {
+                        format!("{}.disabled", entry.filename)
+                    };
+                    let new_path = mods_dir.join(&new_name);
+                    if current_path.exists() && current_path != new_path {
+                        let _ = fs::rename(&current_path, &new_path);
+                    }
+                    entry.filename = new_name;
+                    entry.enabled = false;
+                    disabled_count += 1;
+                    disabled_titles.push(title);
+                }
+            }
+            let active_filenames: HashSet<String> = instance
+                .mods
+                .iter()
+                .filter(|m| m.enabled)
+                .map(|m| m.filename.clone())
+                .collect();
+            disable_loose_jars(&mods_dir, &active_filenames);
+
+            let json = serde_json::to_string_pretty(&instance)?;
+            paths::atomic_write(&meta_path, json.as_bytes())?;
+        }
+    } else if loader_changed && convert_mods {
+        // Auto-convert compatible mods for the new loader
+        let mod_candidates: Vec<ModEntry> = instance
+            .mods
+            .iter()
+            .filter(|m| m.category == "mod" && m.enabled)
+            .cloned()
+            .collect();
+
+        let total = mod_candidates.len();
+
+        for (idx, entry) in mod_candidates.iter().enumerate() {
+            let title = entry.title.clone().unwrap_or_else(|| {
+                entry
+                    .filename
+                    .strip_suffix(".jar")
+                    .or_else(|| entry.filename.strip_suffix(".jar.disabled"))
+                    .unwrap_or(&entry.filename)
+                    .to_string()
+            });
+
+            emit_progress(app, idx + 1, total, &title, "Checking...");
+
+            if entry.source == "modrinth" && !entry.project_id.is_empty() {
+                let versions_res = modrinth::get_project_versions(
+                    &entry.project_id,
+                    loader_type.as_str(),
+                    &instance.game_version,
+                )
+                .await;
+
+                match versions_res {
+                    Ok(versions) => {
+                        let preferred = find_preferred_version(
+                            &versions,
+                            ProjectType::Mod,
+                            loader_type.as_str(),
+                            &instance.game_version,
+                        );
+
+                        if let Some(ver) = preferred {
+                            if ver.id == entry.version_id {
+                                // Existing jar already supports this target loader
+                                enable_single_mod_on_disk_and_meta(&meta_path, &mods_dir, &entry.id, &entry.project_id);
+                                converted_count += 1;
+                                converted_titles.push(title.clone());
+                                emit_progress(app, idx + 1, total, &title, "Compatible");
+                            } else {
+                                emit_progress(app, idx + 1, total, &title, "Downloading...");
+                                match mod_install::install_mod(
+                                    id,
+                                    &entry.project_id,
+                                    loader_type.as_str(),
+                                    &instance.game_version,
+                                    "mod",
+                                    Some(ver.id.clone()),
+                                )
+                                .await
+                                {
+                                    Ok(_) => {
+                                        converted_count += 1;
+                                        converted_titles.push(title.clone());
+                                        emit_progress(app, idx + 1, total, &title, "Converted");
+                                    }
+                                    Err(e) => {
+                                        tracing::warn!(
+                                            "Failed to install converted Modrinth mod {}: {}",
+                                            entry.project_id,
+                                            e
+                                        );
+                                        disable_single_mod_on_disk_and_meta(
+                                            &meta_path,
+                                            &mods_dir,
+                                            &entry.id,
+                                            &entry.project_id,
+                                        );
+                                        disabled_count += 1;
+                                        disabled_titles.push(title.clone());
+                                        emit_progress(app, idx + 1, total, &title, "Failed (disabled)");
+                                    }
+                                }
+                            }
+                        } else {
+                            // No compatible build for target loader
+                            disable_single_mod_on_disk_and_meta(
+                                &meta_path,
+                                &mods_dir,
+                                &entry.id,
+                                &entry.project_id,
+                            );
+                            disabled_count += 1;
+                            disabled_titles.push(title.clone());
+                            emit_progress(app, idx + 1, total, &title, "No build (disabled)");
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to fetch Modrinth versions for {}: {}",
+                            entry.project_id,
+                            e
+                        );
+                        disable_single_mod_on_disk_and_meta(
+                            &meta_path,
+                            &mods_dir,
+                            &entry.id,
+                            &entry.project_id,
+                        );
+                        disabled_count += 1;
+                        disabled_titles.push(title.clone());
+                        emit_progress(app, idx + 1, total, &title, "Lookup failed (disabled)");
+                    }
+                }
+            } else if entry.source == "curseforge" && !entry.project_id.is_empty() {
+                let api_key = resolve_cf_key().await;
+                let files_res = curseforge::get_project_files(
+                    &api_key,
+                    &entry.project_id,
+                    &instance.game_version,
+                    loader_type.as_str(),
+                )
+                .await;
+
+                match files_res {
+                    Ok(files) => {
+                        let preferred = cf_mod_install::find_preferred_file(
+                            &files,
+                            &instance.game_version,
+                            loader_type.as_str(),
+                        );
+
+                        if let Some(file) = preferred {
+                            if file.file_id.to_string() == entry.version_id {
+                                enable_single_mod_on_disk_and_meta(&meta_path, &mods_dir, &entry.id, &entry.project_id);
+                                converted_count += 1;
+                                converted_titles.push(title.clone());
+                                emit_progress(app, idx + 1, total, &title, "Compatible");
+                            } else {
+                                emit_progress(app, idx + 1, total, &title, "Downloading...");
+                                match cf_mod_install::install_cf_mod(
+                                    id,
+                                    &entry.project_id,
+                                    loader_type.as_str(),
+                                    &instance.game_version,
+                                    "mod",
+                                    &api_key,
+                                    Some(file.file_id.to_string()),
+                                    None,
+                                )
+                                .await
+                                {
+                                    Ok(_) => {
+                                        converted_count += 1;
+                                        converted_titles.push(title.clone());
+                                        emit_progress(app, idx + 1, total, &title, "Converted");
+                                    }
+                                    Err(e) => {
+                                        tracing::warn!(
+                                            "Failed to install converted CurseForge mod {}: {}",
+                                            entry.project_id,
+                                            e
+                                        );
+                                        disable_single_mod_on_disk_and_meta(
+                                            &meta_path,
+                                            &mods_dir,
+                                            &entry.id,
+                                            &entry.project_id,
+                                        );
+                                        disabled_count += 1;
+                                        disabled_titles.push(title.clone());
+                                        emit_progress(app, idx + 1, total, &title, "Failed (disabled)");
+                                    }
+                                }
+                            }
+                        } else {
+                            disable_single_mod_on_disk_and_meta(
+                                &meta_path,
+                                &mods_dir,
+                                &entry.id,
+                                &entry.project_id,
+                            );
+                            disabled_count += 1;
+                            disabled_titles.push(title.clone());
+                            emit_progress(app, idx + 1, total, &title, "No build (disabled)");
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to fetch CurseForge files for {}: {}",
+                            entry.project_id,
+                            e
+                        );
+                        disable_single_mod_on_disk_and_meta(
+                            &meta_path,
+                            &mods_dir,
+                            &entry.id,
+                            &entry.project_id,
+                        );
+                        disabled_count += 1;
+                        disabled_titles.push(title.clone());
+                        emit_progress(app, idx + 1, total, &title, "Lookup failed (disabled)");
+                    }
+                }
+            } else {
+                // Untracked or local mod without online project ID
+                disable_single_mod_on_disk_and_meta(
+                    &meta_path,
+                    &mods_dir,
+                    &entry.id,
+                    &entry.project_id,
+                );
+                disabled_count += 1;
+                disabled_titles.push(title.clone());
+                emit_progress(app, idx + 1, total, &title, "Incompatible source (disabled)");
+            }
+        }
+    } else if loader_changed && disable_mods {
+        // Standard disable without conversion
+        if mods_dir.exists() {
+            for entry in &mut instance.mods {
+                if entry.category == "mod" && entry.enabled {
+                    let title = entry.title.clone().unwrap_or_else(|| entry.filename.clone());
+                    let current_path = mods_dir.join(&entry.filename);
+                    let new_name = if entry.filename.ends_with(".disabled") {
+                        entry.filename.clone()
+                    } else {
+                        format!("{}.disabled", entry.filename)
+                    };
+                    let new_path = mods_dir.join(&new_name);
+                    if current_path.exists() && current_path != new_path {
+                        let _ = fs::rename(&current_path, &new_path);
+                    }
+                    entry.filename = new_name;
+                    entry.enabled = false;
+                    disabled_count += 1;
+                    disabled_titles.push(title);
+                }
+            }
+            let active_filenames: HashSet<String> = instance
+                .mods
+                .iter()
+                .filter(|m| m.enabled)
+                .map(|m| m.filename.clone())
+                .collect();
+            disable_loose_jars(&mods_dir, &active_filenames);
+
+            let json = serde_json::to_string_pretty(&instance)?;
+            paths::atomic_write(&meta_path, json.as_bytes())?;
+        }
+    }
+
+    // Re-read final instance.json and sanitize
+    let final_content = fs::read_to_string(&meta_path)?;
+    let mut final_instance: Instance = serde_json::from_str(&final_content)?;
+    sanitize_instance_json(&mut final_instance, &meta_path);
+
+    if mods_dir.exists() {
+        let active_filenames: HashSet<String> = final_instance
+            .mods
+            .iter()
+            .filter(|m| m.enabled)
+            .map(|m| m.filename.clone())
+            .collect();
+        disable_loose_jars(&mods_dir, &active_filenames);
+    }
+
+    Ok(LoaderChangeResult {
+        instance: final_instance,
+        converted_count,
+        disabled_count,
+        converted_titles,
+        disabled_titles,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_loader_change_result_serde() {
+        let instance_json = r#"{
+            "format_version": 1,
+            "id": "test-instance",
+            "name": "Test Instance",
+            "icon": "grass",
+            "created_at": "2026-01-01T00:00:00Z",
+            "total_play_seconds": 0,
+            "game_version": "1.21.1",
+            "loader": {
+                "type": "fabric",
+                "version": "0.16.9"
+            },
+            "java": {
+                "memory_max_mb": 4096,
+                "memory_min_mb": 1024,
+                "extra_args": []
+            },
+            "window": {
+                "width": 854,
+                "height": 480
+            },
+            "mods": []
+        }"#;
+
+        let dummy_instance: Instance = serde_json::from_str(instance_json).expect("Parse instance");
+
+        let result = LoaderChangeResult {
+            instance: dummy_instance,
+            converted_count: 5,
+            disabled_count: 2,
+            converted_titles: vec!["Sodium".to_string(), "Iris".to_string()],
+            disabled_titles: vec!["Fabric API".to_string()],
+        };
+
+        let json = serde_json::to_string(&result).expect("Serialize LoaderChangeResult");
+        let deserialized: LoaderChangeResult = serde_json::from_str(&json).expect("Deserialize LoaderChangeResult");
+
+        assert_eq!(deserialized.converted_count, 5);
+        assert_eq!(deserialized.disabled_count, 2);
+        assert_eq!(deserialized.converted_titles.len(), 2);
+        assert_eq!(deserialized.disabled_titles.len(), 1);
+        assert_eq!(deserialized.instance.loader.loader_type, LoaderType::Fabric);
+    }
 }
 

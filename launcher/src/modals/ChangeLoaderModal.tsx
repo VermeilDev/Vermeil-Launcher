@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, createSignal, createResource, createEffect, createMemo, Show, For, onCleanup } from "solid-js";
+import { Component, createSignal, createResource, createEffect, createMemo, Show, For, onCleanup, onMount } from "solid-js";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { instances, refetchInstances, showToast, gameRunning } from "../App";
 import {
   getFabricLoaderVersions,
@@ -15,6 +16,7 @@ import {
   changeInstanceLoader,
   syncInstanceMods,
   FabricVersion,
+  ModConversionProgress,
 } from "../ipc/commands";
 import { loaderLabel } from "../lib/loader";
 import {
@@ -107,9 +109,24 @@ const ChangeLoaderModal: Component = () => {
   const [selectedLoader, setSelectedLoader] = createSignal<string>("vanilla");
   const [selectedVersion, setSelectedVersion] = createSignal<string | null>(null);
   const [disableMods, setDisableMods] = createSignal(true);
+  const [autoConvertMods, setAutoConvertMods] = createSignal(true);
   const [changing, setChanging] = createSignal(false);
+  const [conversionProgress, setConversionProgress] = createSignal<ModConversionProgress | null>(null);
   const [versionDropOpen, setVersionDropOpen] = createSignal(false);
   const [versionFilter, setVersionFilter] = createSignal("");
+
+  let unlistenProgress: UnlistenFn | undefined;
+  onMount(async () => {
+    unlistenProgress = await listen<ModConversionProgress>("mod-conversion-progress", (event) => {
+      setConversionProgress(event.payload);
+    });
+  });
+
+  onCleanup(() => {
+    if (unlistenProgress) {
+      unlistenProgress();
+    }
+  });
 
   // Supported MC game versions per loader
   const [fabricGameVersions] = createResource(getFabricGameVersions);
@@ -137,6 +154,8 @@ const ChangeLoaderModal: Component = () => {
       setSelectedLoader(current.loader.type);
       setSelectedVersion(current.loader.version || null);
       setDisableMods(true);
+      setAutoConvertMods(true);
+      setConversionProgress(null);
       setVersionDropOpen(false);
       setVersionFilter("");
     }
@@ -298,21 +317,44 @@ const ChangeLoaderModal: Component = () => {
     }
 
     setChanging(true);
+    setConversionProgress(null);
     try {
-      await changeInstanceLoader(
+      const isSwitchingModded = selectedLoader() !== "vanilla" && !isSameLoader();
+      const shouldConvert = isSwitchingModded && autoConvertMods() && activeModCount() > 0;
+
+      const result = await changeInstanceLoader(
         current.id,
         selectedLoader(),
         selectedLoader() === "vanilla" ? null : selectedVersion(),
-        disableMods()
+        disableMods(),
+        shouldConvert
       );
       await syncInstanceMods(current.id);
       await refetchInstances();
-      showToast({
-        title: "Loader updated",
-        message: `Switched "${current.name}" to ${loaderLabel(selectedLoader())} ${selectedVersion() || ""}`.trim(),
-        type: "success",
-        autoCloseMs: 3500,
-      });
+
+      if (shouldConvert && result) {
+        const parts: string[] = [];
+        if (result.converted_count > 0) {
+          parts.push(`${result.converted_count} mod${result.converted_count === 1 ? "" : "s"} converted`);
+        }
+        if (result.disabled_count > 0) {
+          parts.push(`${result.disabled_count} disabled`);
+        }
+        const summary = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+        showToast({
+          title: "Loader switched",
+          message: `Switched "${current.name}" to ${loaderLabel(selectedLoader())}${summary}`.trim(),
+          type: "success",
+          autoCloseMs: 4500,
+        });
+      } else {
+        showToast({
+          title: "Loader updated",
+          message: `Switched "${current.name}" to ${loaderLabel(selectedLoader())} ${selectedVersion() || ""}`.trim(),
+          type: "success",
+          autoCloseMs: 3500,
+        });
+      }
       closeChangeLoaderModal();
     } catch (e: any) {
       showToast({
@@ -323,6 +365,7 @@ const ChangeLoaderModal: Component = () => {
       });
     } finally {
       setChanging(false);
+      setConversionProgress(null);
     }
   };
 
@@ -674,6 +717,26 @@ const ChangeLoaderModal: Component = () => {
                 <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
                   Quilt and Fabric share high compatibility. Most mods continue to work normally, though individual mods may require targeted builds.
                 </div>
+                <Show when={activeModCount() > 0}>
+                  <div
+                    style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none;"
+                    onClick={() => setAutoConvertMods(!autoConvertMods())}
+                  >
+                    <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;">
+                      <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
+                        Auto-convert compatible mods (Recommended)
+                      </span>
+                      <span style="font-size: 10px; color: var(--muted); line-height: 1.3;">
+                        Verify and fetch {loaderLabel(selectedLoader())} builds for {activeModCount()} active mod{activeModCount() === 1 ? "" : "s"}.
+                      </span>
+                    </div>
+                    <TactileSwitch
+                      checked={autoConvertMods()}
+                      onChange={setAutoConvertMods}
+                      aria-label="Auto-convert compatible mods"
+                    />
+                  </div>
+                </Show>
               </Show>
 
               {/* Scenario 6: Incompatible Loader Architecture */}
@@ -709,18 +772,57 @@ const ChangeLoaderModal: Component = () => {
                   </div>
                   <div
                     style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none;"
-                    onClick={() => setDisableMods(!disableMods())}
+                    onClick={() => setAutoConvertMods(!autoConvertMods())}
                   >
-                    <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
-                      Disable {activeModCount()} incompatible mod{activeModCount() === 1 ? "" : "s"} (Recommended)
-                    </span>
+                    <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;">
+                      <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
+                        Auto-convert compatible mods (Recommended)
+                      </span>
+                      <span style="font-size: 10px; color: var(--muted); line-height: 1.3;">
+                        Downloads {loaderLabel(selectedLoader())} builds from Modrinth/CurseForge; disables mods without a build.
+                      </span>
+                    </div>
                     <TactileSwitch
-                      checked={disableMods()}
-                      onChange={setDisableMods}
-                      aria-label="Disable incompatible mods"
+                      checked={autoConvertMods()}
+                      onChange={setAutoConvertMods}
+                      aria-label="Auto-convert compatible mods"
                     />
                   </div>
+                  <Show when={!autoConvertMods()}>
+                    <div
+                      style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none;"
+                      onClick={() => setDisableMods(!disableMods())}
+                    >
+                      <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
+                        Disable {activeModCount()} incompatible mod{activeModCount() === 1 ? "" : "s"}
+                      </span>
+                      <TactileSwitch
+                        checked={disableMods()}
+                        onChange={setDisableMods}
+                        aria-label="Disable incompatible mods"
+                      />
+                    </div>
+                  </Show>
                 </Show>
+              </Show>
+
+              {/* In-progress live conversion indicator */}
+              <Show when={changing() && conversionProgress()}>
+                <div style="margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
+                    <span style="font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      {conversionProgress()!.mod_title}
+                    </span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    <span style="font-size: 10px; color: var(--accent); font-family: var(--font-mono); font-weight: 600;">
+                      {conversionProgress()!.status}
+                    </span>
+                    <span style="font-size: 9.5px; color: var(--muted); font-family: var(--font-mono);">
+                      {conversionProgress()!.current}/{conversionProgress()!.total}
+                    </span>
+                  </div>
+                </div>
               </Show>
             </div>
           </div>
@@ -756,7 +858,7 @@ const ChangeLoaderModal: Component = () => {
               </button>
               <button
                 class={`btn btn--sm ${
-                  isIncompatibleCross() && activeModCount() > 0 && !disableMods()
+                  isIncompatibleCross() && activeModCount() > 0 && !autoConvertMods() && !disableMods()
                     ? "btn--danger"
                     : "btn--primary"
                 }`}
@@ -768,7 +870,14 @@ const ChangeLoaderModal: Component = () => {
                 }
                 onClick={handleApply}
               >
-                <Show when={!changing()} fallback={"Applying changes..."}>
+                <Show
+                  when={!changing()}
+                  fallback={
+                    conversionProgress()
+                      ? `Converting (${conversionProgress()!.current}/${conversionProgress()!.total})...`
+                      : "Applying changes..."
+                  }
+                >
                   {isSameLoader()
                     ? `Update ${loaderLabel(selectedLoader())}`
                     : `Switch to ${loaderLabel(selectedLoader())}`}

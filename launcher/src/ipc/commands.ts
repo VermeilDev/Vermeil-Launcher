@@ -279,12 +279,35 @@ export const updateInstanceMemory = (id: string, memoryMaxMb: number) => invoke<
 export const updateInstanceOptions = (id: string, opts: { memoryMaxMb?: number; width?: number; height?: number; extraArgs?: string[]; adaptiveOverride?: boolean }) =>
   invoke<void>("update_instance_options", { id, ...opts });
 export const renameInstance = (id: string, newName: string) => invoke<void>("rename_instance", { id, newName });
+export interface LoaderChangeResult {
+  instance: Instance;
+  converted_count: number;
+  disabled_count: number;
+  converted_titles: string[];
+  disabled_titles: string[];
+}
+
+export interface ModConversionProgress {
+  current: number;
+  total: number;
+  mod_title: string;
+  status: string;
+}
+
 export const changeInstanceLoader = (
   id: string,
   loaderType: string,
   loaderVersion: string | null,
-  disableMods: boolean,
-) => invoke<Instance>("change_instance_loader", { id, loaderType, loaderVersion, disableMods });
+  disableMods?: boolean,
+  convertMods?: boolean,
+) =>
+  invoke<LoaderChangeResult>("change_instance_loader", {
+    id,
+    loaderType,
+    loaderVersion,
+    disableMods,
+    convertMods,
+  });
 export const setInstanceIcon = (id: string, sourcePath: string) =>
   invoke<string>("set_instance_icon", { id, sourcePath });
 export const clearInstanceIcon = (id: string) => invoke<void>("clear_instance_icon", { id });
