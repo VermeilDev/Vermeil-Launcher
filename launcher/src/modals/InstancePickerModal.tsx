@@ -6,6 +6,7 @@ import { instances, showToast } from "../App";
 import { IconPlay, IconGlobe } from "../components/Icons";
 import { resolveAssetUrl } from "../lib/assets";
 import { loaderBadgeClass, loaderLabel } from "../lib/loader";
+import TactileSwitch from "../components/TactileSwitch";
 
 export interface InstancePickerTarget {
   name: string;
@@ -148,19 +149,18 @@ const InstancePickerModal: Component = () => {
               </div>
             </Show>
 
-            {/* Remember Checkbox */}
+            {/* Remember Toggle */}
             <div
               class="picker-remember-row"
+              style="display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer;"
               onClick={() => setRemember(!remember())}
             >
-              <div class={`check-box ${remember() ? "checked" : ""}`}>
-                <Show when={remember()}>
-                  <svg viewBox="0 0 24 24" class="check-icon">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </Show>
-              </div>
               <span>Always launch {target()?.name ?? "this server"} with this instance</span>
+              <TactileSwitch
+                checked={remember()}
+                onChange={setRemember}
+                aria-label="Remember server instance"
+              />
             </div>
           </div>
 

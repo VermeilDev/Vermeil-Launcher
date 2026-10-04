@@ -19,6 +19,7 @@ import { javaActionButtonLabel, javaActionButtonTip, javaVendorShortName, javaVe
 import { KEYBINDS, resolveBinding } from "../lib/keybinds";
 import { listen } from "@tauri-apps/api/event";
 import { resolveAssetUrl } from "../lib/assets";
+import TactileSwitch from "../components/TactileSwitch";
 
 type SettingsTab = "all" | "general" | "resources" | "instances" | "keybinds" | "about";
 
@@ -31,30 +32,6 @@ const clampConcurrency = (n: number, max: number): number =>
 const clampSpeedLimit = (n: number, max = 500): number =>
   Math.max(0, Math.min(max, Math.round(Number.isNaN(n) ? 0 : n)));
 
-interface TactileSwitchProps {
-  checked: boolean;
-  onChange: (val: boolean) => void;
-  disabled?: boolean;
-  tip?: string;
-  tipClass?: string;
-  "aria-label"?: string;
-}
-
-const TactileSwitch: Component<TactileSwitchProps> = (props) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={props.checked}
-    aria-label={props["aria-label"]}
-    disabled={props.disabled}
-    class={`tactile-switch ${props.checked ? "active" : ""} ${props.tipClass ?? ""}`}
-    data-tip={props.tip}
-    onClick={(e) => {
-      e.stopPropagation();
-      if (!props.disabled) props.onChange(!props.checked);
-    }}
-  />
-);
 
 // Module-level Java state: persists across screen switches so background installs
 // don't abort, state isn't reset, and buttons remain disabled/queued when navigating

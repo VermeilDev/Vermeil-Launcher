@@ -7,6 +7,7 @@ import { quickServers, setQuickServers, serverPings, formatServerVersion } from 
 import { saveQuickServer, removeQuickServer, QuickServerEntry } from "../ipc/commands";
 import { IconServer, IconTrash2 } from "../components/Icons";
 import { loaderLabel } from "../lib/loader";
+import TactileSwitch from "../components/TactileSwitch";
 
 const [open, setOpen] = createSignal(false);
 
@@ -195,20 +196,19 @@ const ServerRoutingModal: Component = () => {
                           {/* Toggle row */}
                           <div
                             class="routing-toggle-row"
+                            style="display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer;"
                             onClick={() => handleToggleRemember(srv)}
                           >
-                            <div class={`check-box ${isLinked() ? "checked" : ""}`}>
-                              <Show when={isLinked()}>
-                                <svg viewBox="0 0 24 24" class="check-icon">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              </Show>
-                            </div>
                             <span>
                               {isLinked()
                                 ? `Always boots ${linkedInst()?.name ? `"${linkedInst()!.name}"` : "linked instance"} immediately`
                                 : "Always asks which instance to launch with"}
                             </span>
+                            <TactileSwitch
+                              checked={isLinked()}
+                              onChange={() => handleToggleRemember(srv)}
+                              aria-label="Always boots linked instance immediately"
+                            />
                           </div>
                         </div>
                       </div>

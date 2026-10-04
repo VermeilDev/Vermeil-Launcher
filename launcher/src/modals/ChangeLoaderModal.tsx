@@ -27,6 +27,7 @@ import {
   IconSearch,
   IconArrowRight,
 } from "../components/Icons";
+import TactileSwitch from "../components/TactileSwitch";
 
 interface LoaderInfo {
   id: string;
@@ -644,18 +645,18 @@ const ChangeLoaderModal: Component = () => {
                   <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
                     You have <strong style="color:var(--text);">{activeModCount()} active mod{activeModCount() === 1 ? "" : "s"}</strong>. Vanilla Minecraft will ignore them and cannot load modded content.
                   </div>
-                  <div style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08);">
-                    <label class="check check--lg" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                      <input
-                        type="checkbox"
-                        checked={disableMods()}
-                        onChange={(e) => setDisableMods(e.currentTarget.checked)}
-                      />
-                      <span class="check-box"></span>
-                      <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
-                        Disable {activeModCount()} active mod{activeModCount() === 1 ? "" : "s"} (renames to .disabled)
-                      </span>
-                    </label>
+                  <div
+                    style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none;"
+                    onClick={() => setDisableMods(!disableMods())}
+                  >
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
+                      Disable {activeModCount()} active mod{activeModCount() === 1 ? "" : "s"} (renames to .disabled)
+                    </span>
+                    <TactileSwitch
+                      checked={disableMods()}
+                      onChange={setDisableMods}
+                      aria-label="Disable active mods"
+                    />
                   </div>
                 </Show>
               </Show>
@@ -706,18 +707,18 @@ const ChangeLoaderModal: Component = () => {
                   <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
                     You have <strong style="color:var(--text);">{activeModCount()} active mod{activeModCount() === 1 ? "" : "s"}</strong> built for {loaderLabel(inst()!.loader.type)}. They cannot run on {loaderLabel(selectedLoader())} and will crash on launch.
                   </div>
-                  <div style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08);">
-                    <label class="check check--lg" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                      <input
-                        type="checkbox"
-                        checked={disableMods()}
-                        onChange={(e) => setDisableMods(e.currentTarget.checked)}
-                      />
-                      <span class="check-box"></span>
-                      <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
-                        Disable {activeModCount()} incompatible mod{activeModCount() === 1 ? "" : "s"} (Recommended)
-                      </span>
-                    </label>
+                  <div
+                    style="margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none;"
+                    onClick={() => setDisableMods(!disableMods())}
+                  >
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--text);">
+                      Disable {activeModCount()} incompatible mod{activeModCount() === 1 ? "" : "s"} (Recommended)
+                    </span>
+                    <TactileSwitch
+                      checked={disableMods()}
+                      onChange={setDisableMods}
+                      aria-label="Disable incompatible mods"
+                    />
                   </div>
                 </Show>
               </Show>

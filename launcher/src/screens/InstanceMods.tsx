@@ -15,6 +15,7 @@ import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
 import { searchMods, installModToInstance, installCfModToInstance, listInstanceFiles, listInstanceWorlds, openInstanceFolder, deleteInstance, renameInstance, updateInstanceOptions, toggleModInInstance, removeModFromInstance, removeModsFromInstance, checkModUpdates, applyModUpdate, ModUpdate, cloneInstance, getSettings, saveSettings, setInstanceIcon, clearInstanceIcon, searchCurseforge, getPresetJvmArgs, getKnownPresetArgs, getSystemMemory, getEffectiveMemory, EffectiveMemory, ModHit, FileEntry, WorldEntry, closeLogsWindow, syncInstanceMods, setInstanceCompanionEnabled, getInstance, exportShareCode, getModVersions, getCfModFiles, launchInstance, stopInstance, getGameVersions } from "../ipc/commands";
 import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconGrid, IconList, IconShuffle } from "../components/Icons";
 import SelectionDock from "../components/SelectionDock";
+import TactileSwitch from "../components/TactileSwitch";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
 
 import { resolveAssetUrl } from "../lib/assets";
@@ -1967,14 +1968,11 @@ const InstanceMods: Component = () => {
                   <span class="setting-desc">Dynamically calculate RAM based on installed mods, loader overhead, and system memory</span>
                 </div>
                 <div class="setting-control">
-                  <label class="check check--lg">
-                    <input
-                      type="checkbox"
-                      checked={isAdaptive()}
-                      onChange={toggleAdaptive}
-                    />
-                    <span class="check-box"></span>
-                  </label>
+                  <TactileSwitch
+                    checked={isAdaptive()}
+                    onChange={toggleAdaptive}
+                    aria-label="Automatic memory allocation"
+                  />
                 </div>
               </div>
 
