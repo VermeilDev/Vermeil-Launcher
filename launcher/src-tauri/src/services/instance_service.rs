@@ -681,11 +681,30 @@ pub async fn change_loader(
 
                 match files_res {
                     Ok(files) => {
-                        let preferred = cf_mod_install::find_preferred_file(
+                        let mut preferred = cf_mod_install::find_preferred_file(
                             &files,
                             &instance.game_version,
                             loader_type.as_str(),
-                        );
+                        )
+                        .cloned();
+
+                        if preferred.is_none() && loader_type == LoaderType::Quilt {
+                            if let Ok(fabric_files) = curseforge::get_project_files(
+                                &api_key,
+                                &entry.project_id,
+                                &instance.game_version,
+                                "fabric",
+                            )
+                            .await
+                            {
+                                preferred = cf_mod_install::find_preferred_file(
+                                    &fabric_files,
+                                    &instance.game_version,
+                                    "fabric",
+                                )
+                                .cloned();
+                            }
+                        }
 
                         if let Some(file) = preferred {
                             if file.file_id.to_string() == entry.version_id {

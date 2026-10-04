@@ -88,8 +88,19 @@ pub fn is_file_compatible(f: &CfFileInfo, game_version: &str, loader: &str) -> b
     {
         return false;
     }
-    if !loader.is_empty() && !f.loaders.is_empty() && !f.loaders.iter().any(|l| l == loader) {
-        return false;
+    if !loader.is_empty() && !f.loaders.is_empty() {
+        let target = loader.to_lowercase();
+        let matches = if target == "quilt" {
+            f.loaders.iter().any(|l| {
+                let lower = l.to_lowercase();
+                lower == "quilt" || lower == "fabric"
+            })
+        } else {
+            f.loaders.iter().any(|l| l.eq_ignore_ascii_case(&target))
+        };
+        if !matches {
+            return false;
+        }
     }
     true
 }
