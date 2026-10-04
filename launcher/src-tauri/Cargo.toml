@@ -1,6 +1,6 @@
 [package]
 name = "vermeil"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 description = "A tactile, privacy-focused Minecraft launcher"
 authors = ["VermeilDev"]
 repository = "https://github.com/VermeilDev/Vermeil-Launcher"
