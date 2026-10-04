@@ -373,6 +373,12 @@ fn disable_single_mod_on_disk_and_meta(
     for m in &mut inst.mods {
         if m.id == entry_id || (!project_id.is_empty() && m.project_id == project_id) {
             let current_path = mods_dir.join(&m.filename);
+            if m.loaders.is_empty() && current_path.exists() {
+                let detected = crate::services::loader_scan::detect_jar_loaders(&current_path);
+                if !detected.is_empty() {
+                    m.loaders = detected;
+                }
+            }
             let new_name = if m.filename.ends_with(".disabled") {
                 m.filename.clone()
             } else {
@@ -408,12 +414,18 @@ fn enable_single_mod_on_disk_and_meta(
 
     for m in &mut inst.mods {
         if m.id == entry_id || (!project_id.is_empty() && m.project_id == project_id) {
+            let current_path = mods_dir.join(&m.filename);
+            if m.loaders.is_empty() && current_path.exists() {
+                let detected = crate::services::loader_scan::detect_jar_loaders(&current_path);
+                if !detected.is_empty() {
+                    m.loaders = detected;
+                }
+            }
             let active_name = if m.filename.ends_with(".disabled") {
                 m.filename.strip_suffix(".disabled").unwrap_or(&m.filename).to_string()
             } else {
                 m.filename.clone()
             };
-            let current_path = mods_dir.join(&m.filename);
             let active_path = mods_dir.join(&active_name);
             if current_path.exists() && current_path != active_path {
                 let _ = fs::rename(&current_path, &active_path);
@@ -749,15 +761,38 @@ pub async fn change_loader(
                 }
             } else {
                 // Untracked or local mod without online project ID
-                disable_single_mod_on_disk_and_meta(
-                    &meta_path,
-                    &mods_dir,
-                    &entry.id,
-                    &entry.project_id,
-                );
-                disabled_count += 1;
-                disabled_titles.push(title.clone());
-                emit_progress(app, idx + 1, total, &title, "Incompatible source (disabled)");
+                let jar_path = mods_dir.join(&entry.filename);
+                let detected = if entry.loaders.is_empty() && jar_path.exists() {
+                    crate::services::loader_scan::detect_jar_loaders(&jar_path)
+                } else {
+                    entry.loaders.clone()
+                };
+                if !detected.is_empty()
+                    && crate::services::loader_scan::is_mod_compatible_with_loader(
+                        &loader_type,
+                        &detected,
+                    )
+                {
+                    enable_single_mod_on_disk_and_meta(
+                        &meta_path,
+                        &mods_dir,
+                        &entry.id,
+                        &entry.project_id,
+                    );
+                    converted_count += 1;
+                    converted_titles.push(title.clone());
+                    emit_progress(app, idx + 1, total, &title, "Compatible");
+                } else {
+                    disable_single_mod_on_disk_and_meta(
+                        &meta_path,
+                        &mods_dir,
+                        &entry.id,
+                        &entry.project_id,
+                    );
+                    disabled_count += 1;
+                    disabled_titles.push(title.clone());
+                    emit_progress(app, idx + 1, total, &title, "Incompatible source (disabled)");
+                }
             }
         }
     } else if loader_changed && disable_mods {

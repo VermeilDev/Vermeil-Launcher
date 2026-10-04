@@ -731,7 +731,18 @@ pub(crate) fn find_preferred_version<'a>(
     game_version: &str,
 ) -> Option<&'a ModrinthVersion> {
     let loader_ok = |v: &ModrinthVersion| {
-        !project_type.checks_loader() || loader.is_empty() || v.loaders.iter().any(|l| l == loader)
+        if !project_type.checks_loader() || loader.is_empty() {
+            return true;
+        }
+        let target = loader.to_lowercase();
+        if target == "quilt" {
+            v.loaders.iter().any(|l| {
+                let lower = l.to_lowercase();
+                lower == "quilt" || lower == "fabric"
+            })
+        } else {
+            v.loaders.iter().any(|l| l.eq_ignore_ascii_case(&target))
+        }
     };
 
     if game_version.is_empty() {
