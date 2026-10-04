@@ -2707,7 +2707,7 @@ const InstanceMods: Component = () => {
             <SelectionDock
               count={selectedInstalled().size}
               mode="delete"
-              primaryLabel={isDeletingInstalled() ? "Deleting..." : `Delete (${selectedInstalled().size})`}
+              primaryLabel={isDeletingInstalled() ? "Deleting..." : "Delete"}
               primaryDisabled={selectedInstalled().size === 0 || isDeletingInstalled()}
               primaryLoading={isDeletingInstalled()}
               onPrimary={async () => {
@@ -3123,7 +3123,7 @@ const InstanceMods: Component = () => {
               <SelectionDock
                 count={selectedItems().size}
                 mode="install"
-                primaryLabel={`Install ${selectedItems().size} ${selectedItems().size === 1 ? "Item" : "Items"}`}
+                primaryLabel="Install"
                 onPrimary={handleBulkInstall}
                 onClear={() => setSelectedItems(new Map())}
                 icon={<IconDownload />}

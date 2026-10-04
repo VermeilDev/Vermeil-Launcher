@@ -932,7 +932,7 @@ const Library: Component = () => {
         <SelectionDock
           count={selected().size}
           mode="delete"
-          primaryLabel={isDeleting() ? "Deleting..." : (showDeleteConfirm() ? "Delete All" : `Delete (${selected().size})`)}
+          primaryLabel={isDeleting() ? "Deleting..." : (showDeleteConfirm() ? "Delete All" : "Delete")}
           primaryDisabled={showDeleteConfirm() ? (deleteInput() !== "Confirm" || isDeleting()) : (selected().size === 0 || isDeleting())}
           primaryLoading={isDeleting()}
           onPrimary={async () => {

@@ -8,7 +8,7 @@ import { IconX } from "./Icons";
 export interface SelectionDockProps {
   count: number;
   mode?: "install" | "delete";
-  primaryLabel: string;
+  primaryLabel?: string;
   onPrimary: () => void;
   onClear: () => void;
   primaryDisabled?: boolean;
@@ -60,7 +60,7 @@ export const SelectionDock: Component<SelectionDockProps> = (props) => {
         <Show when={props.icon}>
           {props.icon}
         </Show>
-        <span>{props.primaryLabel}</span>
+        <span>{props.primaryLabel || (isDelete() ? "Delete" : "Install")}</span>
       </button>
 
       {/* Dismiss / Clear Action */}
