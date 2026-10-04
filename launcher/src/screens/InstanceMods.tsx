@@ -60,6 +60,15 @@ function detectCategory(mod: ModHit): "mod" | "resourcepack" | "shader" | "datap
   return "mod";
 }
 
+function categoryLabel(cat: string): string {
+  switch (cat) {
+    case "resourcepack": return "Resource Pack";
+    case "shader": return "Shader";
+    case "datapack": return "Datapack";
+    default: return "Mod";
+  }
+}
+
 /**
  * Test whether a mod search hit claims compatibility with the target instance.
  *
@@ -413,17 +422,20 @@ const InstanceMods: Component = () => {
     const instVersion = inst?.game_version || "";
     const all = gameVersionsList() || [];
 
-    const opts: DropdownOption[] = [
-      { value: "", label: "Any" },
-    ];
+    const opts: DropdownOption[] = [];
 
     if (instVersion) {
       opts.push({
-        value: instVersion,
-        label: instVersion,
+        value: "",
+        label: `${instVersion} (Current)`,
         badge: "Current",
       });
     }
+
+    opts.push({
+      value: "any",
+      label: "All Versions",
+    });
 
     for (const v of all) {
       if (v.id === instVersion) continue;
@@ -445,16 +457,7 @@ const InstanceMods: Component = () => {
   const [searchQuery, setSearchQuery] = createSignal("");
   const [searchResults, setSearchResults] = createSignal<ModHit[]>([]);
   const [searching, setSearching] = createSignal(false);
-  const displayBrowseResults = createMemo(() => {
-    const list = searchResults();
-    if (instance()?.loader?.type === "vanilla") {
-      return list.filter((m) => {
-        const cat = detectCategory(m);
-        return cat !== "mod" && m.project_type !== "mod";
-      });
-    }
-    return list;
-  });
+  const displayBrowseResults = () => searchResults();
   const [totalHits, setTotalHits] = createSignal(0);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [sortBy, setSortBy] = createSignal("relevance");
@@ -963,7 +966,7 @@ const InstanceMods: Component = () => {
     const inst = instance();
     if (!inst) return;
 
-    if (inst.loader.type === "vanilla" && browseFilter() === "mod") {
+    if (inst.loader.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")) {
       setSearchResults([]);
       setTotalHits(0);
       setSearching(false);
@@ -975,15 +978,13 @@ const InstanceMods: Component = () => {
     const token = ++searchToken;
     setSearching(true);
     try {
-      // Resource packs and shaders aren't hard-bound to a game version, so
-      // their version box is optional: an empty box means "any version" and we
-      // pass "" through, which both backends read as "no version facet".
-      // Previously an empty box fell back to the instance version, so "any"
-      // silently filtered to the instance's release. Mods and datapacks always
-      // filter to the instance version.
+      // Version resolution:
+      // An empty `browseVersion` means use the instance's active version.
+      // "any" means explicitly search across all game versions (empty string sent to backend).
+      // A specific version string (e.g. "1.20.1") scopes search to that version.
+      const bv = browseVersion().trim();
+      const version = bv === "any" ? "" : (bv ? bv.replace(/\.+$/, "") : inst.game_version);
       const filter = browseFilter();
-      const versionOptional = filter === "resourcepack" || filter === "shader";
-      const version = versionOptional ? browseVersion().trim().replace(/\.+$/, "") : inst.game_version;
 
       const source = modSource();
       const result = source === "curseforge"
@@ -1140,7 +1141,7 @@ const InstanceMods: Component = () => {
       return;
     }
     if (contentTab() === "browse" && totalPages() > 1) {
-      if (instance()?.loader?.type === "vanilla" && browseFilter() === "mod") {
+      if (instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")) {
         setDockPagination(null);
       } else {
         setDockPagination({ current: currentPage(), total: totalPages(), onPageChange: goToPage });
@@ -2284,15 +2285,24 @@ const InstanceMods: Component = () => {
                     </Show>
                   </button>
                   <button class={`inst-category-item ${browseFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setBrowseFilter("resourcepack")}>Resources</button>
-                  <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>
+                    Shaders
+                    <Show when={instance()?.loader?.type === "vanilla"}>
+                      <span class="category-unsupported-tag">unsupported</span>
+                    </Show>
+                  </button>
                   <button class={`inst-category-item ${browseFilter() === "datapack" ? "active" : ""}`} onClick={() => setBrowseFilter("datapack")}>Datapacks</button>
                 </div>
                 <div class="inst-category-count-wrap">
                   <Show when={searching()}>
                     <span class="inst-count-text">Searching...</span>
                   </Show>
-                  <Show when={!searching() && totalHits() > 0 && !(instance()?.loader?.type === "vanilla" && browseFilter() === "mod")}>
-                    <span class="inst-count-text"><strong class="inst-count-bold">{totalHits().toLocaleString()}</strong> results</span>
+                  <Show when={!searching() && totalHits() > 0 && !(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader"))}>
+                    <span class="inst-count-text">
+                      <strong class="inst-count-bold">
+                        {modSource() === "curseforge" && totalHits() >= 10000 ? "10,000+" : totalHits().toLocaleString()}
+                      </strong> results
+                    </span>
                   </Show>
                 </div>
               </div>
@@ -2424,18 +2434,16 @@ const InstanceMods: Component = () => {
                 </Show>
 
                 <Show when={contentTab() === "browse"}>
-                  <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod")}>
-                    <Show when={browseFilter() === "resourcepack" || browseFilter() === "shader"}>
-                      <Dropdown
-                        prefix="Version: "
-                        value={browseVersion()}
-                        options={browseVersionOptions()}
-                        onChange={handleBrowseVersionChange}
-                        searchable={true}
-                        searchPlaceholder="Search versions..."
-                        width="145px"
-                      />
-                    </Show>
+                  <Show when={!(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader"))}>
+                    <Dropdown
+                      prefix="Version: "
+                      value={browseVersion()}
+                      options={browseVersionOptions()}
+                      onChange={handleBrowseVersionChange}
+                      searchable={true}
+                      searchPlaceholder="Search versions..."
+                      width="145px"
+                    />
                     <Dropdown prefix="Sort: " value={sortBy()} options={SORT_OPTIONS} onChange={handleSortChange} width="155px" />
                   </Show>
                   {/* View Mode Toggle: Grid vs Compact */}
@@ -2749,15 +2757,17 @@ const InstanceMods: Component = () => {
         <Show when={contentTab() === "browse"}>
           <div class="browse-wrapper">
             <div class="browse-results">
-              <Show when={instance()?.loader?.type === "vanilla" && browseFilter() === "mod"}>
+              <Show when={instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")}>
                 <div class="vanilla-unsupported-panel">
                   <div class="vanilla-unsupported-art-wrap">
                     <div class="vanilla-unsupported-glow" />
                     <div class="vanilla-unsupported-art">
                       <div class="vanilla-cube-graphic">
-                        <IconCube />
+                        <Show when={browseFilter() === "shader"} fallback={<IconCube />}>
+                          <IconWand />
+                        </Show>
                       </div>
-                      <div class="vanilla-badge-slash" data-tip="Mods unsupported on Vanilla">
+                      <div class="vanilla-badge-slash" data-tip={browseFilter() === "shader" ? "Shaders unsupported on Vanilla" : "Mods unsupported on Vanilla"}>
                         <IconX />
                       </div>
                     </div>
@@ -2765,9 +2775,19 @@ const InstanceMods: Component = () => {
 
                   <div class="vanilla-unsupported-header">
                     <span class="vanilla-unsupported-pill">Vanilla Loader Active</span>
-                    <h3 class="vanilla-unsupported-title">Mods Are Unsupported on Vanilla</h3>
+                    <h3 class="vanilla-unsupported-title">
+                      {browseFilter() === "shader" ? "Shaders Are Unsupported on Vanilla" : "Mods Are Unsupported on Vanilla"}
+                    </h3>
                     <p class="vanilla-unsupported-desc">
-                      This instance is running vanilla Minecraft. The official game engine cannot load or run code mods (.jar) without a modding loader such as <strong>Fabric</strong>, <strong>NeoForge</strong>, <strong>Forge</strong>, or <strong>Quilt</strong>.
+                      {browseFilter() === "shader" ? (
+                        <>
+                          Vanilla Minecraft has no built-in shader pipeline. Shaderpacks (.zip) require a shader loader mod such as <strong>Iris</strong> (Fabric/NeoForge) or <strong>Oculus</strong> (Forge).
+                        </>
+                      ) : (
+                        <>
+                          This instance is running vanilla Minecraft. The official game engine cannot load or run code mods (.jar) without a modding loader such as <strong>Fabric</strong>, <strong>NeoForge</strong>, <strong>Forge</strong>, or <strong>Quilt</strong>.
+                        </>
+                      )}
                     </p>
                   </div>
 
@@ -2775,8 +2795,12 @@ const InstanceMods: Component = () => {
                     <div class="vanilla-guide-card">
                       <div class="vanilla-guide-icon"><IconSettings /></div>
                       <div class="vanilla-guide-info">
-                        <div class="vanilla-guide-title">Want to use mods?</div>
-                        <div class="vanilla-guide-text">Change this instance's loader to Fabric, NeoForge, or Forge in settings.</div>
+                        <div class="vanilla-guide-title">{browseFilter() === "shader" ? "Want to use shaders?" : "Want to use mods?"}</div>
+                        <div class="vanilla-guide-text">
+                          {browseFilter() === "shader"
+                            ? "Switch to Fabric or NeoForge in settings to enable Iris Shaders."
+                            : "Change this instance's loader to Fabric, NeoForge, or Forge in settings."}
+                        </div>
                       </div>
                       <button class="btn btn--primary btn--sm vanilla-guide-btn" onClick={() => setMainTab("settings")}>
                         Change Loader
@@ -2808,14 +2832,14 @@ const InstanceMods: Component = () => {
                 </div>
               </Show>
 
-              <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod") && searching()}>
+              <Show when={!(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")) && searching()}>
                 <div class="browse-status-pane">
                   <div class="browse-loading-spinner" />
                   <div class="browse-status-text">Searching {modSource() === "curseforge" ? "CurseForge" : "Modrinth"}...</div>
                 </div>
               </Show>
 
-              <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod") && !searching() && displayBrowseResults().length === 0}>
+              <Show when={!(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")) && !searching() && displayBrowseResults().length === 0}>
                 <div class="browse-status-pane">
                   <div class="browse-status-icon"><IconSearch /></div>
                   <div class="browse-status-title">No results found</div>
@@ -2827,7 +2851,7 @@ const InstanceMods: Component = () => {
                 </div>
               </Show>
 
-              <Show when={!(instance()?.loader?.type === "vanilla" && browseFilter() === "mod") && !searching() && displayBrowseResults().length > 0}>
+              <Show when={!(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader")) && !searching() && displayBrowseResults().length > 0}>
                 <div class={`inst-card-grid ${viewMode() === "compact" ? "compact" : ""}`}>
                 <For each={displayBrowseResults()}>
                 {(mod) => (
@@ -2848,11 +2872,16 @@ const InstanceMods: Component = () => {
                     </div>
                     <div class="mod-card-desc">{mod.description}</div>
                     <div class="mod-card-tags">
+                      <Show when={browseFilter() === "all"}>
+                        <span class={`mod-tag mod-tag-type mod-tag-type--${detectCategory(mod)}`}>
+                          {categoryLabel(detectCategory(mod))}
+                        </span>
+                      </Show>
                       {(() => {
                         const tags = extractCardTags(mod.categories);
                         return (
                           <>
-                            <Show when={tags.loader}>
+                            <Show when={tags.loader && detectCategory(mod) === "mod"}>
                               <span class={`mod-tag mod-tag-loader loader-${tags.loader}`}>
                                 {tags.loader === "vanilla" ? "Vanilla" : tags.loader!.charAt(0).toUpperCase() + tags.loader!.slice(1)}
                               </span>
@@ -2870,8 +2899,10 @@ const InstanceMods: Component = () => {
                     <div class="mod-card-footer">
                       <div class="mod-card-meta">
                         <span class="mod-meta-stat"><IconDownload /> {formatDownloads(mod.downloads)}</span>
-                        <span>·</span>
-                        <span class="mod-meta-stat"><IconHeart /> {formatDownloads(mod.follows)}</span>
+                        <Show when={mod.follows > 0}>
+                          <span>·</span>
+                          <span class="mod-meta-stat"><IconHeart /> {formatDownloads(mod.follows)}</span>
+                        </Show>
                         <Show when={mod.client_side || mod.server_side}>
                           {" · "}
                           <Show when={mod.client_side === "required" || mod.client_side === "optional"}>

@@ -95,53 +95,91 @@ pub(crate) async fn resolve_modrinth_token() -> Option<String> {
 }
 
 pub(crate) fn build_search_facets(project_type: &str, loader: &str, game_version: &str) -> String {
-    // Sanitize game_version: Meilisearch parses numeric literals and fails with
-    // "invalid numeric filter literal: EOF while parsing a value at line 1 column 2"
-    // if a version string ends with a dot (e.g. "1." while typing or partial).
-    // Strip trailing dots, and if the cleaned string is empty, treat as no version filter.
     let clean_version = game_version.trim().trim_end_matches('.');
+    let has_version = !clean_version.is_empty();
 
-    // When project_type is "all", we don't filter by project_type or loader so
-    // that mods, resource packs, shaders, and datapacks are all returned.
-    // However, on vanilla instances, mods cannot run, so we limit "all" to
-    // resource packs and datapacks.
-    if project_type == "all" || project_type.is_empty() {
-        if loader == "vanilla" {
-            if clean_version.is_empty() {
-                "[[\"project_type:resourcepack\", \"project_type:datapack\"]]".to_string()
-            } else {
-                format!(
-                    "[[\"project_type:resourcepack\", \"project_type:datapack\"], [\"versions:{}\"]]",
-                    clean_version
-                )
+    if loader == "vanilla" {
+        match project_type {
+            "all" | "" => {
+                if has_version {
+                    format!(
+                        "[[\"project_type:resourcepack\", \"categories:datapack\"], [\"versions:{}\"]]",
+                        clean_version
+                    )
+                } else {
+                    "[[\"project_type:resourcepack\", \"categories:datapack\"]]".to_string()
+                }
             }
-        } else if clean_version.is_empty() {
-            "[]".to_string()
-        } else {
-            format!("[[\"versions:{}\"]]", clean_version)
+            "resourcepack" => {
+                if has_version {
+                    format!("[[\"versions:{}\"], [\"project_type:resourcepack\"]]", clean_version)
+                } else {
+                    "[[\"project_type:resourcepack\"]]".to_string()
+                }
+            }
+            "datapack" => {
+                if has_version {
+                    format!("[[\"versions:{}\"], [\"categories:datapack\"]]", clean_version)
+                } else {
+                    "[[\"categories:datapack\"]]".to_string()
+                }
+            }
+            _ => "[]".to_string(),
         }
-    } else if project_type == "mod" {
-        if clean_version.is_empty() {
-            format!(
-                "[[\"categories:{}\"], [\"project_type:{}\"]]",
-                loader, project_type
-            )
-        } else {
-            format!(
-                "[[\"categories:{}\"], [\"versions:{}\"], [\"project_type:{}\"]]",
-                loader, clean_version, project_type
-            )
-        }
-    } else if clean_version.is_empty() {
-        format!(
-            "[[\"project_type:{}\"]]",
-            project_type
-        )
     } else {
-        format!(
-            "[[\"versions:{}\"], [\"project_type:{}\"]]",
-            clean_version, project_type
-        )
+        match project_type {
+            "all" | "" => {
+                let mut facets = Vec::new();
+                if loader != "all" && !loader.is_empty() {
+                    let loader_part = if loader == "quilt" {
+                        "\"categories:quilt\", \"categories:fabric\", "
+                    } else {
+                        &format!("\"categories:{}\", ", loader)
+                    };
+                    facets.push(format!(
+                        "[{} \"project_type:resourcepack\", \"project_type:shader\", \"categories:datapack\"]",
+                        loader_part
+                    ));
+                }
+                if has_version {
+                    facets.push(format!("[\"versions:{}\"]", clean_version));
+                }
+                if facets.is_empty() {
+                    "[]".to_string()
+                } else {
+                    format!("[{}]", facets.join(", "))
+                }
+            }
+            "mod" => {
+                let mut facets = vec!["[\"project_type:mod\"]".to_string()];
+                if loader != "all" && !loader.is_empty() {
+                    if loader == "quilt" {
+                        facets.push("[\"categories:quilt\", \"categories:fabric\"]".to_string());
+                    } else {
+                        facets.push(format!("[\"categories:{}\"]", loader));
+                    }
+                }
+                if has_version {
+                    facets.push(format!("[\"versions:{}\"]", clean_version));
+                }
+                format!("[{}]", facets.join(", "))
+            }
+            "datapack" => {
+                if has_version {
+                    format!("[[\"versions:{}\"], [\"categories:datapack\"]]", clean_version)
+                } else {
+                    "[[\"categories:datapack\"]]".to_string()
+                }
+            }
+            _ => {
+                // "resourcepack", "shader"
+                if has_version {
+                    format!("[[\"versions:{}\"], [\"project_type:{}\"]]", clean_version, project_type)
+                } else {
+                    format!("[[\"project_type:{}\"]]", project_type)
+                }
+            }
+        }
     }
 }
 
@@ -155,7 +193,7 @@ pub async fn search_mods(
     sort: &str,
     project_type: &str,
 ) -> Result<ModrinthSearchResult, String> {
-    if loader == "vanilla" && project_type == "mod" {
+    if loader == "vanilla" && (project_type == "mod" || project_type == "shader") {
         return Ok(ModrinthSearchResult {
             hits: vec![],
             offset,

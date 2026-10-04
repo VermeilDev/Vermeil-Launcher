@@ -205,7 +205,7 @@ pub async fn search(
         return Err("CurseForge API key not configured. Add it in Settings.".to_string());
     }
 
-    if loader == "vanilla" && project_type == "mod" {
+    if loader == "vanilla" && (project_type == "mod" || project_type == "shader") {
         return Ok(CfSearchResult {
             hits: vec![],
             total_hits: 0,
@@ -216,17 +216,25 @@ pub async fn search(
 
     let sort_field = sort_field_id(sort);
 
-    let mut url = if project_type == "all" || project_type.is_empty() {
-        format!(
+    // On Vanilla instances, if project_type is "all", default to Resource Packs (classId 12)
+    // so raw mods (classId 6) never bleed into a vanilla instance search.
+    let class_id = if loader == "vanilla" && (project_type == "all" || project_type.is_empty()) {
+        Some(12)
+    } else if project_type == "all" || project_type.is_empty() {
+        None
+    } else {
+        Some(class_id_for(project_type))
+    };
+
+    let mut url = match class_id {
+        Some(cid) => format!(
+            "{}/mods/search?gameId={}&classId={}&index={}&pageSize={}&sortField={}&sortOrder=desc",
+            CF_BASE, MINECRAFT_GAME_ID, cid, offset, limit.min(50), sort_field
+        ),
+        None => format!(
             "{}/mods/search?gameId={}&index={}&pageSize={}&sortField={}&sortOrder=desc",
             CF_BASE, MINECRAFT_GAME_ID, offset, limit.min(50), sort_field
-        )
-    } else {
-        let class_id = class_id_for(project_type);
-        format!(
-            "{}/mods/search?gameId={}&classId={}&index={}&pageSize={}&sortField={}&sortOrder=desc",
-            CF_BASE, MINECRAFT_GAME_ID, class_id, offset, limit.min(50), sort_field
-        )
+        ),
     };
 
     if !query.is_empty() {
