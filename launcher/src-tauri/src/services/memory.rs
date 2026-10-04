@@ -319,6 +319,8 @@ mod tests {
                 description: None,
                 author: None,
                 category: "mod".into(),
+                loaders: Vec::new(),
+                game_versions: Vec::new(),
             });
         }
         if has_shader {
@@ -337,6 +339,8 @@ mod tests {
                 description: None,
                 author: None,
                 category: "shader".into(),
+                loaders: Vec::new(),
+                game_versions: Vec::new(),
             });
         }
         Instance {

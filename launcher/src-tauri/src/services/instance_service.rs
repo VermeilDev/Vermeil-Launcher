@@ -52,6 +52,7 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
     let mut modified = false;
     let instance_dir = meta_path.parent().unwrap_or(meta_path);
 
+    let mods_dir = instance_dir.join(".minecraft").join("mods");
     for m in &mut instance.mods {
         if let Some(ref path) = m.local_icon_path {
             if path.starts_with("data:")
@@ -62,6 +63,42 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
             {
                 m.local_icon_path = None;
                 modified = true;
+            }
+        }
+
+        if m.category == "mod" {
+            let current_path = mods_dir.join(&m.filename);
+            if m.loaders.is_empty() && current_path.exists() {
+                let detected = crate::services::loader_scan::detect_jar_loaders(&current_path);
+                if !detected.is_empty() {
+                    m.loaders = detected;
+                    modified = true;
+                }
+            }
+
+            if m.enabled
+                && !crate::services::loader_scan::is_mod_compatible_with_loader(
+                    &instance.loader.loader_type,
+                    &m.loaders,
+                )
+            {
+                let new_name = if m.filename.ends_with(".disabled") {
+                    m.filename.clone()
+                } else {
+                    format!("{}.disabled", m.filename)
+                };
+                let new_path = mods_dir.join(&new_name);
+                if current_path.exists() && current_path != new_path {
+                    let _ = fs::rename(&current_path, &new_path);
+                }
+                m.filename = new_name;
+                m.enabled = false;
+                modified = true;
+                tracing::warn!(
+                    "Auto-disabled incompatible mod '{}' for loader {:?}",
+                    m.title.as_deref().unwrap_or(&m.filename),
+                    instance.loader.loader_type
+                );
             }
         }
     }

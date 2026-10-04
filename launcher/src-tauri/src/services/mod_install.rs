@@ -379,6 +379,8 @@ async fn install_one(
         description,
         category: category.to_string(),
         author,
+        loaders: version.loaders.clone(),
+        game_versions: version.game_versions.clone(),
     };
 
     // === Persist instance.json ===
@@ -1076,6 +1078,30 @@ pub async fn toggle_mod(instance_id: &str, entry_id: &str) -> Result<bool, Strin
         instance.mods[mod_idx].enabled = false;
         new_enabled = false;
     } else {
+        // Enforce compatibility before enabling a mod
+        if instance.mods[mod_idx].category == "mod" {
+            let mut loaders = instance.mods[mod_idx].loaders.clone();
+            if loaders.is_empty() {
+                loaders = crate::services::loader_scan::detect_jar_loaders(&current_path);
+                instance.mods[mod_idx].loaders = loaders.clone();
+            }
+            if !crate::services::loader_scan::is_mod_compatible_with_loader(
+                &instance.loader.loader_type,
+                &loaders,
+            ) {
+                let loader_desc = if loaders.is_empty() {
+                    "another loader".to_string()
+                } else {
+                    loaders.join(", ")
+                };
+                return Err(format!(
+                    "Cannot enable: built for {}, incompatible with {:?} loader",
+                    loader_desc,
+                    instance.loader.loader_type
+                ));
+            }
+        }
+
         let new_name = instance.mods[mod_idx].filename.trim_end_matches(".disabled").to_string();
         let new_path = target_dir.join(&new_name);
         fs::rename(&current_path, &new_path).map_err(|e| format!("Rename failed: {}", e))?;
@@ -1145,6 +1171,21 @@ pub async fn sync_manual_mods(instance_id: &str) -> Result<(), String> {
         }
         let base = name.trim_end_matches(".disabled");
         let title = base.strip_suffix(".jar").unwrap_or(base).to_string();
+        let jar_path = mods_dir.join(name);
+        let jar_loaders = crate::services::loader_scan::detect_jar_loaders(&jar_path);
+        let is_compatible = crate::services::loader_scan::is_mod_compatible_with_loader(
+            &instance.loader.loader_type,
+            &jar_loaders,
+        );
+        let mut final_filename = name.clone();
+        if !is_compatible && !name.ends_with(".disabled") {
+            let disabled_name = format!("{}.disabled", name);
+            if fs::rename(&jar_path, mods_dir.join(&disabled_name)).is_ok() {
+                final_filename = disabled_name;
+            }
+        }
+        let enabled = !final_filename.ends_with(".disabled") && is_compatible;
+
         instance.mods.push(ModEntry {
             // Stable id independent of enabled/disabled state so toggling
             // (which rewrites `filename` to add/strip `.disabled`) keeps working.
@@ -1152,9 +1193,9 @@ pub async fn sync_manual_mods(instance_id: &str) -> Result<(), String> {
             source: "manual".to_string(),
             project_id: String::new(),
             version_id: String::new(),
-            filename: name.clone(),
+            filename: final_filename,
             version_number: None,
-            enabled: !name.ends_with(".disabled"),
+            enabled,
             pinned: false,
             title: Some(title),
             icon_url: None,
@@ -1162,6 +1203,8 @@ pub async fn sync_manual_mods(instance_id: &str) -> Result<(), String> {
             description: None,
             category: "mod".to_string(),
             author: None,
+            loaders: jar_loaders,
+            game_versions: Vec::new(),
         });
         changed = true;
     }

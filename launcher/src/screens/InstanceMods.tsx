@@ -136,6 +136,37 @@ function formatPlaytime(seconds: number): string {
   return `${minutes}m`;
 }
 
+function isInstalledModCompatible(mod: any, instanceLoaderType?: string): boolean {
+  if (!instanceLoaderType || (mod.category || "mod") !== "mod") return true;
+  if (instanceLoaderType === "vanilla") return false;
+  const loaders = mod.loaders as string[] | undefined;
+  if (!loaders || loaders.length === 0) return true;
+  const target = instanceLoaderType.toLowerCase();
+  if (target === "quilt") {
+    return loaders.some((l) => {
+      const lower = l.toLowerCase();
+      return lower === "quilt" || lower === "fabric";
+    });
+  }
+  return loaders.some((l) => l.toLowerCase() === target);
+}
+
+function getInstalledModDisplayLoader(mod: any, instanceLoaderType?: string): string {
+  const loaders = mod.loaders as string[] | undefined;
+  if (loaders && loaders.length > 0) {
+    if (instanceLoaderType) {
+      const target = instanceLoaderType.toLowerCase();
+      const match = loaders.find((l) => l.toLowerCase() === target);
+      if (match) return match;
+      if (target === "quilt" && loaders.some((l) => l.toLowerCase() === "fabric")) {
+        return "fabric";
+      }
+    }
+    return loaders[0];
+  }
+  return instanceLoaderType || "mod";
+}
+
 const InstanceMods: Component = () => {
   const [mainTab, setMainTab] = createSignal<InstanceTab>(initialInstanceTab() as InstanceTab || "content");
   const [viewMode, setViewMode] = createSignal<"grid" | "compact">("grid");
@@ -2612,29 +2643,45 @@ const InstanceMods: Component = () => {
                       The optional update pill is rendered alongside so it
                       sits in the user's eye-line right below the title. */}
                   <Show when={instance()}>
-                    <div class="mod-card-tags">
-                      <Show when={((mod as any).category || "mod") === "mod"}>
-                        <span class={`mod-tag mod-tag-loader loader-${instance()!.loader.type}`}>
-                          {instance()!.loader.type}
-                        </span>
-                      </Show>
-                      <span class="mod-tag mod-tag-version">{instance()!.game_version}</span>
-                      <Show when={contentVersion((mod as any).version_number, mod.filename, instance()!.game_version)}>
-                        {(v) => <span class="mod-tag mod-tag-vnum">{v()}</span>}
-                      </Show>
-                      {/* A pinned entry is skipped by the update checker, so its
-                          update pill never appears. Without this tag that looks
-                          like the mod simply never updates, with no reason
-                          given. */}
-                      <Show when={(mod as any).pinned}>
-                        <span
-                          class="mod-tag mod-tag-held tip-below"
-                          data-tip="Locked by dependency"
-                        >
-                          held
-                        </span>
-                      </Show>
-                    </div>
+                    {(() => {
+                      const isMod = ((mod as any).category || "mod") === "mod";
+                      const isCompatible = isInstalledModCompatible(mod, instance()?.loader.type);
+                      const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader.type);
+                      const loaderLabel = displayLoader.charAt(0).toUpperCase() + displayLoader.slice(1);
+                      return (
+                        <div class="mod-card-tags">
+                          <Show when={isMod}>
+                            <span class={`mod-tag mod-tag-loader loader-${displayLoader.toLowerCase()}`}>
+                              {loaderLabel}
+                            </span>
+                          </Show>
+                          <Show when={isMod && !isCompatible}>
+                            <span
+                              class="mod-tag mod-tag-incompatible tip-below"
+                              data-tip={`Built for ${loaderLabel}, incompatible with ${instance()!.loader.type}`}
+                            >
+                              Incompatible
+                            </span>
+                          </Show>
+                          <span class="mod-tag mod-tag-version">{instance()!.game_version}</span>
+                          <Show when={contentVersion((mod as any).version_number, mod.filename, instance()!.game_version)}>
+                            {(v) => <span class="mod-tag mod-tag-vnum">{v()}</span>}
+                          </Show>
+                          {/* A pinned entry is skipped by the update checker, so its
+                              update pill never appears. Without this tag that looks
+                              like the mod simply never updates, with no reason
+                              given. */}
+                          <Show when={(mod as any).pinned}>
+                            <span
+                              class="mod-tag mod-tag-held tip-below"
+                              data-tip="Locked by dependency"
+                            >
+                              held
+                            </span>
+                          </Show>
+                        </div>
+                      );
+                    })()}
                   </Show>
                   <div class="mod-card-footer">
                     <div class="mod-card-meta">{(mod as any).category || "mod"} · {mod.enabled ? "Enabled" : "Disabled"}</div>
@@ -2659,23 +2706,44 @@ const InstanceMods: Component = () => {
                           </span>
                         </button>
                       </Show>
-                      <button
-                        type="button"
-                        class={`btn btn--sm btn--icon btn--toggle ${mod.enabled ? "active" : ""} tip-right`}
-                        data-tip={mod.enabled ? "Disable mod" : "Enable mod"}
-                        aria-label={mod.enabled ? "Disable mod" : "Enable mod"}
-                        disabled={installedSelectMode()}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const inst = instance();
-                          if (!inst) return;
-                          await toggleModInInstance(inst.id, mod.id);
-                          await refetchInstances();
-                          await refetchDetail();
-                        }}
-                      >
-                        <IconCheck />
-                      </button>
+                      {(() => {
+                        const isCompatible = isInstalledModCompatible(mod, instance()?.loader.type);
+                        const isLocked = installedSelectMode() || (!mod.enabled && !isCompatible);
+                        const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader.type);
+                        const loaderLabel = displayLoader.charAt(0).toUpperCase() + displayLoader.slice(1);
+                        const toggleTip = !isCompatible && !mod.enabled
+                          ? `Cannot enable: built for ${loaderLabel}, incompatible with ${instance()!.loader.type}`
+                          : mod.enabled
+                          ? "Disable mod"
+                          : "Enable mod";
+                        return (
+                          <button
+                            type="button"
+                            class={`btn btn--sm btn--icon btn--toggle ${mod.enabled ? "active" : ""} tip-right`}
+                            data-tip={toggleTip}
+                            aria-label={toggleTip}
+                            disabled={isLocked}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const inst = instance();
+                              if (!inst) return;
+                              try {
+                                await toggleModInInstance(inst.id, mod.id);
+                                await refetchInstances();
+                                await refetchDetail();
+                              } catch (err: any) {
+                                showToast({
+                                  title: "Cannot enable mod",
+                                  message: String(err),
+                                  type: "error",
+                                });
+                              }
+                            }}
+                          >
+                            <IconCheck />
+                          </button>
+                        );
+                      })()}
                       <button
                         type="button"
                         class="btn btn--danger btn--sm btn--icon tip-right"

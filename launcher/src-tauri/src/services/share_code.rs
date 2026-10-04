@@ -1604,6 +1604,8 @@ pub async fn import_share_code(
                         description: None,
                         category: category_name_for(cat_enum).to_string(),
                         author: None,
+                        loaders: version.loaders.clone(),
+                        game_versions: version.game_versions.clone(),
                     });
                 }
             } else {
@@ -1653,6 +1655,8 @@ pub async fn import_share_code(
                                         description: None,
                                         category: cat_str.to_string(),
                                         author: None,
+                                        loaders: latest.loaders.clone(),
+                                        game_versions: latest.game_versions.clone(),
                                     });
                                 }
                             }
@@ -1760,6 +1764,8 @@ pub async fn import_share_code(
                             description: None,
                             category: category_name_for(cat_enum).to_string(),
                             author: None,
+                            loaders: Vec::new(),
+                            game_versions: Vec::new(),
                         });
                     }
                 } else {
@@ -1824,6 +1830,8 @@ pub async fn import_share_code(
                                                 category: category_name_for(cand.cat_enum)
                                                     .to_string(),
                                                 author: None,
+                                                loaders: ver.loaders.clone(),
+                                                game_versions: ver.game_versions.clone(),
                                             });
                                             resolved_idx.insert(idx);
                                         }

@@ -591,6 +591,17 @@
   cursor: help;
 }
 
+/* Incompatible pill — this mod is built for a different loader and cannot be run.
+   Informational, not interactive: the tooltip explains the loader mismatch. */
+.mod-tag-incompatible {
+  background: var(--danger-soft, rgba(239, 68, 68, 0.12));
+  color: var(--danger, #ef4444);
+  border-color: rgba(239, 68, 68, 0.35);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: help;
+}
+
 
 /* Auto-updater banner — top-right corner overlay (Tactile design).
    State machine: available → downloading → downloaded → installing.

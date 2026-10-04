@@ -554,3 +554,127 @@ async fn fetch_latest_neoforge(game_version: &str) -> Option<String> {
         .next_back()
         .cloned()
 }
+
+/// Inspect a mod JAR file and detect its supported loaders based on manifest files inside the archive.
+/// Returns a list of loader IDs (e.g. `["fabric", "quilt"]`, `["neoforge"]`, `["forge"]`).
+pub fn detect_jar_loaders(jar_path: &Path) -> Vec<String> {
+    let file = match fs::File::open(jar_path) {
+        Ok(f) => f,
+        Err(_) => return Vec::new(),
+    };
+    let mut archive = match zip::ZipArchive::new(file) {
+        Ok(a) => a,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut loaders = Vec::new();
+
+    let has_quilt = archive.by_name("quilt.mod.json").is_ok();
+    let has_fabric = archive.by_name("fabric.mod.json").is_ok();
+    let has_neoforge_toml = archive.by_name("META-INF/neoforge.mods.toml").is_ok();
+    let has_mods_toml = archive.by_name("META-INF/mods.toml").is_ok();
+    let has_mcmod_info = archive.by_name("mcmod.info").is_ok();
+
+    if has_neoforge_toml {
+        loaders.push("neoforge".to_string());
+    }
+
+    if has_mods_toml {
+        if let Some(content) = read_entry(&mut archive, "META-INF/mods.toml") {
+            if content.contains("modId=\"neoforge\"") || content.contains("modId = \"neoforge\"") {
+                if !loaders.contains(&"neoforge".to_string()) {
+                    loaders.push("neoforge".to_string());
+                }
+            } else if !loaders.contains(&"forge".to_string()) {
+                loaders.push("forge".to_string());
+            }
+        } else if !loaders.contains(&"forge".to_string()) {
+            loaders.push("forge".to_string());
+        }
+    } else if has_mcmod_info && !loaders.contains(&"forge".to_string()) {
+        loaders.push("forge".to_string());
+    }
+
+    if has_quilt {
+        loaders.push("quilt".to_string());
+        if has_fabric && !loaders.contains(&"fabric".to_string()) {
+            loaders.push("fabric".to_string());
+        }
+    } else if has_fabric {
+        if !loaders.contains(&"fabric".to_string()) {
+            loaders.push("fabric".to_string());
+        }
+        // Fabric mods run on Quilt
+        if !loaders.contains(&"quilt".to_string()) {
+            loaders.push("quilt".to_string());
+        }
+    }
+
+    loaders
+}
+
+/// Determine whether a mod with the declared `mod_loaders` can run under the given instance `loader`.
+/// If `mod_loaders` is empty, returns `true` (permissive fallback for unclassified/custom assets).
+pub fn is_mod_compatible_with_loader(loader: &LoaderType, mod_loaders: &[String]) -> bool {
+    if mod_loaders.is_empty() {
+        return true;
+    }
+
+    let target = match loader {
+        LoaderType::Fabric => "fabric",
+        LoaderType::Quilt => "quilt",
+        LoaderType::Forge => "forge",
+        LoaderType::Neoforge => "neoforge",
+        LoaderType::Vanilla => "vanilla",
+    };
+
+    match loader {
+        LoaderType::Vanilla => false,
+        LoaderType::Quilt => {
+            // Quilt loader can run Quilt mods AND Fabric mods
+            mod_loaders.iter().any(|l| {
+                let l_lower = l.to_lowercase();
+                l_lower == "quilt" || l_lower == "fabric"
+            })
+        }
+        _ => {
+            mod_loaders.iter().any(|l| l.eq_ignore_ascii_case(target))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_mod_compatible_with_loader() {
+        // Empty loaders is permissive
+        assert!(is_mod_compatible_with_loader(&LoaderType::Fabric, &[]));
+        assert!(is_mod_compatible_with_loader(&LoaderType::Neoforge, &[]));
+
+        // Vanilla runs no mods
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Vanilla, &[format!("fabric")]));
+
+        // Fabric mods
+        let fabric = vec!["fabric".to_string(), "quilt".to_string()];
+        assert!(is_mod_compatible_with_loader(&LoaderType::Fabric, &fabric));
+        assert!(is_mod_compatible_with_loader(&LoaderType::Quilt, &fabric));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Neoforge, &fabric));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Forge, &fabric));
+
+        // NeoForge mods
+        let neoforge = vec!["neoforge".to_string()];
+        assert!(is_mod_compatible_with_loader(&LoaderType::Neoforge, &neoforge));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Fabric, &neoforge));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Forge, &neoforge));
+
+        // Forge mods
+        let forge = vec!["forge".to_string()];
+        assert!(is_mod_compatible_with_loader(&LoaderType::Forge, &forge));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Neoforge, &forge));
+        assert!(!is_mod_compatible_with_loader(&LoaderType::Fabric, &forge));
+    }
+}
+
+

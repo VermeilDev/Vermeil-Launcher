@@ -429,6 +429,8 @@ async fn install_cf_one(
         description: None,
         category: category.to_string(),
         author,
+        loaders: file.loaders.clone(),
+        game_versions: file.game_versions.clone(),
     };
 
     // === Persist instance.json ===

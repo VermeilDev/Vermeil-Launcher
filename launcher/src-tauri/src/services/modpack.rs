@@ -382,6 +382,8 @@ pub async fn install_from_mrpack_file(
                     description: None,
                     category: "mod".to_string(),
                     author: None,
+                    loaders: Vec::new(),
+                    game_versions: Vec::new(),
                 });
             } else if let Some(filename) = mf.path.strip_prefix("resourcepacks/") {
                 mod_entries.push(ModEntry {
@@ -399,6 +401,8 @@ pub async fn install_from_mrpack_file(
                     description: None,
                     category: "resourcepack".to_string(),
                     author: None,
+                    loaders: Vec::new(),
+                    game_versions: Vec::new(),
                 });
             } else if let Some(filename) = mf.path.strip_prefix("shaderpacks/") {
                 mod_entries.push(ModEntry {
@@ -416,6 +420,8 @@ pub async fn install_from_mrpack_file(
                     description: None,
                     category: "shader".to_string(),
                     author: None,
+                    loaders: Vec::new(),
+                    game_versions: Vec::new(),
                 });
             } else if let Some(filename) = mf.path.strip_prefix("datapacks/") {
                 // Top-level `datapacks/` entries in a .mrpack — uncommon (most
@@ -438,6 +444,8 @@ pub async fn install_from_mrpack_file(
                     description: None,
                     category: "datapack".to_string(),
                     author: None,
+                    loaders: Vec::new(),
+                    game_versions: Vec::new(),
                 });
             }
         }
@@ -637,6 +645,8 @@ pub async fn enrich_mod_metadata(
                     description: None,
                     category: "mod".to_string(),
                     author: None,
+                    loaders: Vec::new(),
+                    game_versions: Vec::new(),
                 });
             }
         }

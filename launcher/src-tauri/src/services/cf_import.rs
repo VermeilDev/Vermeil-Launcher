@@ -431,6 +431,8 @@ async fn build_mod_tasks(
             description: None,
             category: "mod".to_string(),
             author: None,
+            loaders: Vec::new(),
+            game_versions: Vec::new(),
         });
     }
 
@@ -492,6 +494,8 @@ async fn build_mod_tasks(
                                         description: None,
                                         category: "mod".to_string(),
                                         author: None,
+                                        loaders: version.loaders.clone(),
+                                        game_versions: version.game_versions.clone(),
                                     });
 
                                     resolved_indices.insert(idx);
@@ -595,6 +599,8 @@ async fn build_mod_tasks(
                                         description: Some(hit.description.clone()),
                                         category: "mod".to_string(),
                                         author: hit.author.clone(),
+                                        loaders: v.loaders.clone(),
+                                        game_versions: v.game_versions.clone(),
                                     });
 
                                     resolved_indices.insert(idx);

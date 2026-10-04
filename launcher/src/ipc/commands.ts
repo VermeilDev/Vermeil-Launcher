@@ -54,9 +54,28 @@ export interface InstanceSummary {
   ingame_cape_supported?: boolean;
 }
 
+export interface ModEntry {
+  id: string;
+  source: string;
+  project_id: string;
+  version_id: string;
+  filename: string;
+  version_number?: string | null;
+  enabled: boolean;
+  pinned?: boolean;
+  title?: string | null;
+  icon_url?: string | null;
+  local_icon_path?: string | null;
+  description?: string | null;
+  category: string;
+  author?: string | null;
+  loaders?: string[];
+  game_versions?: string[];
+}
+
 /** Full instance detail with complete mod list. Returned by `getInstance`. */
 export interface Instance extends Omit<InstanceSummary, "mod_count"> {
-  mods: any[];
+  mods: ModEntry[];
 }
 
 export interface CreateInstanceConfig {

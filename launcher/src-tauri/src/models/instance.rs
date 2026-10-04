@@ -132,6 +132,10 @@ pub struct ModEntry {
     /// call.
     #[serde(default)]
     pub author: Option<String>,
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    #[serde(default)]
+    pub game_versions: Vec<String>,
 }
 
 fn default_category() -> String { "mod".to_string() }
