@@ -25,7 +25,7 @@ import {
   IconCube,
   IconLayers,
   IconBolt,
-  IconWand,
+  IconAnvil,
   IconPuzzle,
   IconAlertTriangle,
   IconPlus,
@@ -76,7 +76,7 @@ const LOADER_INFOS: LoaderInfo[] = [
     desc: "Classic heavyweight modding framework",
     tag: "Classic",
     colorClass: "orange",
-    icon: () => <IconWand />,
+    icon: () => <IconAnvil />,
   },
   {
     id: "quilt",
