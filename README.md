@@ -92,6 +92,10 @@ See [DISCLAIMER.md](DISCLAIMER.md) for full project disclaimers and [docs/DEVELO
 - **[Feather Icons](https://github.com/feathericons/feather)** by **Cole Bemis** — System iconography and UI glyphs.
 - **[skinview3d](https://github.com/bs-community/skinview3d)** — 3D Minecraft character and cape rendering canvas.
 
+## Author & Maintainer
+
+Created and maintained by **VermeilDev** ([@Davekb1976](https://github.com/Davekb1976)).
+
 ## License
 
 Vermeil is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](LICENSE) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
