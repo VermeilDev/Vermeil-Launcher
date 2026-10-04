@@ -3,7 +3,17 @@
 
 import { Component, createSignal, createResource, createEffect, createMemo, Show, For, onCleanup, onMount } from "solid-js";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
-import { instances, refetchInstances, showToast, gameRunning } from "../App";
+import {
+  instances,
+  refetchInstances,
+  showToast,
+  gameRunning,
+  trackDownload,
+  completeDownload,
+  setActiveScreen,
+  setActiveInstanceId,
+  setInitialInstanceTab,
+} from "../App";
 import {
   getFabricLoaderVersions,
   getFabricGameVersions,
@@ -115,10 +125,37 @@ const ChangeLoaderModal: Component = () => {
   const [versionDropOpen, setVersionDropOpen] = createSignal(false);
   const [versionFilter, setVersionFilter] = createSignal("");
 
+  const trackedDownloads = new Map<string, string>();
+
   let unlistenProgress: UnlistenFn | undefined;
   onMount(async () => {
     unlistenProgress = await listen<ModConversionProgress>("mod-conversion-progress", (event) => {
       setConversionProgress(event.payload);
+      const current = inst();
+      const targetLoader = selectedLoader();
+      const title = event.payload.mod_title;
+      const status = event.payload.status;
+
+      if (status === "Downloading...") {
+        if (!trackedDownloads.has(title)) {
+          const dlId = trackDownload(title, "mod", {
+            instanceId: current?.id,
+            loader: targetLoader,
+            gameVersion: current?.game_version,
+          });
+          trackedDownloads.set(title, dlId);
+        }
+      } else if (status === "Converted" || status.includes("failed") || status.includes("disabled")) {
+        const dlId = trackedDownloads.get(title);
+        if (dlId) {
+          completeDownload(dlId, undefined, undefined, {
+            instanceId: current?.id,
+            loader: targetLoader,
+            gameVersion: current?.game_version,
+          });
+          trackedDownloads.delete(title);
+        }
+      }
     });
   });
 
@@ -126,6 +163,10 @@ const ChangeLoaderModal: Component = () => {
     if (unlistenProgress) {
       unlistenProgress();
     }
+    for (const dlId of trackedDownloads.values()) {
+      completeDownload(dlId);
+    }
+    trackedDownloads.clear();
   });
 
   // Supported MC game versions per loader
@@ -345,7 +386,15 @@ const ChangeLoaderModal: Component = () => {
           title: "Loader switched",
           message: `Switched "${current.name}" to ${loaderLabel(selectedLoader())}${summary}`.trim(),
           type: "success",
-          autoCloseMs: 4500,
+          autoCloseMs: 5000,
+          action: result.disabled_count > 0 ? {
+            label: "View Mods",
+            onClick: () => {
+              setActiveInstanceId(current.id);
+              setInitialInstanceTab("content");
+              setActiveScreen("mods");
+            },
+          } : undefined,
         });
       } else {
         showToast({
@@ -366,6 +415,10 @@ const ChangeLoaderModal: Component = () => {
     } finally {
       setChanging(false);
       setConversionProgress(null);
+      for (const dlId of trackedDownloads.values()) {
+        completeDownload(dlId);
+      }
+      trackedDownloads.clear();
     }
   };
 

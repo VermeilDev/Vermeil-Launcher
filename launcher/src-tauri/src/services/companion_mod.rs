@@ -117,6 +117,31 @@ fn is_managed_active(name: &str) -> bool {
     name.starts_with(JAR_PREFIX) && name.contains('+') && name.ends_with(".jar")
 }
 
+/// Check if a managed jar prefix matches the instance's loader.
+fn loader_matches(prefix: &str, loader: &str) -> bool {
+    let expected = format!("vermeil-{}", loader);
+    if prefix == expected {
+        return true;
+    }
+    // Quilt natively runs Fabric mods
+    if loader == "quilt" && prefix == "vermeil-fabric" {
+        return true;
+    }
+    false
+}
+
+/// An active managed jar that matches the requested loader.
+fn is_managed_active_for_loader(name: &str, loader: &str) -> bool {
+    if !is_managed_active(name) {
+        return false;
+    }
+    if let Some((prefix, _ver, _mc)) = parse_managed_filename(name) {
+        loader_matches(prefix, loader)
+    } else {
+        false
+    }
+}
+
 /// A disabled managed jar — our naming with the `.disabled` suffix.
 fn is_managed_disabled(name: &str) -> bool {
     name.starts_with(JAR_PREFIX) && name.contains('+') && name.ends_with(".jar.disabled")
@@ -168,13 +193,15 @@ pub async fn ensure_installed(instance: &Instance) -> CompanionStatus {
         return CompanionStatus::Skipped;
     }
 
-    // Fast path: if an active managed jar is already present in mods/, use it directly.
+    let loader = instance.loader.loader_type.as_str();
+
+    // Fast path: if an active managed jar matching this loader is already present in mods/, use it directly.
     // Launching Minecraft should never block on network or auto-upgrade without user consent.
     let names = read_dir_names(&mods);
-    if let Some(active) = names.iter().find(|n| is_managed_active(n)) {
+    if let Some(active) = names.iter().find(|n| is_managed_active_for_loader(n, loader)) {
         return CompanionStatus::Installed { file: active.clone() };
     }
-    if let Some(file) = reenable_existing(&mods) {
+    if let Some(file) = reenable_existing_for_loader(&mods, loader) {
         return CompanionStatus::Installed { file };
     }
 
@@ -183,6 +210,7 @@ pub async fn ensure_installed(instance: &Instance) -> CompanionStatus {
         Ok(file) => CompanionStatus::Installed { file },
         Err(e) => {
             tracing::warn!("Companion mod not installed for instance {}: {}", instance.id, e);
+            disable_managed(&mods);
             CompanionStatus::Failed { reason: e }
         }
     }
@@ -373,17 +401,27 @@ async fn fetch_manifest_remote() -> Result<Manifest, String> {
         .map_err(|e| format!("parse manifest: {}", e))
 }
 
-/// Returns the active managed filename in use, re-enabling a disabled one if
-/// that's all we have. Used only for offline grace when the manifest check fails:
-/// we only ever keep a single managed jar per instance, so any present is *the*
-/// companion jar. Filenames embed a version *range*, so we match by our naming
-/// rather than an exact version. Best-effort on the rename.
-fn reenable_existing(mods: &Path) -> Option<String> {
+/// Returns the active managed filename in use for the requested loader,
+/// re-enabling a matching disabled one if that's all we have. Used only for
+/// offline grace when the manifest check fails: we only ever keep a single
+/// managed jar per instance, so any present is *the* companion jar.
+/// Filenames embed a version *range*, so we match by our naming rather than
+/// an exact version. Best-effort on the rename.
+fn reenable_existing_for_loader(mods: &Path, loader: &str) -> Option<String> {
     let names = read_dir_names(mods);
-    if let Some(active) = names.iter().find(|n| is_managed_active(n)) {
+    if let Some(active) = names.iter().find(|n| is_managed_active_for_loader(n, loader)) {
         return Some(active.clone());
     }
-    let disabled = names.into_iter().find(|n| is_managed_disabled(n))?;
+    let disabled = names.into_iter().find(|n| {
+        if !is_managed_disabled(n) {
+            return false;
+        }
+        if let Some((prefix, _ver, _mc)) = parse_managed_filename(n) {
+            loader_matches(prefix, loader)
+        } else {
+            false
+        }
+    })?;
     let active_name = disabled.trim_end_matches(DISABLED_SUFFIX).to_string();
     match fs::rename(mods.join(&disabled), mods.join(&active_name)) {
         Ok(_) => Some(active_name),
@@ -517,5 +555,20 @@ mod tests {
         assert_eq!(version_compare("0.2.4", "0.2.4"), std::cmp::Ordering::Equal);
         assert_eq!(version_compare("0.10.0", "0.2.0"), std::cmp::Ordering::Greater);
         assert_eq!(version_compare("1.0.0", "0.9.9"), std::cmp::Ordering::Greater);
+    }
+
+    #[test]
+    fn test_loader_matching() {
+        assert!(loader_matches("vermeil-fabric", "fabric"));
+        assert!(loader_matches("vermeil-fabric", "quilt")); // Quilt runs Fabric mods
+        assert!(loader_matches("vermeil-neoforge", "neoforge"));
+        assert!(loader_matches("vermeil-forge", "forge"));
+        assert!(!loader_matches("vermeil-fabric", "neoforge"));
+        assert!(!loader_matches("vermeil-neoforge", "fabric"));
+
+        assert!(is_managed_active_for_loader("vermeil-fabric-0.2.4+mc26.3.jar", "fabric"));
+        assert!(is_managed_active_for_loader("vermeil-fabric-0.2.4+mc26.3.jar", "quilt"));
+        assert!(!is_managed_active_for_loader("vermeil-fabric-0.2.4+mc26.3.jar", "neoforge"));
+        assert!(is_managed_active_for_loader("vermeil-neoforge-0.2.4+mc26.3.jar", "neoforge"));
     }
 }

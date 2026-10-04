@@ -773,6 +773,9 @@ pub async fn change_loader(
         disable_loose_jars(&mods_dir, &active_filenames);
     }
 
+    // Synchronize Vermeil companion mod build with the newly selected loader/version
+    let _ = crate::services::companion_mod::ensure_installed(&final_instance).await;
+
     Ok(LoaderChangeResult {
         instance: final_instance,
         converted_count,
