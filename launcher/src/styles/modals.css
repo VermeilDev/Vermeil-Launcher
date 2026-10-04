@@ -131,21 +131,26 @@
   background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, opacity 0.15s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.15s,
+              background 0.15s,
+              opacity 0.15s;
   user-select: none;
 }
 
 .onboarding-step-key:hover:not(.disabled) {
   border-color: var(--border-hover);
   background: var(--surface-raised);
-  box-shadow: none;
   transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
 }
 .onboarding-step-key:active:not(.disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.70);
 }
 
 .onboarding-step-key.active {
@@ -300,14 +305,18 @@
   font-size: 13px;
   font-weight: 700;
   box-shadow: var(--btn-depth-strong);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.12s ease;
 }
 .onboarding-ms-btn:hover:not(:disabled) {
-  box-shadow: none;
   transform: translateY(1px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.85);
+  filter: brightness(1.08);
 }
 .onboarding-ms-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .onboarding-ms-btn svg {
@@ -494,8 +503,13 @@
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: all 0.15s ease;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease,
+              filter 0.12s ease;
   user-select: none;
 }
 
@@ -503,12 +517,13 @@
   background: var(--surface-raised);
   color: var(--text);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .onboarding-accordion-toggle:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .onboarding-accordion-toggle svg {
@@ -550,15 +565,25 @@
   border-left: 3px solid var(--border-strong);
   border-radius: 0;
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: border-color 0.15s,
+              transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s,
+              filter 0.12s ease;
   user-select: none;
 }
 
 .onboarding-choice-card:hover {
   border-left-color: var(--accent);
   background: var(--surface-raised);
-  transform: translateY(-1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+.onboarding-choice-card:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .onboarding-choice-card--modpack:hover { border-left-color: var(--accent); }
@@ -960,14 +985,26 @@
   justify-content: space-between;
   gap: 12px;
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: all 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s,
+              background 0.12s,
+              filter 0.12s ease;
   user-select: none;
 }
 
 .picker-inst-card:hover {
   background: var(--surface-raised);
   border-color: var(--border-hover);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+
+.picker-inst-card:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .picker-inst-card.selected {
@@ -1105,7 +1142,7 @@
 .server-routing-card {
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: none;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;

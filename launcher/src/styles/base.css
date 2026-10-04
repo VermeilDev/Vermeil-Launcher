@@ -57,10 +57,19 @@
   --accent-soft: #1a1428;     /* deep purple tint for active backgrounds */
   --accent-contrast: #ffffff; /* light label/icon color on accent fills */
   --accent-glow: rgba(139, 92, 246, 0.35); /* theme-reactive glow token */
+  --accent-rim: #a78bfa;          /* Specular highlight rim for 3D buttons */
+  --accent-shelf: #5b21b6;        /* Solid chromatic extrusion shelf */
 
   /* --- 3D Button Depth Tokens (Tactile Bento) --- */
-  --btn-depth: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
-  --btn-depth-strong: inset 0 -4px 0 rgba(0, 0, 0, 0.30);
+  --btn-depth-neutral: 0 3px 0 rgba(0, 0, 0, 0.70);
+  --btn-depth-neutral-pressed: 0 2px 0 rgba(0, 0, 0, 0.70);
+  --btn-depth-primary: 0 3px 0 var(--accent-shelf);
+  --btn-depth-primary-pressed: 0 2px 0 var(--accent-shelf);
+  --btn-depth-danger: 0 3px 0 var(--danger-shelf);
+  --btn-depth-danger-pressed: 0 2px 0 var(--danger-shelf);
+
+  --btn-depth: var(--btn-depth-neutral);
+  --btn-depth-strong: 0 4px 0 rgba(0, 0, 0, 0.85);
   --bevel: var(--btn-depth);         /* backward-compat alias */
   --bevel-strong: var(--btn-depth-strong);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
@@ -70,6 +79,8 @@
 
   /* --- Color: semantic state (+ soft tints) --- */
   --danger: #e05656;
+  --danger-rim: #f87171;
+  --danger-shelf: #991b1b;
   --rose: #e05656;
   --danger-soft: #3a1818;
   --danger-shadow: var(--shadow-depth);

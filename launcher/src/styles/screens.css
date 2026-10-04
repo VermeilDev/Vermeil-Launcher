@@ -142,18 +142,24 @@
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              color 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .skins-action-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-action-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-action-btn:disabled {
   opacity: 0.5;
@@ -162,13 +168,20 @@
 .skins-action-btn--primary {
   background: var(--accent);
   color: var(--accent-contrast);
-  border-color: var(--accent-strong);
-  box-shadow: var(--btn-depth);
+  border: 1px solid var(--accent-rim);
+  box-shadow: var(--btn-depth-primary);
 }
 .skins-action-btn--primary:hover:not(:disabled) {
   background: var(--accent-strong);
   color: var(--accent-contrast);
-  box-shadow: none;
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+.skins-action-btn--primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-action-btn--secondary {
   background: var(--surface-panel);
@@ -486,19 +499,25 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              color 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .skins-studio-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   color: var(--text);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-studio-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-studio-btn:disabled {
   opacity: 0.4;
@@ -647,19 +666,25 @@
   background: var(--surface-panel);
   color: var(--text-muted);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              color 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .skins-zoom-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   color: var(--text);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-zoom-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-zoom-btn:disabled {
   opacity: 0.4;
@@ -737,19 +762,25 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              color 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .skins-mini-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   color: var(--text);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-mini-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-mini-btn svg {
   width: 11px;
@@ -786,23 +817,29 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--btn-depth);
-  transition: border-color 0.12s, background 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s,
+              background 0.12s,
+              filter 0.12s ease;
 }
 .skins-cape-tile:hover:not(:disabled) {
   border-color: var(--border-hover);
   background: var(--surface-raised);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-cape-tile:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-cape-tile.active {
   border-color: var(--accent);
+  border-left: 3px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface-panel));
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: var(--btn-depth-primary);
 }
 .skins-cape-tile:disabled {
   opacity: 0.4;
@@ -963,19 +1000,25 @@
   border: 1px solid var(--border);
   color: var(--text-faint);
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: color 0.12s, background 0.12s, border-color 0.12s, transform 0.08s, box-shadow 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              color 0.12s,
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .skins-lib-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   color: var(--text);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .skins-lib-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .skins-lib-btn svg {
   width: 12px;
@@ -1061,23 +1104,29 @@
   color: var(--text);
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
   border-radius: 0;
-  transition: transform 0.08s ease, background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s,
+              border-color 0.15s,
+              color 0.15s,
+              filter 0.12s ease;
   white-space: nowrap;
 }
 
 .skins-banner-btn:hover:not(:disabled) {
   background: var(--surface-raised-hover);
   border-color: var(--border-strong);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .skins-banner-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .skins-banner-btn:disabled {
@@ -1087,15 +1136,22 @@
 
 .skins-banner-btn--primary {
   background: var(--accent);
-  border-color: var(--accent-strong);
+  border: 1px solid var(--accent-rim);
   color: var(--accent-contrast, #fff);
-  box-shadow: var(--btn-depth-strong);
+  box-shadow: var(--btn-depth-primary);
 }
 
 .skins-banner-btn--primary:hover:not(:disabled) {
   background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  box-shadow: none;
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+
+.skins-banner-btn--primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .skins-banner-btn svg {
@@ -1389,23 +1445,28 @@
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.12s, border-color 0.12s, transform 0.1s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
   user-select: none;
 }
 
 .tactile-chip-btn:hover {
   background: color-mix(in srgb, var(--accent) 15%, var(--surface-raised));
   border-color: var(--accent);
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
-  box-shadow: none;
+  filter: brightness(1.08);
 }
 
 .tactile-chip-btn:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .tactile-chip-btn svg {
@@ -1524,7 +1585,7 @@
 .sym-hero-tile {
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1533,7 +1594,11 @@
   height: 76px;
   min-height: 76px;
   box-sizing: border-box;
-  transition: all 0.12s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
   cursor: pointer;
   user-select: none;
   min-width: 0;
@@ -1551,8 +1616,13 @@
 
 .sym-hero-tile:hover {
   background: var(--surface-raised);
-  transform: translateY(-1px);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+.sym-hero-tile:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .sym-hero-tile.tile--world:hover {
@@ -1698,24 +1768,30 @@
   padding: 0 10px;
   background: var(--accent);
   color: var(--accent-contrast, #ffffff);
-  border: 1px solid var(--accent-strong);
+  border: 1px solid var(--accent-rim);
   font-size: 11px;
   font-weight: 700;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-primary);
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.12s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 
 .sym-cta-btn:hover {
   background: var(--accent-strong);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
-  box-shadow: none;
+  filter: brightness(1.08);
 }
 
 .sym-cta-btn:active {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .sym-cta-btn svg {
@@ -1737,8 +1813,12 @@
   justify-content: space-between;
   gap: 10px;
   cursor: pointer;
-  transition: all 0.12s;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
   user-select: none;
   min-width: 0;
 }
@@ -1751,8 +1831,13 @@
 .sym-sub-tile:hover {
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  transform: translateY(-1px);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+.sym-sub-tile:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .sym-sub-left {
@@ -1868,21 +1953,26 @@
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  transition: all 0.12s;
-  box-shadow: var(--btn-depth);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
+  box-shadow: var(--btn-depth-neutral);
 }
 
 .sym-sub-btn:hover {
   background: var(--accent);
   color: var(--accent-contrast, #ffffff);
-  border-color: var(--accent);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
-  box-shadow: none;
+  filter: brightness(1.08);
 }
 
 .sym-sub-btn:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .sym-sub-btn svg {
@@ -2008,8 +2098,13 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.12s;
-  box-shadow: var(--btn-depth);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              color 0.12s,
+              filter 0.12s ease;
+  box-shadow: var(--btn-depth-neutral);
   box-sizing: border-box;
   flex-shrink: 0;
   user-select: none;
@@ -2019,13 +2114,14 @@
   background: var(--surface-raised);
   border-color: var(--border-hover);
   color: var(--text);
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
-  box-shadow: none;
+  filter: brightness(1.08);
 }
 
 .server-config-btn:active {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .server-config-btn svg {
@@ -2111,21 +2207,27 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  box-shadow: var(--btn-depth);
-  transition: all 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              color 0.12s,
+              filter 0.12s ease;
 }
 
 .direct-btn:hover {
   background: var(--accent);
   color: var(--accent-contrast, #ffffff);
-  border-color: var(--accent);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
-  box-shadow: none;
+  filter: brightness(1.08);
 }
 
 .direct-btn:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .direct-btn svg {
@@ -3691,7 +3793,7 @@
 .dl-active-cancel {
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   color: var(--text-muted);
   font-family: var(--font);
   font-size: 10px;
@@ -3701,18 +3803,24 @@
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s ease,
+              color 0.12s ease,
+              background 0.12s ease,
+              filter 0.12s ease;
 }
 .dl-active-cancel:hover {
   background: var(--surface-panel);
-  border-color: var(--danger);
+  border-color: var(--danger-rim);
   color: var(--danger);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .dl-active-cancel:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .dl-cancelling-tag {
   font-size: 10px;
@@ -3902,7 +4010,7 @@
   gap: 4px;
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   color: var(--text-muted);
   font-family: var(--font);
   font-size: 10px;
@@ -3912,20 +4020,26 @@
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s ease,
+              color 0.12s ease,
+              background 0.12s ease,
+              filter 0.12s ease;
 }
 
 .dl-queue-cancel:hover {
   background: var(--surface-panel);
-  border-color: var(--danger);
+  border-color: var(--danger-rim);
   color: var(--danger);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .dl-queue-cancel:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .dl-queue-overflow-plate {
@@ -4922,32 +5036,40 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: none;
+  border: 1px solid var(--accent-rim);
   border-radius: 0;
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 var(--accent-shelf);
   cursor: pointer;
-  transition: box-shadow 0.12s ease;
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 .cape-slider-plate input[type="range"]::-webkit-slider-thumb:hover,
-.cape-slider-plate input[type="range"]:hover::-webkit-slider-thumb,
+.cape-slider-plate input[type="range"]:hover::-webkit-slider-thumb {
+  box-shadow: 0 1px 0 var(--accent-shelf);
+  filter: brightness(1.12);
+}
 .cape-slider-plate input[type="range"]::-webkit-slider-thumb:active {
-  box-shadow: 0 0 0 2px var(--surface-panel);
+  box-shadow: 0 0 0 var(--accent-shelf);
+  filter: brightness(1.18);
 }
 .cape-slider-plate input[type="range"]::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  border: none;
+  border: 1px solid var(--accent-rim);
   border-radius: 0;
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 var(--accent-shelf);
   cursor: pointer;
-  transition: box-shadow 0.12s ease;
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 .cape-slider-plate input[type="range"]::-moz-range-thumb:hover,
-.cape-slider-plate input[type="range"]:hover::-moz-range-thumb,
+.cape-slider-plate input[type="range"]:hover::-moz-range-thumb {
+  box-shadow: 0 1px 0 var(--accent-shelf);
+  filter: brightness(1.12);
+}
 .cape-slider-plate input[type="range"]::-moz-range-thumb:active {
-  box-shadow: 0 0 0 2px var(--surface-panel);
+  box-shadow: 0 0 0 var(--accent-shelf);
+  filter: brightness(1.18);
 }
 
 
@@ -5084,32 +5206,40 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: none;
+  border: 1px solid var(--border-hover);
   border-radius: 0;
   background: var(--text);
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.75);
   cursor: pointer;
-  transition: box-shadow 0.12s ease, filter 0.12s ease;
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 .color-chan input[type="range"]::-webkit-slider-thumb:hover,
-.color-chan input[type="range"]:hover::-webkit-slider-thumb,
+.color-chan input[type="range"]:hover::-webkit-slider-thumb {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.75);
+  filter: brightness(1.12);
+}
 .color-chan input[type="range"]::-webkit-slider-thumb:active {
-  box-shadow: 0 0 0 2px var(--surface-panel);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.75);
+  filter: brightness(1.18);
 }
 .color-chan input[type="range"]::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  border: none;
+  border: 1px solid var(--border-hover);
   border-radius: 0;
   background: var(--text);
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.75);
   cursor: pointer;
-  transition: box-shadow 0.12s ease, filter 0.12s ease;
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 .color-chan input[type="range"]::-moz-range-thumb:hover,
-.color-chan input[type="range"]:hover::-moz-range-thumb,
+.color-chan input[type="range"]:hover::-moz-range-thumb {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.75);
+  filter: brightness(1.12);
+}
 .color-chan input[type="range"]::-moz-range-thumb:active {
-  box-shadow: 0 0 0 2px var(--surface-panel);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.75);
+  filter: brightness(1.18);
 }
 
 .color-chan-value {
@@ -5149,34 +5279,41 @@
   cursor: pointer;
   border-radius: 0;
   user-select: none;
-  box-shadow: var(--btn-depth);
-  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s,
+              border-color 0.15s,
+              color 0.15s,
+              filter 0.12s ease;
 }
 .cat-btn:hover:not(.active) {
   background: var(--surface-panel);
   border-color: var(--border-hover);
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .cat-btn:active:not(.active) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .cat-btn.active {
   background: var(--cat-bg, var(--accent));
   color: var(--cat-fg, var(--accent-contrast));
-  border-color: var(--cat-bg, var(--accent));
+  border: 1px solid var(--accent-rim);
   font-weight: 700;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-primary);
 }
 .cat-btn.active:hover {
-  box-shadow: none;
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .cat-btn.active:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* Count rendered inside the search input as a trailing suffix, so it never
@@ -6750,23 +6887,27 @@
   font-weight: 600;
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   color: var(--text);
   border-radius: 0;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.15s ease,
+              filter 0.12s ease;
 }
 .modpack-back-btn svg { width: 14px; height: 14px; }
 .modpack-back-btn:hover {
   transform: translateY(1px);
   border-color: var(--accent);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
 }
 .modpack-back-btn:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .modpack-title-wrap {
@@ -6898,22 +7039,28 @@
   font-weight: 600;
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   border-radius: 0;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.12s, transform 0.12s, border-color 0.12s, box-shadow 0.12s, color 0.12s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              color 0.12s,
+              filter 0.12s ease;
 }
 .modpack-source-tab:hover {
   background: var(--surface-raised);
   border-color: var(--border-hover);
   color: var(--text);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .modpack-source-tab:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .modpack-source-tab.tab-mr.active {
   background: rgba(0, 175, 92, 0.15);
@@ -7180,12 +7327,19 @@
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 0;
-  box-shadow: var(--btn-depth);
-  transition: all 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.12s ease;
 }
 .modpack-card-install-btn:hover:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
+}
+.modpack-card-install-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* Compact Bento Cassette Card (Horizontal Tile) */
@@ -7561,9 +7715,14 @@
   border: 1px solid rgba(239, 68, 68, 0.4);
   color: #ef4444;
   border-radius: 0;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 .modpack-detail-modal .modal-close svg {
   width: 16px;
@@ -7573,12 +7732,13 @@
   background: #dc2626;
   border-color: #ef4444;
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .modpack-detail-modal .modal-close:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .modpack-detail-names { display: flex; flex-direction: column; gap: 4px; }
@@ -7887,23 +8047,29 @@
 /* Chunky tactile red close/cancel button in modal footer */
 .modpack-footer-close-btn {
   background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid var(--danger-rim);
   color: #fca5a5;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   font-weight: 600;
   border-radius: 0;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 .modpack-footer-close-btn:hover:not(:disabled) {
   background: #dc2626;
   border-color: #ef4444;
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .modpack-footer-close-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* ════════════════════════════════════════════════════════════

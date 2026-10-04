@@ -175,13 +175,14 @@
   padding: 0;
   flex-shrink: 0;
   user-select: none;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   transition:
-    transform 0.12s cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
     background 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    filter 0.12s ease;
 }
 .dock-btn svg {
   width: 19px;
@@ -204,17 +205,18 @@
 .dock-btn:hover:not(.active),
 .dock-btn:focus-visible:not(.active) {
   outline: none;
-  transform: translateY(-2px) scale(1.04);
+  transform: translateY(1px);
   background: var(--surface-panel);
   border-color: var(--border-hover);
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
   z-index: 5;
 }
 .dock-btn:active:not(.active) {
-  transform: translateY(1px) scale(0.97);
+  transform: translateY(3px);
   background: var(--surface-panel);
-  box-shadow: none;
+  box-shadow: 0 0 0 transparent;
   z-index: 5;
 }
 
@@ -222,21 +224,22 @@
 .dock-btn.active {
   background: var(--accent);
   color: var(--accent-contrast);
-  border-color: var(--accent-strong);
-  box-shadow: var(--btn-depth-strong), 0 0 0 1px var(--accent);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary);
 }
 .dock-btn.active:hover,
 .dock-btn.active:focus-visible {
-  transform: translateY(-2px) scale(1.04);
+  transform: translateY(1px);
   background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
+  filter: brightness(1.08);
   z-index: 5;
 }
 .dock-btn.active:active {
-  transform: translateY(1px) scale(0.97);
+  transform: translateY(3px);
   background: var(--accent-strong);
-  box-shadow: none;
+  box-shadow: 0 0 0 transparent;
   z-index: 5;
 }
 
@@ -370,19 +373,20 @@
 .dock-btn.dock-btn-stop {
   background: var(--danger) !important;
   color: #ffffff !important;
-  border-color: #f87171 !important;
-  box-shadow: var(--btn-depth-strong) !important;
+  border-color: var(--danger-rim) !important;
+  box-shadow: var(--btn-depth-danger) !important;
 }
 .dock-btn.dock-btn-stop:hover {
-  transform: translateY(-2px) scale(1.04);
-  background: #f87171 !important;
-  border-color: #f87171 !important;
-  box-shadow: none !important;
+  transform: translateY(1px);
+  background: var(--danger) !important;
+  border-color: var(--danger-rim) !important;
+  box-shadow: var(--btn-depth-danger-pressed) !important;
+  filter: brightness(1.08);
   z-index: 5;
 }
 .dock-btn.dock-btn-stop:active {
-  transform: translateY(1px) scale(0.97);
-  box-shadow: none !important;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent !important;
   z-index: 5;
 }
 
@@ -470,11 +474,14 @@
   from { opacity: 0; transform: translateY(6px) scale(0.9); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+.dock-pin-tile {
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1);
+}
 .dock-pin-tile:hover {
-  transform: translateY(-2px) scale(1.04);
+  transform: translateY(1px);
 }
 .dock-pin-tile:active {
-  transform: translateY(1px) scale(0.97);
+  transform: translateY(3px);
 }
 
 .dock-pin-tile-img {
@@ -483,7 +490,7 @@
   border-radius: 0;
   border: 1px solid var(--border);
   background: var(--surface-sunken);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -495,16 +502,18 @@
   user-select: none;
   transition:
     border-color 0.15s ease,
-    box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
     background 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    filter 0.12s ease;
 }
 .dock-pin-tile:hover .dock-pin-tile-img {
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
 }
 .dock-pin-tile:active .dock-pin-tile-img {
-  box-shadow: none;
+  box-shadow: 0 0 0 transparent;
 }
 .dock-pin-tile-img img {
   width: 100%;

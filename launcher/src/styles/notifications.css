@@ -102,7 +102,7 @@
 .toast-action {
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   color: var(--text);
   font-size: 10px;
   font-weight: 600;
@@ -112,18 +112,24 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   align-self: center;
-  transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 .toast-action:hover {
   background: var(--surface-panel);
-  border-color: var(--accent);
+  border-color: var(--accent-rim);
   color: var(--accent);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .toast-action:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* Install progress popup (Tactile design) */
@@ -196,7 +202,7 @@
 .install-progress-cancel {
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   color: var(--text-muted);
   font-family: var(--font);
   font-size: 10px;
@@ -206,18 +212,24 @@
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s ease,
+              color 0.12s ease,
+              background 0.12s ease,
+              filter 0.12s ease;
 }
 .install-progress-cancel:hover {
   background: var(--surface-panel);
-  border-color: var(--danger);
+  border-color: var(--danger-rim);
   color: var(--danger);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .install-progress-cancel:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .install-progress-close {
   background: transparent;

@@ -24,6 +24,8 @@
   --accent-soft: #1a1428;
   --accent-contrast: #ffffff;
   --accent-glow: rgba(139, 92, 246, 0.35);
+  --accent-rim: #a78bfa;
+  --accent-shelf: #5b21b6;
 
   --splash-word-gradient: linear-gradient(90deg, #2dd4ef, #4f86f7, #8b5cf6, #d94ff0, #8b5cf6, #4f86f7, #2dd4ef);
   --splash-bar-gradient: linear-gradient(90deg, #2dd4ef, #8b5cf6);
@@ -48,6 +50,8 @@
   --accent-soft: rgba(255, 101, 0, 0.14);
   --accent-contrast: #ffffff;
   --accent-glow: rgba(255, 101, 0, 0.38);
+  --accent-rim: #fb923c;
+  --accent-shelf: #9a3412;
 
   --splash-word-gradient: linear-gradient(90deg, #ffe600, #ffb000, #ff6500, #e60012, #ff1744, #e60012, #ff6500, #ffb000, #ffe600);
   --splash-bar-gradient: linear-gradient(90deg, #ffe600, #ff6500, #ff1744);
@@ -72,6 +76,8 @@
   --accent-soft: rgba(229, 231, 235, 0.10);
   --accent-contrast: #08090b;
   --accent-glow: rgba(229, 231, 235, 0.25);
+  --accent-rim: #ffffff;
+  --accent-shelf: #6b7280;
 
   --splash-word-gradient: linear-gradient(90deg, #ffffff, #e5e7eb, #9ca3af, #4b5563, #9ca3af, #e5e7eb, #ffffff);
   --splash-bar-gradient: linear-gradient(90deg, #9ca3af, #e5e7eb, #ffffff);
@@ -103,6 +109,8 @@
   --accent-soft: rgba(0, 102, 255, 0.14);
   --accent-contrast: #ffffff;
   --accent-glow: rgba(0, 217, 255, 0.40);
+  --accent-rim: #38bdf8;
+  --accent-shelf: #0040aa;
 
   --splash-word-gradient: linear-gradient(90deg, #00d9ff, #0088ff, #0066ff, #102a72, #0066ff, #0088ff, #00d9ff);
   --splash-bar-gradient: linear-gradient(90deg, #00d9ff, #0066ff);
@@ -127,6 +135,8 @@
   --accent-soft: rgba(192, 38, 255, 0.14);
   --accent-contrast: #ffffff;
   --accent-glow: rgba(240, 60, 255, 0.38);
+  --accent-rim: #e879f9;
+  --accent-shelf: #7e22ce;
 
   --splash-word-gradient: linear-gradient(90deg, #f03cff, #c026ff, #7b2cff, #32105f, #7b2cff, #c026ff, #f03cff);
   --splash-bar-gradient: linear-gradient(90deg, #f03cff, #7b2cff);
@@ -152,6 +162,8 @@ body.theme-emerald {
   --accent-soft: rgba(0, 200, 120, 0.12);
   --accent-contrast: #ffffff;
   --accent-glow: rgba(57, 255, 170, 0.38);
+  --accent-rim: #39FFAA;
+  --accent-shelf: #00513D;
 
   --splash-word-gradient: linear-gradient(90deg, #39FFAA, #00C878, #008F5B, #00513D, #008F5B, #00C878, #39FFAA);
   --splash-bar-gradient: linear-gradient(90deg, #39FFAA, #00C878);
@@ -195,10 +207,14 @@ body.theme-emerald {
   padding: 12px 8px 10px;
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
   position: relative;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.15s ease,
+              background 0.15s ease,
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.12s ease;
   user-select: none;
   min-height: 155px;
   box-sizing: border-box;
@@ -207,13 +223,14 @@ body.theme-emerald {
 .theme-card:hover {
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  transform: translateY(-1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .theme-card:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* Active Theme Card: 3px left border, accent outline, soft background wash */
@@ -221,11 +238,16 @@ body.theme-emerald {
   border-color: var(--accent);
   border-left: 3px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--surface-panel));
-  box-shadow: var(--btn-depth), 0 0 16px var(--accent-glow);
+  box-shadow: var(--btn-depth-primary), 0 0 16px var(--accent-glow);
 }
 .theme-card.active:hover {
+  box-shadow: var(--btn-depth-primary-pressed), 0 0 16px var(--accent-glow);
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+.theme-card.active:active {
+  transform: translateY(3px);
   box-shadow: 0 0 16px var(--accent-glow);
-  transform: translateY(-1px);
 }
 
 .theme-card-emblem-wrap {

@@ -1249,26 +1249,32 @@
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   background: var(--surface-raised);
   color: var(--text);
   outline: none;
   border-radius: 0;
   cursor: pointer;
-  box-shadow: var(--btn-depth);
-  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              filter 0.12s ease,
+              color 0.12s ease;
   white-space: nowrap;
   user-select: none;
 }
 .btn:hover:not(:disabled) {
-  background: var(--surface-panel);
+  background: var(--surface-raised-hover);
   border-color: var(--border-hover);
-  box-shadow: none;
   transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.70);
 }
 .btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
@@ -1296,65 +1302,88 @@
 .btn--neutral {
   background: var(--surface-raised);
   color: var(--text);
-  border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--btn-depth-neutral);
 }
 .btn--neutral:hover:not(:disabled) {
-  background: var(--surface-panel);
+  background: var(--surface-raised-hover);
   border-color: var(--border-hover);
-  box-shadow: none;
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
+}
+.btn--neutral:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.70);
 }
 
 .btn--subtle {
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
 }
 .btn--subtle:hover:not(:disabled) {
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  box-shadow: none;
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
+}
+.btn--subtle:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.70);
 }
 
 .btn--primary {
   background: var(--accent);
   color: var(--accent-contrast);
-  border-color: var(--accent);
-  box-shadow: var(--btn-depth);
+  border: 1px solid var(--accent-rim);
+  box-shadow: var(--btn-depth-primary);
 }
 .btn--primary:hover:not(:disabled) {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  box-shadow: none;
+  background: var(--accent);
+  border-color: var(--accent-rim);
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-primary-pressed);
+  filter: brightness(1.08);
+}
+.btn--primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--accent-shelf);
 }
 
 .btn--danger {
-  background: #3a1818;
-  color: var(--rose);
-  border: 1px solid var(--rose);
-  box-shadow: var(--btn-depth);
+  background: var(--danger);
+  color: #ffffff;
+  border: 1px solid var(--danger-rim);
+  box-shadow: var(--btn-depth-danger);
 }
 .btn--danger:hover:not(:disabled) {
-  background: var(--rose);
-  color: var(--text);
-  box-shadow: none;
+  background: var(--danger);
+  border-color: var(--danger-rim);
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-danger-pressed);
+  filter: brightness(1.08);
+}
+.btn--danger:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--danger-shelf);
 }
 
 .btn--success {
-  background: rgba(74, 222, 128, 0.14);
-  color: var(--success);
-  border: 1px solid rgba(74, 222, 128, 0.35);
-  box-shadow: var(--btn-depth);
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #34d399;
+  box-shadow: 0 3px 0 #047857;
 }
 .btn--success:hover:not(:disabled) {
-  background: rgba(74, 222, 128, 0.24);
-  border-color: rgba(74, 222, 128, 0.5);
-  color: #86efac;
-  box-shadow: none;
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #047857;
+  filter: brightness(1.08);
 }
 .btn--success:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #047857;
 }
 
 .btn--ghost {
@@ -1562,38 +1591,45 @@
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
-  box-shadow: var(--btn-depth);
-  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s,
+              border-color 0.15s,
+              color 0.15s,
+              filter 0.12s ease;
 }
 /* Hover — inactive, enabled tabs ONLY */
 .tab:hover:not(.active):not(:disabled):not(.disabled) {
   color: #ffffff;
   background: var(--surface-panel);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .tab:active:not(:disabled):not(.disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
-/* Active — vibrant accent plate with inset button depth */
+/* Active — vibrant accent plate with 3D button depth */
 .tab.active {
   background: var(--tab-bg, var(--accent));
   color: var(--tab-fg, var(--accent-contrast));
-  border-color: var(--tab-bg, var(--accent));
+  border: 1px solid var(--accent-rim);
   font-weight: var(--fw-bold);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-primary);
 }
 .tab.active:hover {
   background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  box-shadow: none;
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .tab.active:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 /* Disabled — single treatment, no hover/active applied */
 .tab:disabled,
@@ -1602,7 +1638,7 @@
   cursor: not-allowed;
   background: var(--surface-panel);
   color: var(--text-muted);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   transform: none;
 }
 
@@ -1838,9 +1874,14 @@
   border: 1px solid rgba(239, 68, 68, 0.4);
   color: #ef4444;
   border-radius: 0;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 .mod-detail-modal .modal-close svg {
   width: 16px;
@@ -1850,12 +1891,13 @@
   background: #dc2626;
   border-color: #ef4444;
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .mod-detail-modal .modal-close:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .mod-detail-names { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -2223,23 +2265,29 @@
 /* Chunky tactile red close/cancel button in modal footer */
 .mod-footer-close-btn {
   background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid var(--danger-rim);
   color: #fca5a5;
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   font-weight: 600;
   border-radius: 0;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 .mod-footer-close-btn:hover:not(:disabled) {
   background: #dc2626;
   border-color: #ef4444;
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-danger-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .mod-footer-close-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 /* Variant — media card: media region sits flush at the top edge, body below.
@@ -2814,11 +2862,16 @@
   color: var(--text-muted);
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  transition: all 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s ease,
+              border-color 0.12s ease,
+              color 0.12s ease,
+              filter 0.12s ease;
 }
 
 .settings-shelf-btn svg {
@@ -2834,8 +2887,9 @@
   color: #ffffff;
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .settings-shelf-btn:hover svg {
@@ -2843,15 +2897,15 @@
 }
 
 .settings-shelf-btn:active:not(.active) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .settings-shelf-btn.active {
   background: var(--accent);
   color: var(--accent-contrast, #ffffff);
-  border-color: var(--accent-strong);
-  box-shadow: var(--btn-depth-strong), 0 0 10px var(--accent-glow);
+  border-color: var(--accent-rim);
+  box-shadow: var(--btn-depth-primary), 0 0 10px var(--accent-glow);
 }
 
 .settings-shelf-btn.active svg {
@@ -2860,13 +2914,14 @@
 }
 
 .settings-shelf-btn.active:hover {
-  box-shadow: 0 0 10px var(--accent-glow);
+  box-shadow: var(--btn-depth-primary-pressed), 0 0 10px var(--accent-glow);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .settings-shelf-btn.active:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 /* SETTINGS FULL-WIDTH CONTENT CANVAS (Scroll Hugs 1180px Edge!) */
@@ -2970,9 +3025,13 @@
   height: 16px;
   box-sizing: border-box;
   background: var(--surface-raised);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--btn-depth);
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  border: 1px solid var(--border-hover);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.75);
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1),
+              box-shadow 0.08s ease,
+              background 0.15s ease,
+              border-color 0.15s ease,
+              filter 0.12s ease;
 }
 
 .tactile-switch:hover:not(:disabled) {
@@ -2980,7 +3039,9 @@
 }
 
 .tactile-switch:hover:not(:disabled)::after {
-  box-shadow: none;
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.75);
+  filter: brightness(1.1);
 }
 
 .tactile-switch.active {
@@ -2991,8 +3052,8 @@
 .tactile-switch.active::after {
   transform: translateX(22px);
   background: var(--accent);
-  border-color: var(--accent-strong);
-  box-shadow: var(--btn-depth);
+  border: 1px solid var(--accent-rim);
+  box-shadow: 0 2px 0 var(--accent-shelf);
 }
 
 .tactile-switch.active:hover:not(:disabled) {
@@ -3000,7 +3061,9 @@
 }
 
 .tactile-switch.active:hover:not(:disabled)::after {
-  box-shadow: none;
+  transform: translateX(22px) translateY(1px);
+  box-shadow: 0 1px 0 var(--accent-shelf);
+  filter: brightness(1.1);
 }
 
 .tactile-switch:disabled {
@@ -4470,16 +4533,47 @@ select.field-input[size] { appearance: none; }
 /* Choice pills */
 .choice-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .choice-btn {
-  background: var(--surface-raised); border: 1px solid var(--border); border-radius: 0;
-  box-shadow: var(--btn-depth);
-  padding: var(--space-2) var(--space-3); font-size: 12px; font-family: var(--font); color: var(--muted);
-  cursor: pointer; transition: all .12s;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  box-shadow: var(--btn-depth-neutral);
+  padding: var(--space-2) var(--space-3);
+  font-size: 12px;
+  font-family: var(--font);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.12s ease,
+              color 0.12s ease;
 }
-.choice-btn:hover { border-color: var(--accent); color: var(--text); transform: translateY(1px); box-shadow: none; }
-.choice-btn:active { transform: translateY(2px) scale(0.97); box-shadow: none; }
-.choice-btn.selected { background: var(--accent-tint); border-color: var(--accent); color: var(--accent); box-shadow: var(--btn-depth-strong); }
-.choice-btn.selected:hover { box-shadow: 0 0 10px var(--accent-glow); transform: translateY(1px); }
-.choice-btn.selected:active { transform: translateY(2px) scale(0.97); box-shadow: none; }
+.choice-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  filter: brightness(1.08);
+}
+.choice-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.70);
+}
+.choice-btn.selected {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  border-top: 1px solid var(--accent-rim);
+  color: var(--accent);
+  box-shadow: 0 3px 0 var(--accent-shelf);
+}
+.choice-btn.selected:hover {
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 var(--accent-shelf);
+  filter: brightness(1.08);
+}
+.choice-btn.selected:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--accent-shelf);
+}
 
 /* Create choice grid — single column so each option is a full-width card.
    Looks balanced with three options instead of leaving one orphaned in the
@@ -4556,12 +4650,12 @@ select.field-input[size] { appearance: none; }
   width: 14px;
   height: 14px;
   background: var(--accent);
-  border: none;
+  border: 1px solid var(--accent-rim);
   border-radius: 0;
   cursor: pointer;
-  transition: box-shadow 0.12s ease, filter 0.12s ease;
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 var(--accent-shelf);
   margin-top: 0;
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 
 /* Firefox / WebKitGTK range thumb (must remain a standalone rule) */
@@ -4570,72 +4664,53 @@ select.field-input[size] { appearance: none; }
   width: 14px;
   height: 14px;
   background: var(--accent);
-  border: none;
+  border: 1px solid var(--accent-rim);
   border-radius: 0;
   cursor: pointer;
-  transition: box-shadow 0.12s ease, filter 0.12s ease;
-  box-shadow: 0 0 0 2px var(--surface-panel), var(--btn-depth);
+  box-shadow: 0 2px 0 var(--accent-shelf);
+  transition: box-shadow 0.08s ease, filter 0.08s ease;
 }
 
-/* Synchronize 2px thumb gap with setting row hover */
+/* Hover: Compresses down 1px onto shelf with luminous brighten */
+.slider::-webkit-slider-thumb:hover,
+.slider:hover::-webkit-slider-thumb,
+.concurrency-slider::-webkit-slider-thumb:hover,
+.concurrency-slider:hover::-webkit-slider-thumb,
 .card-section-body .setting-row:hover .slider::-webkit-slider-thumb,
 .card-section-body .setting-row:hover .concurrency-slider::-webkit-slider-thumb,
 .settings-cell:hover .slider::-webkit-slider-thumb,
 .settings-cell:hover .concurrency-slider::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--surface-raised), var(--btn-depth);
-}
-.card-section-body .setting-row:hover .slider::-moz-range-thumb,
-.card-section-body .setting-row:hover .concurrency-slider::-moz-range-thumb,
-.settings-cell:hover .slider::-moz-range-thumb,
-.settings-cell:hover .concurrency-slider::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--surface-raised), var(--btn-depth);
-}
-
-/* Tactile press-down: on hover or active/drag, remove 3D depth lip matching .tactile-switch */
-.slider::-webkit-slider-thumb:hover,
-.slider:hover::-webkit-slider-thumb,
-.slider:active::-webkit-slider-thumb,
-.slider::-webkit-slider-thumb:active,
-.concurrency-slider::-webkit-slider-thumb:hover,
-.concurrency-slider:hover::-webkit-slider-thumb,
-.concurrency-slider:active::-webkit-slider-thumb,
-.concurrency-slider::-webkit-slider-thumb:active,
-.card-section-body .setting-row:hover .slider::-webkit-slider-thumb:hover,
-.card-section-body .setting-row:hover .slider:hover::-webkit-slider-thumb,
-.card-section-body .setting-row:hover .slider:active::-webkit-slider-thumb,
-.card-section-body .setting-row:hover .concurrency-slider::-webkit-slider-thumb:hover,
-.card-section-body .setting-row:hover .concurrency-slider:hover::-webkit-slider-thumb,
-.card-section-body .setting-row:hover .concurrency-slider:active::-webkit-slider-thumb,
-.settings-cell:hover .slider::-webkit-slider-thumb:hover,
-.settings-cell:hover .slider:hover::-webkit-slider-thumb,
-.settings-cell:hover .slider:active::-webkit-slider-thumb,
-.settings-cell:hover .concurrency-slider::-webkit-slider-thumb:hover,
-.settings-cell:hover .concurrency-slider:hover::-webkit-slider-thumb,
-.settings-cell:hover .concurrency-slider:active::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--surface-raised);
+  box-shadow: 0 1px 0 var(--accent-shelf);
+  filter: brightness(1.12);
 }
 
 .slider::-moz-range-thumb:hover,
 .slider:hover::-moz-range-thumb,
-.slider:active::-moz-range-thumb,
-.slider::-moz-range-thumb:active,
 .concurrency-slider::-moz-range-thumb:hover,
 .concurrency-slider:hover::-moz-range-thumb,
-.concurrency-slider:active::-moz-range-thumb,
+.card-section-body .setting-row:hover .slider::-moz-range-thumb,
+.card-section-body .setting-row:hover .concurrency-slider::-moz-range-thumb,
+.settings-cell:hover .slider::-moz-range-thumb,
+.settings-cell:hover .concurrency-slider::-moz-range-thumb {
+  box-shadow: 0 1px 0 var(--accent-shelf);
+  filter: brightness(1.12);
+}
+
+/* Active / Dragging: Locks flush into track */
+.slider::-webkit-slider-thumb:active,
+.slider:active::-webkit-slider-thumb,
+.concurrency-slider::-webkit-slider-thumb:active,
+.concurrency-slider:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 var(--accent-shelf);
+  filter: brightness(1.18);
+}
+
+.slider::-moz-range-thumb:active,
+.slider:active::-moz-range-thumb,
 .concurrency-slider::-moz-range-thumb:active,
-.card-section-body .setting-row:hover .slider::-moz-range-thumb:hover,
-.card-section-body .setting-row:hover .slider:hover::-moz-range-thumb,
-.card-section-body .setting-row:hover .slider:active::-moz-range-thumb,
-.card-section-body .setting-row:hover .concurrency-slider::-moz-range-thumb:hover,
-.card-section-body .setting-row:hover .concurrency-slider:hover::-moz-range-thumb,
-.card-section-body .setting-row:hover .concurrency-slider:active::-moz-range-thumb,
-.settings-cell:hover .slider::-moz-range-thumb:hover,
-.settings-cell:hover .slider:hover::-moz-range-thumb,
-.settings-cell:hover .slider:active::-moz-range-thumb,
-.settings-cell:hover .concurrency-slider::-moz-range-thumb:hover,
-.settings-cell:hover .concurrency-slider:hover::-moz-range-thumb,
-.settings-cell:hover .concurrency-slider:active::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--surface-raised);
+.concurrency-slider:active::-moz-range-thumb {
+  box-shadow: 0 0 0 var(--accent-shelf);
+  filter: brightness(1.18);
 }
 
 .slider:disabled,
@@ -5090,8 +5165,13 @@ select.field-input[size] { appearance: none; }
   flex-shrink: 0;
   user-select: none;
   white-space: nowrap;
-  box-shadow: var(--btn-depth);
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, color 0.15s ease;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease,
+              filter 0.12s ease;
 }
 
 .inst-header-play-btn svg {
@@ -5101,38 +5181,40 @@ select.field-input[size] { appearance: none; }
 }
 
 .inst-header-play-btn:active:not(.btn--disabled) {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 
 .inst-header-play-btn.btn--play {
   background: var(--accent);
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-rim);
   color: var(--accent-contrast, #ffffff);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-primary);
 }
 
 .inst-header-play-btn.btn--play:hover:not(.btn--disabled) {
   background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  border-color: var(--accent-rim);
   color: var(--accent-contrast, #ffffff);
-  box-shadow: 0 0 12px var(--accent-glow);
+  box-shadow: var(--btn-depth-primary-pressed), 0 0 12px var(--accent-glow);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .inst-header-play-btn.btn--stop {
   background: color-mix(in srgb, var(--danger, #f43f5e) 18%, var(--surface-panel));
-  border: 1px solid var(--danger, #f43f5e);
+  border: 1px solid var(--danger-rim);
   color: var(--danger, #f43f5e);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-danger);
 }
 
 .inst-header-play-btn.btn--stop:hover:not(.btn--disabled) {
   background: var(--danger, #f43f5e);
-  border-color: var(--danger, #f43f5e);
+  border-color: var(--danger-rim);
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+  box-shadow: var(--btn-depth-danger-pressed), 0 0 12px rgba(244, 63, 94, 0.4);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .inst-header-play-btn.btn--disabled {
@@ -5435,30 +5517,36 @@ select.field-input[size] { appearance: none; }
   padding: 0;
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   border-radius: 0;
   color: var(--text);
   cursor: pointer;
   flex-shrink: 0;
   align-self: center;
-  transition: background 0.12s, transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              color 0.12s,
+              filter 0.12s ease;
 }
 .inst-panel-btn:hover:not(:disabled) {
   background: var(--surface-raised);
   border-color: var(--border-hover);
   color: #ffffff;
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .inst-panel-btn:active:not(:disabled) {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .inst-panel-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
-  box-shadow: var(--btn-depth) !important;
+  box-shadow: var(--btn-depth-neutral) !important;
 }
 .inst-panel-btn svg {
   width: 16px;
@@ -5538,7 +5626,7 @@ select.field-input[size] { appearance: none; }
   font-weight: 600;
   background: var(--surface-panel);
   border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  box-shadow: var(--btn-depth-neutral);
   border-radius: 0;
   color: var(--text);
   display: flex;
@@ -5546,17 +5634,22 @@ select.field-input[size] { appearance: none; }
   gap: 6px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.12s ease;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s,
+              border-color 0.12s,
+              filter 0.12s ease;
 }
 .inst-toolbar-right .custom-dropdown-selected:hover {
   background: var(--surface-raised);
   border-color: var(--border-hover);
-  box-shadow: none;
+  box-shadow: var(--btn-depth-neutral-pressed);
   transform: translateY(1px);
+  filter: brightness(1.08);
 }
 .inst-toolbar-right .custom-dropdown-selected:active {
-  transform: translateY(2px) scale(0.97);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
 }
 .inst-toolbar-right .custom-dropdown-selected span:first-child {
   color: var(--text-muted);
