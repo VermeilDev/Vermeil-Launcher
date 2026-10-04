@@ -38,6 +38,8 @@ import {
   IconChevronDown,
   IconSearch,
   IconArrowRight,
+  IconAlertTriangle,
+  IconArrowLeft,
 } from "../components/Icons";
 import TactileSwitch from "../components/TactileSwitch";
 
@@ -124,6 +126,7 @@ const ChangeLoaderModal: Component = () => {
   const [conversionProgress, setConversionProgress] = createSignal<ModConversionProgress | null>(null);
   const [versionDropOpen, setVersionDropOpen] = createSignal(false);
   const [versionFilter, setVersionFilter] = createSignal("");
+  const [showConfirm, setShowConfirm] = createSignal(false);
 
   const trackedDownloads = new Map<string, string>();
 
@@ -199,6 +202,7 @@ const ChangeLoaderModal: Component = () => {
       setConversionProgress(null);
       setVersionDropOpen(false);
       setVersionFilter("");
+      setShowConfirm(false);
     }
   });
 
@@ -245,7 +249,8 @@ const ChangeLoaderModal: Component = () => {
     return false;
   };
 
-  const formatLoaderVersionDisplay = (ver: string, loader = selectedLoader()) => {
+  const formatLoaderVersionDisplay = (ver?: string | null, loader = selectedLoader()): string => {
+    if (!ver) return "";
     const gv = inst()?.game_version || "";
     if (loader === "forge" && gv && ver.startsWith(`${gv}-`)) {
       let clean = ver.slice(gv.length + 1);
@@ -335,6 +340,8 @@ const ChangeLoaderModal: Component = () => {
         if (versionDropOpen()) {
           setVersionDropOpen(false);
           setVersionFilter("");
+        } else if (showConfirm()) {
+          setShowConfirm(false);
         } else {
           closeChangeLoaderModal();
         }
@@ -344,7 +351,23 @@ const ChangeLoaderModal: Component = () => {
     onCleanup(() => document.removeEventListener("keydown", onKey));
   });
 
-  const handleApply = async () => {
+  const handleReview = () => {
+    const current = inst();
+    if (!current || isNoChange() || changing()) return;
+
+    if (gameRunning()) {
+      showToast({
+        title: "Game running",
+        message: "Please close Minecraft before changing the mod loader.",
+        type: "error",
+      });
+      return;
+    }
+
+    setShowConfirm(true);
+  };
+
+  const handleExecuteApply = async () => {
     const current = inst();
     if (!current || isNoChange() || changing()) return;
 
@@ -422,6 +445,195 @@ const ChangeLoaderModal: Component = () => {
     }
   };
 
+  const ConfirmationBody: Component = () => (
+    <>
+      {/* 1. Warning Notice Box */}
+      <div
+        style="padding: 12px 14px; background: rgba(245, 158, 11, 0.07); border: 1px solid rgba(245, 158, 11, 0.3); border-left: 3px solid var(--warn); display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;"
+      >
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="color: var(--warn); display: flex; align-items: center; width: 16px; height: 16px; flex-shrink: 0;">
+            <IconAlertTriangle />
+          </div>
+          <span style="font-size: 12px; font-weight: 700; color: var(--warn); letter-spacing: 0.02em;">
+            Potential Mod Incompatibilities &amp; Launch Crashes
+          </span>
+        </div>
+        <div style="font-size: 11.5px; color: var(--text); line-height: 1.5;">
+          Updating or switching mod loaders can cause game crashes on launch. Loader releases—especially cutting-edge betas and minor revisions—frequently introduce breaking internal API changes, remove legacy fields, or alter bytecode transformers.
+        </div>
+        <div style="font-size: 11px; color: var(--muted); line-height: 1.45;">
+          Installed mods compiled for earlier loader builds may fail to start (<code style="font-family: var(--font-mono); color: var(--warn); font-size: 10.5px;">NoSuchFieldError</code>, <code style="font-family: var(--font-mono); color: var(--warn); font-size: 10.5px;">ClassNotFoundException</code>, mixin conflicts) until their mod authors publish updates.
+        </div>
+        <div style="padding-top: 6px; border-top: 1px solid rgba(245, 158, 11, 0.2); font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+          <span style="font-weight: 600; color: var(--text);">Safety:</span>
+          <span>You can revert to your previous working loader version anytime in this menu, or disable affected mods in the Mods tab.</span>
+        </div>
+      </div>
+
+      {/* 2. Change Manifest */}
+      <div
+        style="background: var(--surface-sunken, #0c0b12); border: 1px solid var(--border); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;"
+      >
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">
+          Change Manifest
+        </div>
+
+        {/* Transition Visual Plate */}
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface-panel); border: 1px solid var(--border);">
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+            <span style="font-size: 9.5px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Current Runtime</span>
+            <span style="font-size: 12.5px; font-weight: 700; color: var(--text); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {loaderLabel(inst()!.loader.type)} {inst()!.loader.version ? formatLoaderVersionDisplay(inst()!.loader.version, inst()!.loader.type) : "Default"}
+            </span>
+          </div>
+          <div style="color: var(--dim, #5c566f); display: flex; align-items: center; width: 16px; height: 16px; flex-shrink: 0;">
+            <IconArrowRight />
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; align-items: flex-end; min-width: 0;">
+            <span style="font-size: 9.5px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Target Runtime</span>
+            <span style="font-size: 12.5px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {loaderLabel(selectedLoader())} {selectedLoader() !== "vanilla" && selectedVersion() ? formatLoaderVersionDisplay(selectedVersion()!, selectedLoader()) : "Default"}
+            </span>
+          </div>
+        </div>
+
+        {/* Mods Impact Item */}
+        <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 4px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 11.5px; font-weight: 700; color: var(--text);">
+              Installed Mods Impact ({activeModCount()} active)
+            </span>
+            <Show when={activeModCount() === 0}>
+              <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--success); background: rgba(16,185,129,0.15); padding: 1px 5px; border: 1px solid rgba(16,185,129,0.3);">Clean</span>
+            </Show>
+            <Show when={activeModCount() > 0 && isSameLoader() && !isSameVersion()}>
+              <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); padding: 1px 5px; border: 1px solid rgba(139,92,246,0.3);">Preserved</span>
+            </Show>
+            <Show when={activeModCount() > 0 && isVanillaToModded()}>
+              <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--success); background: rgba(16,185,129,0.15); padding: 1px 5px; border: 1px solid rgba(16,185,129,0.3);">Mod Support Active</span>
+            </Show>
+            <Show when={activeModCount() > 0 && isModdedToVanilla()}>
+              <Show when={disableMods()} fallback={<span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--danger); background: rgba(239,68,68,0.15); padding: 1px 5px; border: 1px solid rgba(239,68,68,0.3);">Ignored</span>}>
+                <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--warn); background: rgba(245,158,11,0.15); padding: 1px 5px; border: 1px solid rgba(245,158,11,0.3);">Disabling</span>
+              </Show>
+            </Show>
+            <Show when={activeModCount() > 0 && !isSameLoader() && selectedLoader() !== "vanilla" && inst()!.loader.type !== "vanilla"}>
+              <Show
+                when={autoConvertMods()}
+                fallback={
+                  disableMods() ? (
+                    <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--warn); background: rgba(245,158,11,0.15); padding: 1px 5px; border: 1px solid rgba(245,158,11,0.3);">Disabling All</span>
+                  ) : (
+                    <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--danger); background: rgba(239,68,68,0.15); padding: 1px 5px; border: 1px solid rgba(239,68,68,0.3);">High Risk</span>
+                  )
+                }
+              >
+                <span style="font-size: 9px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); padding: 1px 5px; border: 1px solid rgba(139,92,246,0.3);">Auto-Converting</span>
+              </Show>
+            </Show>
+          </div>
+
+          <div style="font-size: 11px; color: var(--muted); line-height: 1.45;">
+            <Show when={activeModCount() === 0}>
+              No mods currently installed. Fresh runtime environment will be configured.
+            </Show>
+            <Show when={activeModCount() > 0 && isSameLoader() && !isSameVersion()}>
+              All {activeModCount()} installed mod{activeModCount() === 1 ? "" : "s"} will remain intact. If any mod crashes on launch due to loader bytecode changes, update the mod or downgrade the loader build.
+            </Show>
+            <Show when={activeModCount() > 0 && isVanillaToModded()}>
+              Mod loader will be installed. You will be able to browse and add {loaderLabel(selectedLoader())} mods immediately.
+            </Show>
+            <Show when={activeModCount() > 0 && isModdedToVanilla()}>
+              {disableMods()
+                ? `${activeModCount()} active mod${activeModCount() === 1 ? "" : "s"} will be disabled (.jar.disabled) to ensure standard vanilla launch.`
+                : `Vanilla Minecraft does not load mods. Active mods will be ignored.`}
+            </Show>
+            <Show when={activeModCount() > 0 && !isSameLoader() && selectedLoader() !== "vanilla" && inst()!.loader.type !== "vanilla"}>
+              {autoConvertMods()
+                ? `Will search Modrinth and CurseForge for ${loaderLabel(selectedLoader())} builds of your ${activeModCount()} active mod${activeModCount() === 1 ? "" : "s"}. Incompatible or missing mods will be safely disabled.`
+                : disableMods()
+                ? `All ${activeModCount()} active mod${activeModCount() === 1 ? "" : "s"} will be disabled (.jar.disabled) to prevent startup crashes.`
+                : `All ${activeModCount()} active mod${activeModCount() === 1 ? "" : "s"} will remain enabled. Because they were compiled for ${loaderLabel(inst()!.loader.type)}, they will almost certainly crash on startup.`}
+            </Show>
+          </div>
+        </div>
+
+        {/* Live conversion progress bar if in-progress */}
+        <Show when={changing() && conversionProgress()}>
+          <div style="padding: 8px 10px; background: var(--surface-panel); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {conversionProgress()!.mod_title}
+              </span>
+              <span style="font-size: 10px; color: var(--accent); font-family: var(--font-mono); font-weight: 600;">
+                {conversionProgress()!.status}
+              </span>
+            </div>
+            <div style="width: 100%; height: 4px; background: var(--surface-sunken); overflow: hidden;">
+              <div
+                style={`height: 100%; background: var(--accent); transition: width 0.2s; width: ${
+                  conversionProgress()!.total > 0
+                    ? Math.round((conversionProgress()!.current / conversionProgress()!.total) * 100)
+                    : 0
+                }%;`}
+              />
+            </div>
+          </div>
+        </Show>
+      </div>
+    </>
+  );
+
+  const ConfirmationFooter: Component = () => (
+    <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
+      <button
+        type="button"
+        class="btn btn--subtle btn--sm"
+        onClick={() => setShowConfirm(false)}
+        disabled={changing()}
+        style="display: flex; align-items: center; gap: 6px;"
+      >
+        <span style="display: flex; align-items: center; width: 14px; height: 14px;"><IconArrowLeft /></span>
+        <span>Back</span>
+      </button>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button
+          type="button"
+          class="btn btn--subtle btn--sm"
+          onClick={closeChangeLoaderModal}
+          disabled={changing()}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class={`btn btn--sm ${
+            isIncompatibleCross() && activeModCount() > 0 && !autoConvertMods() && !disableMods()
+              ? "btn--danger"
+              : "btn--primary"
+          }`}
+          disabled={changing()}
+          onClick={handleExecuteApply}
+        >
+          <Show
+            when={!changing()}
+            fallback={
+              conversionProgress()
+                ? `Converting (${conversionProgress()!.current}/${conversionProgress()!.total})...`
+                : "Applying changes..."
+            }
+          >
+            {isSameLoader()
+              ? `Confirm & Update ${loaderLabel(selectedLoader())}`
+              : `Confirm & Switch to ${loaderLabel(selectedLoader())}`}
+          </Show>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <Show when={open() && inst()}>
       <div class="modal-overlay" onClick={closeChangeLoaderModal}>
@@ -433,11 +645,35 @@ const ChangeLoaderModal: Component = () => {
           {/* Header */}
           <div class="modal-header">
             <div class="modal-header-left">
-              <span class="card-section-tag tag-settings-instances">FRAMEWORK</span>
+              <Show
+                when={showConfirm()}
+                fallback={<span class="card-section-tag tag-settings-instances">FRAMEWORK</span>}
+              >
+                <span
+                  class="card-section-tag"
+                  style="background: rgba(245, 158, 11, 0.15); color: var(--warn); border: 1px solid rgba(245, 158, 11, 0.3);"
+                >
+                  CONFIRMATION
+                </span>
+              </Show>
               <div>
-                <div class="modal-title">Change Mod Loader</div>
+                <div class="modal-title">
+                  <Show
+                    when={showConfirm()}
+                    fallback="Change Mod Loader"
+                  >
+                    {isSameLoader()
+                      ? `Confirm ${loaderLabel(selectedLoader())} Update`
+                      : `Confirm Switch to ${loaderLabel(selectedLoader())}`}
+                  </Show>
+                </div>
                 <div style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono);">
-                  {inst()!.name} &middot; Minecraft {inst()!.game_version}
+                  <Show
+                    when={showConfirm()}
+                    fallback={`${inst()!.name} \u00B7 Minecraft ${inst()!.game_version}`}
+                  >
+                    {`${inst()!.name} \u00B7 Review potential compatibility risks before applying`}
+                  </Show>
                 </div>
               </div>
             </div>
@@ -445,7 +681,8 @@ const ChangeLoaderModal: Component = () => {
 
           {/* Body */}
           <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; overflow: visible;">
-            {/* 1. Loader Selection (Balanced 3+2 Bento Grid) */}
+            <Show when={!showConfirm()} fallback={<ConfirmationBody />}>
+              {/* 1. Loader Selection (Balanced 3+2 Bento Grid) */}
             <div>
               <div class="field-label" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Select Modding Framework</span>
@@ -878,66 +1115,69 @@ const ChangeLoaderModal: Component = () => {
                 </div>
               </Show>
             </div>
+            </Show>
           </div>
 
           {/* Footer */}
-          <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
-            {/* Real-time transition summary */}
-            <div style="font-size: 11px; color: var(--muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 6px;">
-              <Show
-                when={!isNoChange()}
-                fallback={<span style="color: var(--dim, #5c566f);">No modifications pending</span>}
-              >
-                <span>
-                  {loaderLabel(inst()!.loader.type)}
-                  {inst()!.loader.type !== "vanilla" && inst()!.loader.version ? ` ${formatLoaderVersionDisplay(inst()!.loader.version!, inst()!.loader.type)}` : ""}
-                </span>
-                <span style="color: var(--dim, #5c566f); display: flex; align-items: center;"><IconArrowRight /></span>
-                <span style="color: var(--accent); font-weight: 600;">
-                  {loaderLabel(selectedLoader())}
-                  {selectedLoader() !== "vanilla" && selectedVersion() ? ` ${formatLoaderVersionDisplay(selectedVersion()!, selectedLoader())}` : ""}
-                </span>
-              </Show>
-            </div>
-
-            {/* Actions */}
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <button
-                class="btn btn--subtle btn--sm"
-                onClick={closeChangeLoaderModal}
-                disabled={changing()}
-              >
-                Cancel
-              </button>
-              <button
-                class={`btn btn--sm ${
-                  isIncompatibleCross() && activeModCount() > 0 && !autoConvertMods() && !disableMods()
-                    ? "btn--danger"
-                    : "btn--primary"
-                }`}
-                disabled={
-                  isNoChange() ||
-                  !isLoaderCompatible(selectedLoader()) ||
-                  changing() ||
-                  (selectedLoader() !== "vanilla" && (!selectedVersion() || isVersionLoading()))
-                }
-                onClick={handleApply}
-              >
+          <Show when={!showConfirm()} fallback={<ConfirmationFooter />}>
+            <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
+              {/* Real-time transition summary */}
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 6px;">
                 <Show
-                  when={!changing()}
-                  fallback={
-                    conversionProgress()
-                      ? `Converting (${conversionProgress()!.current}/${conversionProgress()!.total})...`
-                      : "Applying changes..."
-                  }
+                  when={!isNoChange()}
+                  fallback={<span style="color: var(--dim, #5c566f);">No modifications pending</span>}
                 >
-                  {isSameLoader()
-                    ? `Update ${loaderLabel(selectedLoader())}`
-                    : `Switch to ${loaderLabel(selectedLoader())}`}
+                  <span>
+                    {loaderLabel(inst()!.loader.type)}
+                    {inst()!.loader.type !== "vanilla" && inst()!.loader.version ? ` ${formatLoaderVersionDisplay(inst()!.loader.version!, inst()!.loader.type)}` : ""}
+                  </span>
+                  <span style="color: var(--dim, #5c566f); display: flex; align-items: center;"><IconArrowRight /></span>
+                  <span style="color: var(--accent); font-weight: 600;">
+                    {loaderLabel(selectedLoader())}
+                    {selectedLoader() !== "vanilla" && selectedVersion() ? ` ${formatLoaderVersionDisplay(selectedVersion()!, selectedLoader())}` : ""}
+                  </span>
                 </Show>
-              </button>
+              </div>
+
+              {/* Actions */}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button
+                  class="btn btn--subtle btn--sm"
+                  onClick={closeChangeLoaderModal}
+                  disabled={changing()}
+                >
+                  Cancel
+                </button>
+                <button
+                  class={`btn btn--sm ${
+                    isIncompatibleCross() && activeModCount() > 0 && !autoConvertMods() && !disableMods()
+                      ? "btn--danger"
+                      : "btn--primary"
+                  }`}
+                  disabled={
+                    isNoChange() ||
+                    !isLoaderCompatible(selectedLoader()) ||
+                    changing() ||
+                    (selectedLoader() !== "vanilla" && (!selectedVersion() || isVersionLoading()))
+                  }
+                  onClick={handleReview}
+                >
+                  <Show
+                    when={!changing()}
+                    fallback={
+                      conversionProgress()
+                        ? `Converting (${conversionProgress()!.current}/${conversionProgress()!.total})...`
+                        : "Applying changes..."
+                    }
+                  >
+                    {isSameLoader()
+                      ? `Update ${loaderLabel(selectedLoader())}`
+                      : `Switch to ${loaderLabel(selectedLoader())}`}
+                  </Show>
+                </button>
+              </div>
             </div>
-          </div>
+          </Show>
         </div>
       </div>
     </Show>
