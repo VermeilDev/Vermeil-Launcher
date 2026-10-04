@@ -594,7 +594,7 @@ When documenting architectural pipelines, data flows, and security protocols in 
 - **No Raw URLs in Node Boxes**: Never paste raw URLs inside node boxes. Use clean HTTP method and endpoint descriptions: `POST Token Request<br/>(oauth2.googleapis.com)`.
 - **Sequence Diagram Message Sanitization**: In `sequenceDiagram`, avoid unescaped double quotes, curly braces `{id}`, square brackets `[tag]`, or nested query strings.
 - **Quoted Syntax**: Always quote labels: `nodeId["Label Title<br/>(Brief detail)"]`.
-- **Comparative Flowcharts**: When documenting refactors or optimizations, include a comparative flowchart showing legacy flawed vs modern calibrated pipelines with a summary comparison table.
+- **Comparative Flowcharts**: When documenting refactors or optimizations, include a comparative flowchart showing legacy flawed vs modern solution pipelines with a summary comparison table.
 
 ## Project Structure
 
