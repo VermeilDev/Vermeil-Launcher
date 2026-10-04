@@ -580,7 +580,14 @@ pub async fn change_loader(
 
             emit_progress(app, idx + 1, total, &title, "Checking...");
 
-            if entry.source == "modrinth" && !entry.project_id.is_empty() {
+            let is_modrinth = (entry.source == "modrinth"
+                || (entry.source == "modpack" && entry.project_id.parse::<u64>().is_err()))
+                && !entry.project_id.is_empty();
+            let is_curseforge = (entry.source == "curseforge"
+                || (entry.source == "modpack" && entry.project_id.parse::<u64>().is_ok()))
+                && !entry.project_id.is_empty();
+
+            if is_modrinth {
                 let versions_res = modrinth::get_project_versions(
                     &entry.project_id,
                     loader_type.as_str(),
@@ -669,7 +676,7 @@ pub async fn change_loader(
                         emit_progress(app, idx + 1, total, &title, "Lookup failed (disabled)");
                     }
                 }
-            } else if entry.source == "curseforge" && !entry.project_id.is_empty() {
+            } else if is_curseforge {
                 let api_key = resolve_cf_key().await;
                 let files_res = curseforge::get_project_files(
                     &api_key,

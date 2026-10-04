@@ -263,7 +263,7 @@ async fn resolve_and_install(instance: &Instance, mods: &Path) -> Result<String,
         .into_iter()
         .find(|e| {
             e.minecraft_versions.iter().any(|v| v == &instance.game_version)
-                && e.loaders.iter().any(|l| l == loader)
+                && e.loaders.iter().any(|l| l == loader || (loader == "quilt" && l == "fabric"))
         })
         .ok_or_else(|| {
             format!("no companion build for Minecraft {} ({})", instance.game_version, loader)

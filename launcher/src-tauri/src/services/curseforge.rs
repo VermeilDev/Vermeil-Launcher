@@ -246,8 +246,13 @@ pub async fn search(
     // CurseForge's `modLoaderType` filter applies to mods AND modpacks
     // (both have a primary loader). Resource packs, shaders, and datapacks
     // are loader-agnostic — applying the filter to them returns 0 results.
+    //
+    // Quilt instances natively run Fabric mods, so we query `modLoaderTypes=Quilt,Fabric`
+    // to discover both Quilt-specific and compatible Fabric uploads.
     if project_type == "mod" || project_type == "modpack" {
-        if let Some(loader_id) = loader_type_id(loader) {
+        if loader == "quilt" {
+            url.push_str("&modLoaderTypes=Quilt,Fabric");
+        } else if let Some(loader_id) = loader_type_id(loader) {
             url.push_str(&format!("&modLoaderType={}", loader_id));
         }
     }
@@ -385,17 +390,21 @@ pub async fn get_project_files(
     if !game_version.is_empty() {
         url.push_str(&format!("&gameVersion={}", urlencoding::encode(game_version)));
     }
-    match loader_type_id(loader) {
-        Some(loader_id) => url.push_str(&format!("&modLoaderType={}", loader_id)),
-        // An empty loader is intentional (loader-agnostic content). A non-empty
-        // one we can't map means the server-side filter silently doesn't apply,
-        // so every loader's files come back — the caller MUST validate the
-        // chosen file's own loader list rather than trusting this response.
-        None if !loader.is_empty() => tracing::warn!(
-            "No CurseForge modLoaderType for loader '{}'; file list is unfiltered by loader",
-            loader
-        ),
-        None => {}
+    if loader == "quilt" {
+        url.push_str("&modLoaderTypes=Quilt,Fabric");
+    } else {
+        match loader_type_id(loader) {
+            Some(loader_id) => url.push_str(&format!("&modLoaderType={}", loader_id)),
+            // An empty loader is intentional (loader-agnostic content). A non-empty
+            // one we can't map means the server-side filter silently doesn't apply,
+            // so every loader's files come back — the caller MUST validate the
+            // chosen file's own loader list rather than trusting this response.
+            None if !loader.is_empty() => tracing::warn!(
+                "No CurseForge modLoaderType for loader '{}'; file list is unfiltered by loader",
+                loader
+            ),
+            None => {}
+        }
     }
 
     let resp = HTTP

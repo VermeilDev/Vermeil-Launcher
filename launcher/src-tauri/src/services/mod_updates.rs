@@ -238,7 +238,20 @@ async fn check_curseforge_entry(
     // Same picker the install flow uses, so what we report is exactly what an
     // install would fetch: locally validated, stable channel preferred, highest
     // file id within that channel.
-    let latest = cf_mod_install::find_preferred_file(&files, &instance.game_version, loader)?;
+    let mut latest = cf_mod_install::find_preferred_file(&files, &instance.game_version, loader).cloned();
+    if latest.is_none() && loader == "quilt" {
+        if let Ok(fabric_files) = curseforge::get_project_files(
+            api_key,
+            &entry.project_id,
+            &instance.game_version,
+            "fabric",
+        )
+        .await
+        {
+            latest = cf_mod_install::find_preferred_file(&fabric_files, &instance.game_version, loader).cloned();
+        }
+    }
+    let latest = latest?;
 
     if latest.file_id <= current_id {
         // Already on the newest (or local id is somehow ahead — never downgrade).

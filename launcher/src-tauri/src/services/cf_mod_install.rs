@@ -247,13 +247,35 @@ async fn install_cf_one(
                 listed =
                     curseforge::get_project_files(api_key, mod_id, game_version, loader_filter)
                         .await?;
-                find_preferred_file(&listed, game_version, loader_filter).cloned()
+                let mut best = find_preferred_file(&listed, game_version, loader_filter).cloned();
+                if best.is_none() && loader_filter == "quilt" {
+                    if let Ok(fabric_files) =
+                        curseforge::get_project_files(api_key, mod_id, game_version, "fabric").await
+                    {
+                        if let Some(f) = find_preferred_file(&fabric_files, game_version, loader_filter) {
+                            best = Some(f.clone());
+                        }
+                        listed.extend(fabric_files);
+                    }
+                }
+                best
             }
         },
         None => {
             listed =
                 curseforge::get_project_files(api_key, mod_id, game_version, loader_filter).await?;
-            find_preferred_file(&listed, game_version, loader_filter).cloned()
+            let mut best = find_preferred_file(&listed, game_version, loader_filter).cloned();
+            if best.is_none() && loader_filter == "quilt" {
+                if let Ok(fabric_files) =
+                    curseforge::get_project_files(api_key, mod_id, game_version, "fabric").await
+                {
+                    if let Some(f) = find_preferred_file(&fabric_files, game_version, loader_filter) {
+                        best = Some(f.clone());
+                    }
+                    listed.extend(fabric_files);
+                }
+            }
+            best
         }
     };
 
@@ -727,5 +749,28 @@ mod tests {
         assert_eq!(category_for_class(Some(6945)), "datapack");
         assert_eq!(category_for_class(Some(6)), "mod");
         assert_eq!(category_for_class(None), "mod");
+    }
+
+    #[test]
+    fn quilt_loader_accepts_fabric_and_quilt_files() {
+        let fabric_file = file(100, 1, &["1.20.1"], &["fabric"], true);
+        let quilt_file = file(200, 1, &["1.20.1"], &["quilt"], true);
+        let forge_file = file(300, 1, &["1.20.1"], &["forge"], true);
+
+        assert!(is_file_compatible(&fabric_file, "1.20.1", "quilt"));
+        assert!(is_file_compatible(&quilt_file, "1.20.1", "quilt"));
+        assert!(!is_file_compatible(&forge_file, "1.20.1", "quilt"));
+
+        let files = vec![fabric_file.clone(), forge_file];
+        assert_eq!(
+            find_preferred_file(&files, "1.20.1", "quilt").unwrap().file_id,
+            100
+        );
+
+        let files_with_quilt = vec![fabric_file, quilt_file];
+        assert_eq!(
+            find_preferred_file(&files_with_quilt, "1.20.1", "quilt").unwrap().file_id,
+            200
+        );
     }
 }
