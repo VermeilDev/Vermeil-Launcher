@@ -1084,6 +1084,9 @@ pub async fn toggle_mod(instance_id: &str, entry_id: &str) -> Result<bool, Strin
     if instance.mods[mod_idx].enabled {
         let new_name = format!("{}.disabled", instance.mods[mod_idx].filename);
         let new_path = target_dir.join(&new_name);
+        if new_path.exists() {
+            let _ = fs::remove_file(&new_path);
+        }
         fs::rename(&current_path, &new_path).map_err(|e| format!("Rename failed: {}", e))?;
         instance.mods[mod_idx].filename = new_name;
         instance.mods[mod_idx].enabled = false;
@@ -1115,6 +1118,9 @@ pub async fn toggle_mod(instance_id: &str, entry_id: &str) -> Result<bool, Strin
 
         let new_name = instance.mods[mod_idx].filename.trim_end_matches(".disabled").to_string();
         let new_path = target_dir.join(&new_name);
+        if new_path.exists() {
+            let _ = fs::remove_file(&new_path);
+        }
         fs::rename(&current_path, &new_path).map_err(|e| format!("Rename failed: {}", e))?;
         instance.mods[mod_idx].filename = new_name;
         instance.mods[mod_idx].enabled = true;
