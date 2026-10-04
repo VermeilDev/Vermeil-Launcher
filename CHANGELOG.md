@@ -1,23 +1,21 @@
-## 0.1.0 (Alpha Build 5)
+## 0.1.0 (Alpha Build 6)
 
 ### Added
 
-- Compact cassette view mode for instance content and modpack browse screens
-- Searchable game version filter in modpack browse navigation
-- Unified tactile floating selection dock with smart bottom pagination clearance
-- Vanilla instance datapack discovery and installation support
+- Compatibility warning confirmation step in the Change Mod Loader flow to inform users of loader API breaking changes and crash risks
+- Automatic mod conversion pipeline when switching mod loaders, querying compatible builds across Modrinth and CurseForge
 
 ### Changed
 
-- Reworked buttons, tabs, switches, and sliders with 3D tactile depth and mechanical hover-press physics
-- Locked compact card geometry with fixed action columns and uniform install button dimensions
-- Reordered instance content toolbar with clear left search anchor and right action clustering
-- Streamlined selection dock action labels to remove redundant item count strings
-- Consolidated multi-source content browse pipelines across Modrinth and CurseForge
+- Redesigned Change Mod Loader modal with balanced Bento grid layout, searchable runtime versions, and height stability
+- Unified 3D tactile toggle switches across all screens and modal dialogs
+- Streamlined loader conversion pipeline and consolidated companion mod loader parity
+- Enhanced launcher self-updater with cache-busting, in-flight release detection, and background channel synchronization
+- Replaced wand icon with authentic anvil iconography for Forge and shuffle symbol for loader switching
 
 ### Fixed
 
-- Resolved horizontal alignment discrepancies and uneven X-positioning across compact content cards
-- Hardened atomic file writing with automated backup and self-healing config recovery
-- Fixed pagination collision with floating selection docks on instances with bottom page navigation
-- Anchored empty launchpad footer and screenshot hub consistently across large viewport heights
+- Prevented enabling incompatible mods and restored authentic loader type badges in instance content views
+- Fixed dual Quilt-Fabric API queries and automatic conversion for incompatible mods
+- Resolved loader parity and Quilt fallback behavior during CurseForge downloads and imports
+- Prevented file rename collisions when enabling compatible mods during loader conversion
