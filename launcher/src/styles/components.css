@@ -6003,7 +6003,7 @@ select.field-input[size] { appearance: none; }
 .inst-card-grid.compact .card--mod {
   position: relative !important;
   display: grid !important;
-  grid-template-columns: auto 1fr auto !important;
+  grid-template-columns: auto 1fr 144px !important;
   grid-template-rows: auto auto auto !important;
   grid-template-areas:
     "icon title   actions"
@@ -6026,6 +6026,7 @@ select.field-input[size] { appearance: none; }
 
 @media (min-width: 1200px) {
   .inst-card-grid.compact .card--mod {
+    grid-template-columns: auto 1fr 156px !important;
     min-height: 100px !important;
     padding: 14px 18px !important;
     column-gap: 16px !important;
@@ -6245,6 +6246,7 @@ select.field-input[size] { appearance: none; }
   flex-direction: column !important;
   align-items: flex-end !important;
   justify-content: center !important;
+  width: 144px !important;
   gap: 3px !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -6253,6 +6255,7 @@ select.field-input[size] { appearance: none; }
 }
 @media (min-width: 1200px) {
   .inst-card-grid.compact .mod-card-footer {
+    width: 156px !important;
     gap: 6px !important;
     padding: 0 !important;
   }
@@ -6264,6 +6267,8 @@ select.field-input[size] { appearance: none; }
   color: #8c869c !important;
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
   gap: 4px !important;
   line-height: 1.1 !important;
   white-space: nowrap !important;
@@ -6278,6 +6283,8 @@ select.field-input[size] { appearance: none; }
 .inst-card-grid.compact .mod-card-actions {
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-end !important;
+  align-self: flex-end !important;
   gap: 4px !important;
   flex-shrink: 0 !important;
 }
@@ -6285,6 +6292,12 @@ select.field-input[size] { appearance: none; }
   .inst-card-grid.compact .mod-card-actions {
     gap: 6px !important;
   }
+}
+
+.inst-card-grid.compact .mod-card-footer > .btn,
+.inst-card-grid.compact .mod-card-footer > .select-check,
+.inst-card-grid.compact .mod-card-footer > .mod-card-actions {
+  align-self: flex-end !important;
 }
 
 .inst-card-grid.compact .btn--icon {
@@ -6327,13 +6340,19 @@ select.field-input[size] { appearance: none; }
 
 .inst-card-grid.compact .btn--installed {
   height: 24px !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  justify-content: center !important;
   padding: 0 8px !important;
   font-size: 10px !important;
   border-radius: 0 !important;
   gap: 4px !important;
+  box-sizing: border-box !important;
 }
 @media (min-width: 1200px) {
   .inst-card-grid.compact .btn--installed {
+    width: 96px !important;
+    min-width: 96px !important;
     height: 26px !important;
     padding: 0 10px !important;
     font-size: 11px !important;
@@ -6342,12 +6361,18 @@ select.field-input[size] { appearance: none; }
 
 .inst-card-grid.compact .card--mod .btn--primary {
   height: 24px !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  justify-content: center !important;
   padding: 0 10px !important;
   font-size: 11px !important;
   border-radius: 0 !important;
+  box-sizing: border-box !important;
 }
 @media (min-width: 1200px) {
   .inst-card-grid.compact .card--mod .btn--primary {
+    width: 96px !important;
+    min-width: 96px !important;
     height: 26px !important;
     padding: 0 14px !important;
     font-size: 12px !important;

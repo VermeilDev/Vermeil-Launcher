@@ -7447,11 +7447,19 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: center;
+  width: 96px;
+  min-width: 96px;
   gap: 4px;
 }
 .modpack-cassette-actions .modpack-card-install-btn {
   padding: 3px 10px;
   font-size: 11px;
+  width: 86px;
+  min-width: 86px;
+  justify-content: center;
+  align-self: flex-end;
+  box-sizing: border-box;
 }
 .modpack-cassette-stats {
   font-family: var(--font-mono);
@@ -7459,6 +7467,8 @@
   color: var(--muted);
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  width: 100%;
   gap: 4px;
 }
 .modpack-cassette-stats svg { width: 11px; height: 11px; color: #635d75; }
