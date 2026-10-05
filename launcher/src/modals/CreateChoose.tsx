@@ -7,10 +7,8 @@ import {
   IconSettings,
   IconLayers,
   IconDownload,
-  IconCheck,
   IconArrowRight,
   IconShieldCheck,
-  IconCpu,
 } from "../components/Icons";
 
 const CreateChoose: Component = () => {
@@ -31,7 +29,7 @@ const CreateChoose: Component = () => {
         {/* 3 Bento Hero Pillars */}
         <div class="create-hub-pillars">
           {/* Pillar 1: Custom Setup */}
-          <div class="create-hero-card" onClick={() => setActiveScreen("create-custom")}>
+          <div class="create-hero-card create-hero-card--accent" onClick={() => setActiveScreen("create-custom")}>
             <div class="create-hero-card-top">
               <div class="create-hero-icon-box create-hero-icon--accent">
                 <IconSettings />
@@ -41,144 +39,77 @@ const CreateChoose: Component = () => {
             <div class="create-hero-card-body">
               <div class="create-hero-title">Custom Setup</div>
               <div class="create-hero-desc">
-                Configure your loader, Minecraft version, JVM runtime, and memory parameters manually with full control.
+                Build an instance from scratch with your choice of loader and version.
               </div>
-              <div class="create-hero-features">
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Vanilla, Fabric, NeoForge, Forge, Quilt</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Granular build picker &amp; auto-suggest</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Automatic Companion mod injection</span>
-                </div>
+              <div class="create-hero-tags">
+                <span class="create-tag-chip">Vanilla</span>
+                <span class="create-tag-chip">Fabric</span>
+                <span class="create-tag-chip">NeoForge</span>
+                <span class="create-tag-chip">Forge</span>
+                <span class="create-tag-chip">Quilt</span>
               </div>
             </div>
-            <div class="create-hero-action create-hero-action--accent">
-              <span>CONFIGURE INSTANCE</span>
+            <button class="create-hero-btn create-hero-btn--accent" type="button">
+              <span>Configure Instance</span>
               <IconArrowRight />
-            </div>
+            </button>
           </div>
 
           {/* Pillar 2: Install Modpack */}
-          <div class="create-hero-card" onClick={() => setActiveScreen("create-modpack")}>
+          <div class="create-hero-card create-hero-card--info" onClick={() => setActiveScreen("create-modpack")}>
             <div class="create-hero-card-top">
               <div class="create-hero-icon-box create-hero-icon--info">
                 <IconLayers />
               </div>
-              <span class="create-hero-badge create-hero-badge--info">RECOMMENDED</span>
+              <span class="create-hero-badge create-hero-badge--info">COMMUNITY</span>
             </div>
             <div class="create-hero-card-body">
               <div class="create-hero-title">Install Modpack</div>
               <div class="create-hero-desc">
-                Browse, search, and download thousands of curated community modpacks from Modrinth and CurseForge.
+                Browse and download curated community modpacks from Modrinth and CurseForge.
               </div>
-              <div class="create-hero-features">
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Modrinth &amp; CurseForge live catalog</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>1-click automated dependency resolver</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Smart update tracking &amp; lockfile parity</span>
-                </div>
+              <div class="create-hero-tags">
+                <span class="create-tag-chip">Modrinth</span>
+                <span class="create-tag-chip">CurseForge</span>
+                <span class="create-tag-chip">1-Click Install</span>
               </div>
             </div>
-            <div class="create-hero-action create-hero-action--info">
-              <span>EXPLORE MODPACKS</span>
+            <button class="create-hero-btn create-hero-btn--info" type="button">
+              <span>Explore Modpacks</span>
               <IconArrowRight />
-            </div>
+            </button>
           </div>
 
           {/* Pillar 3: Import Archive */}
-          <div class="create-hero-card" onClick={() => setActiveScreen("create-import")}>
+          <div class="create-hero-card create-hero-card--warn" onClick={() => setActiveScreen("create-import")}>
             <div class="create-hero-card-top">
               <div class="create-hero-icon-box create-hero-icon--warn">
                 <IconDownload />
               </div>
-              <span class="create-hero-badge create-hero-badge--warn">PORTABILITY</span>
+              <span class="create-hero-badge create-hero-badge--warn">ARCHIVE</span>
             </div>
             <div class="create-hero-card-body">
               <div class="create-hero-title">Import Archive</div>
               <div class="create-hero-desc">
-                Ingest existing Modrinth (.mrpack) or CurseForge (.zip) archives, or restore via instant serverless share code.
+                Ingest .mrpack or .zip archives, or restore from serverless share codes.
               </div>
-              <div class="create-hero-features">
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Modrinth (.mrpack) &amp; CurseForge (.zip)</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Serverless VML Share Code blueprints</span>
-                </div>
-                <div class="create-hero-feature-item">
-                  <IconCheck />
-                  <span>Zero-network offline manifest extraction</span>
-                </div>
+              <div class="create-hero-tags">
+                <span class="create-tag-chip">.mrpack</span>
+                <span class="create-tag-chip">.zip (CurseForge)</span>
+                <span class="create-tag-chip">Share Code</span>
               </div>
             </div>
-            <div class="create-hero-action create-hero-action--warn">
-              <span>IMPORT ARCHIVE</span>
+            <button class="create-hero-btn create-hero-btn--warn" type="button">
+              <span>Import Archive</span>
               <IconArrowRight />
-            </div>
+            </button>
           </div>
         </div>
 
-        {/* Lower Bento Feature Shelf */}
-        <div class="create-hub-shelf">
-          <div class="create-shelf-tile">
-            <div class="create-shelf-icon">
-              <IconShieldCheck />
-            </div>
-            <div class="create-shelf-content">
-              <div class="create-shelf-title">
-                <span>Instance Sandboxes</span>
-                <span class="create-shelf-tag">ISOLATION</span>
-              </div>
-              <div class="create-shelf-desc">
-                Separate mod folders, configs, worlds, and runtimes per instance. Zero cross-contamination.
-              </div>
-            </div>
-          </div>
-
-          <div class="create-shelf-tile">
-            <div class="create-shelf-icon">
-              <img src="/logo.png" alt="Vermeil" class="create-shelf-logo" draggable={false} />
-            </div>
-            <div class="create-shelf-content">
-              <div class="create-shelf-title">
-                <span>Vermeil Companion</span>
-                <span class="create-shelf-tag create-shelf-tag--accent">IN-GAME SYNC</span>
-              </div>
-              <div class="create-shelf-desc">
-                Automatic zero-network animated capes, skin sync, Discord RPC, and telemetry hooks.
-              </div>
-            </div>
-          </div>
-
-          <div class="create-shelf-tile">
-            <div class="create-shelf-icon">
-              <IconCpu />
-            </div>
-            <div class="create-shelf-content">
-              <div class="create-shelf-title">
-                <span>Adaptive Memory</span>
-                <span class="create-shelf-tag">JVM OPTIMIZED</span>
-              </div>
-              <div class="create-shelf-desc">
-                Hardware-aware dynamic RAM bounds that scale with installed mod density to prevent OOM.
-              </div>
-            </div>
-          </div>
+        {/* Clean Isolation Footer Hint */}
+        <div class="create-hub-footer-hint">
+          <IconShieldCheck />
+          <span>Every instance runs in an isolated sandbox with dedicated mods, configs, and saves.</span>
         </div>
       </div>
     </div>

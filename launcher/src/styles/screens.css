@@ -5419,32 +5419,42 @@
 
 .create-hero-card {
   background: var(--surface-panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--btn-depth);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   box-sizing: border-box;
+  padding: 24px 22px 20px;
+  min-height: 290px;
 }
 
 .create-hero-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px var(--accent-soft);
+  transform: translateY(-3px);
 }
 
-.create-hero-card:active {
-  transform: translateY(1px);
-  box-shadow: none;
+.create-hero-card--accent:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-soft);
+}
+
+.create-hero-card--info:hover {
+  border-color: var(--info, #38bdf8);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.create-hero-card--warn:hover {
+  border-color: var(--warn, #f59e0b);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.2);
 }
 
 .create-hero-card-top {
-  padding: 18px 18px 12px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  margin-bottom: 18px;
 }
 
 .create-hero-icon-box {
@@ -5498,172 +5508,142 @@
 }
 
 .create-hero-card-body {
-  padding: 0 18px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .create-hero-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.01em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .create-hero-desc {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--muted);
-  line-height: 1.45;
-  margin-bottom: 14px;
+  line-height: 1.5;
+  margin-bottom: 18px;
 }
 
-.create-hero-features {
+.create-hero-tags {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: auto;
+  margin-bottom: 22px;
+}
+
+.create-tag-chip {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 3px 8px;
   background: var(--surface-sunken);
-  padding: 10px 12px;
   border: 1px solid var(--border);
+  color: var(--muted);
+  letter-spacing: 0.3px;
 }
 
-.create-hero-feature-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  color: var(--text);
-}
-
-.create-hero-feature-item svg {
-  width: 12px;
-  height: 12px;
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
-.create-hero-action {
-  padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid var(--border);
+/* 3D Tactile Buttons on Chooser Cards */
+.create-hero-btn {
+  width: 100%;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 16px;
   font-size: 11.5px;
   font-weight: 700;
   font-family: var(--font-mono);
-  transition: background 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.create-hero-action svg {
+.create-hero-btn:hover {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 0 rgba(0, 0, 0, 0.4);
+  filter: brightness(1.08);
+}
+
+.create-hero-btn:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.create-hero-btn svg {
   width: 14px;
   height: 14px;
   transition: transform 0.15s;
 }
 
-.create-hero-card:hover .create-hero-action svg {
+.create-hero-card:hover .create-hero-btn svg {
   transform: translateX(3px);
 }
 
-.create-hero-action--accent { color: var(--accent); }
-.create-hero-action--info { color: var(--info, #38bdf8); }
-.create-hero-action--warn { color: var(--warn, #f59e0b); }
-
-.create-hero-card:hover .create-hero-action {
-  background: var(--accent-soft);
+.create-hero-btn--accent {
+  background: var(--accent);
+  color: var(--accent-contrast, #ffffff);
+  border-color: var(--accent-strong, var(--accent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 0 color-mix(in srgb, var(--accent) 70%, #000);
 }
 
-/* Lower Bento Feature Shelf */
-.create-hub-shelf {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  width: 100%;
-  box-sizing: border-box;
+.create-hero-btn--accent:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000);
 }
 
-@media (max-width: 860px) {
-  .create-hub-shelf {
-    grid-template-columns: 1fr;
-  }
+.create-hero-btn--info {
+  background: #0284c7;
+  color: #fff;
+  border-color: #0369a1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 0 #075985;
 }
 
-.create-shelf-tile {
-  background: var(--surface-panel);
-  border: 1px solid var(--border);
-  padding: 12px 14px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  border-left: 3px solid var(--border-strong);
-  transition: border-left-color 0.15s, background 0.15s;
-  box-sizing: border-box;
+.create-hero-btn--info:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 #075985;
 }
 
-.create-shelf-tile:hover {
-  border-left-color: var(--accent);
-  background: var(--surface-raised);
+.create-hero-btn--warn {
+  background: #b45309;
+  color: #fff;
+  border-color: #92400e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 0 #78350f;
 }
 
-.create-shelf-icon {
-  color: var(--muted);
-  margin-top: 2px;
-  flex-shrink: 0;
+.create-hero-btn--warn:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 #78350f;
+}
+
+/* Subtle Isolation Footer Hint */
+.create-hub-footer-hint {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.create-shelf-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-.create-shelf-logo {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-}
-
-.create-shelf-content {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.create-shelf-title {
+  gap: 8px;
   font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.create-shelf-tag {
-  font-size: 8px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  padding: 1px 4px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
   color: var(--muted);
-  letter-spacing: 0.5px;
+  margin-top: 14px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.create-shelf-tag--accent {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+.create-hub-footer-hint svg {
+  width: 14px;
+  height: 14px;
   color: var(--accent);
-}
-
-.create-shelf-desc {
-  font-size: 10.5px;
-  color: var(--text-faint);
-  margin-top: 2px;
-  line-height: 1.35;
+  flex-shrink: 0;
 }
 
 /* ── Legacy grid fallback (preserved for backwards-compatibility) ────────── */
