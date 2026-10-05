@@ -1,1 +1,23 @@
-{"version":"0.1.0-alpha.1","notes":"Initial baseline","pub_date":"2026-09-30T00:00:00Z","platforms":{}}
+{
+  "version": "0.1.0-alpha.6",
+  "notes": "## 0.1.0 (Alpha Build 6)\n\n### Added\n\n- Compatibility warning confirmation step in the Change Mod Loader flow to inform users of loader API breaking changes and crash risks\n- Automatic mod conversion pipeline when switching mod loaders, querying compatible builds across Modrinth and CurseForge\n\n### Changed\n\n- Redesigned Change Mod Loader modal with balanced Bento grid layout, searchable runtime versions, and height stability\n- Unified 3D tactile toggle switches across all screens and modal dialogs\n- Streamlined loader conversion pipeline and consolidated companion mod loader parity\n- Enhanced launcher self-updater with cache-busting, in-flight release detection, and background channel synchronization\n- Replaced wand icon with authentic anvil iconography for Forge and shuffle symbol for loader switching\n\n### Fixed\n\n- Prevented enabling incompatible mods and restored authentic loader type badges in instance content views\n- Fixed dual Quilt-Fabric API queries and automatic conversion for incompatible mods\n- Resolved loader parity and Quilt fallback behavior during CurseForge downloads and imports\n- Prevented file rename collisions when enabling compatible mods during loader conversion",
+  "pub_date": "2026-10-05T03:53:55.575Z",
+  "platforms": {
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkw0UlZ2YjNXQzk0aDN6NGJJM3JuUGtDWFNpUmVWVVZ5bTQzVGFMYUtSS1lxSkxmdVduYWlCTnlVK1RRaUJtdEdWOTdlTW14OERqUXQxOXNtL3ZvSVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTcyMzAzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS42X2FtZDY0LkFwcEltYWdlCmRIMSsrWGlNd2ZRVFZ1NnFlcjJuUTVIQzVZRUUzVnJYZjFJTXFwK0l4YlJvZVZtZmpwQkc1bmxoMTZIZFRkMVNpTnpZTzN1K01JbWorRnMyQ1M5M0NnPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.6/Vermeil_0.1.0-alpha.6_amd64.AppImage"
+    },
+    "linux-x86_64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkw0UlZ2YjNXQzk0aDN6NGJJM3JuUGtDWFNpUmVWVVZ5bTQzVGFMYUtSS1lxSkxmdVduYWlCTnlVK1RRaUJtdEdWOTdlTW14OERqUXQxOXNtL3ZvSVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTcyMzAzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS42X2FtZDY0LkFwcEltYWdlCmRIMSsrWGlNd2ZRVFZ1NnFlcjJuUTVIQzVZRUUzVnJYZjFJTXFwK0l4YlJvZVZtZmpwQkc1bmxoMTZIZFRkMVNpTnpZTzN1K01JbWorRnMyQ1M5M0NnPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.6/Vermeil_0.1.0-alpha.6_amd64.AppImage"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkYxOHl2NWwwQmVLWTdKYkd3OTRMZSsyVmFVQTBaMkVsYXg4Q1V1ZDYzWm5lWkUxTlZML05EMzN0eGVkQzdrbzdFUVhtU1FJeVJDN1JaRXhpZ1ZFbFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTcyNDMzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS42X3g2NC1zZXR1cC5leGUKUmJJUmQ5dFJrUWtyRGtmNEQ3UGNmOGdqUU5wVWlPUFB5eHpONTY0WlJ1WkFYQjdVMHdwZFVnM1B0bkhrdXJGaHdqcjI5L2IvdUZGYWxtSzUzUUtkQnc9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.6/Vermeil_0.1.0-alpha.6_x64-setup.exe"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkYxOHl2NWwwQmVLWTdKYkd3OTRMZSsyVmFVQTBaMkVsYXg4Q1V1ZDYzWm5lWkUxTlZML05EMzN0eGVkQzdrbzdFUVhtU1FJeVJDN1JaRXhpZ1ZFbFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTcyNDMzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS42X3g2NC1zZXR1cC5leGUKUmJJUmQ5dFJrUWtyRGtmNEQ3UGNmOGdqUU5wVWlPUFB5eHpONTY0WlJ1WkFYQjdVMHdwZFVnM1B0bkhrdXJGaHdqcjI5L2IvdUZGYWxtSzUzUUtkQnc9PQo=",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.6/Vermeil_0.1.0-alpha.6_x64-setup.exe"
+    }
+  }
+}
