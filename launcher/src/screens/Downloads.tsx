@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, For, Show, createMemo, createSignal } from "solid-js";
+import { Component, For, Show, createMemo, createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import {
   downloads,
   clearDownloadHistory,
@@ -12,6 +12,7 @@ import {
   bulkDone,
   bulkProgress,
   instances,
+  setDockPagination,
 } from "../App";
 import { activeInstall, cancelActiveInstall } from "../services/installProgress";
 import { activeInstallTask, queuedInstallTasks, cancelQueuedTask } from "../services/modpackQueue";
@@ -34,7 +35,88 @@ function getCategoryLabel(category: string): string {
 
 const Downloads: Component = () => {
   const activeDownloads = () => downloads().filter(d => d.status === "downloading");
-  const history = () => downloads().filter(d => d.status !== "downloading").slice(0, 100);
+  const history = () => downloads().filter(d => d.status !== "downloading");
+
+  // Filtering
+  const [filter, setFilter] = createSignal<string>("all");
+  const [page, setPage] = createSignal(1);
+
+  // Responsive Grid Dimensions & Viewport-Adaptive Page Size (Auto Screen-Fill)
+  const [windowSize, setWindowSize] = createSignal({
+    w: typeof window !== "undefined" ? window.innerWidth : 1280,
+    h: typeof window !== "undefined" ? window.innerHeight : 760,
+  });
+
+  onMount(() => {
+    const onResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    onCleanup(() => window.removeEventListener("resize", onResize));
+  });
+
+  const gridCols = createMemo(() => {
+    const w = windowSize().w;
+    if (w >= 860) return 3;
+    if (w >= 560) return 2;
+    return 1;
+  });
+
+  const gridRows = createMemo(() => {
+    const h = windowSize().h;
+    if (h >= 880) return 6;
+    if (h >= 780) return 5;
+    return 4;
+  });
+
+  const pageSize = createMemo(() => gridCols() * gridRows());
+
+  const filteredHistory = createMemo(() => {
+    const cat = filter();
+    const all = history();
+    if (cat === "all") return all;
+    return all.filter((d) => d.category === cat);
+  });
+
+  const totalPages = createMemo(() => Math.max(1, Math.ceil(filteredHistory().length / pageSize())));
+
+  // Clamp page if filter changes or window resizes to a state with fewer pages
+  createEffect(() => {
+    const total = totalPages();
+    if (page() > total) {
+      setPage(total);
+    }
+  });
+
+  // Keep Dock Pagination Island synchronized with download history
+  createEffect(() => {
+    const total = totalPages();
+    if (total > 1) {
+      setDockPagination({ current: page(), total, onPageChange: setPage });
+    } else {
+      setDockPagination(null);
+    }
+  });
+
+  onCleanup(() => {
+    setDockPagination(null);
+  });
+
+  const paginatedHistory = createMemo(() => {
+    const size = pageSize();
+    const start = (page() - 1) * size;
+    return filteredHistory().slice(start, start + size);
+  });
+
+  const countForCategory = (cat: string) => {
+    if (cat === "all") return history().length;
+    return history().filter((d) => d.category === cat).length;
+  };
+
+  const handleClearHistory = () => {
+    clearDownloadHistory();
+    setFilter("all");
+    setPage(1);
+    setDockPagination(null);
+  };
 
   // The active orchestrator install (e.g. modpack from installQueue)
   const activeInstallEntry = () => {
@@ -158,20 +240,33 @@ const Downloads: Component = () => {
   };
 
   return (
-    <div class="screen-enter">
-      {/* ── Section 1: Current Downloads ── */}
+    <div class="screen-enter downloads-screen">
+      {/* ── Section 1: Transfers & Queue ── */}
       <div class="section-label section-label--row">
-        <span>Current Downloads</span>
-        <Show when={hasAnyActive()}>
-          <span class="badge" style="font-family:var(--font-mono)">
-            {totalActiveCount()} active
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>Transfers &amp; Queue</span>
+          <span
+            class="badge"
+            classList={{
+              "badge--idle": !hasAnyActive(),
+              "badge--active": hasAnyActive(),
+            }}
+            style="font-family: var(--font-mono);"
+          >
+            {hasAnyActive() ? `${totalActiveCount()} active` : "0 active · 0 queued"}
           </span>
-        </Show>
+        </div>
       </div>
 
       <Show when={hasAnyActive()} fallback={
-        <div class="dl-empty-well">
-          No active downloads in progress.
+        <div class="dl-queue-idle-plate">
+          <div class="dl-queue-idle-left">
+            <div class="dl-queue-idle-icon">
+              <IconCheck />
+            </div>
+            <span>Download queue is idle &bull; All requested packages and runtimes are installed.</span>
+          </div>
+          <span class="dl-queue-idle-hint">READY FOR NEW TRANSFERS</span>
         </div>
       }>
         {/* Orchestrator install (modpack, instance prep, loader install) */}
@@ -185,7 +280,7 @@ const Downloads: Component = () => {
           >
             <div class="dl-active-header">
               <div class="dl-active-title-row">
-                <div class="dl-active-icon-badge">
+                <div class="dl-active-icon-badge" classList={{ "dl-card-icon--java": activeInstallEntry()?.category === "java" }}>
                   <Show when={activeInstall().done} fallback={
                     <Show when={activeIcon()} fallback={
                       activeInstallEntry()?.category === "java" ? <IconCoffee /> : <IconDownload />
@@ -262,7 +357,7 @@ const Downloads: Component = () => {
           <div class="dl-active-card">
             <div class="dl-active-header">
               <div class="dl-active-title-row">
-                <div class="dl-active-icon-badge">
+                <div class="dl-active-icon-badge" classList={{ "dl-card-icon--java": activeContentItem()?.category === "java" }}>
                   <Show
                     when={activeContentItem()?.iconUrl}
                     fallback={
@@ -388,9 +483,16 @@ const Downloads: Component = () => {
 
       {/* ── Section 2: Download History ── */}
       <div class="section-label section-label--row" style="margin-top: var(--space-5);">
-        <span>Download History</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>Download History</span>
+          <span class="badge badge--count" style="font-family: var(--font-mono);">
+            {history().length} TOTAL
+          </span>
+        </div>
         <Show when={history().length > 0}>
-          <button class="btn btn--sm" onClick={clearDownloadHistory}>Clear</button>
+          <button class="btn btn--sm btn--neutral" onClick={handleClearHistory}>
+            Clear History
+          </button>
         </Show>
       </div>
 
@@ -399,11 +501,83 @@ const Downloads: Component = () => {
           Download history will appear here.
         </div>
       }>
-        <div class="dl-grid">
-          <For each={history()}>
-            {(dl) => <DownloadCard entry={dl} timeAgo={timeAgo} />}
-          </For>
+        {/* Category Filter Bar */}
+        <div class="dl-history-controls-row">
+          <div class="category-filters">
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "all" }}
+              onClick={() => { setFilter("all"); setPage(1); }}
+            >
+              <span>All</span>
+              <span class="filter-tab-count">{countForCategory("all")}</span>
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "mod" }}
+              onClick={() => { setFilter("mod"); setPage(1); }}
+            >
+              <span>Mods</span>
+              <span class="filter-tab-count">{countForCategory("mod")}</span>
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "java" }}
+              onClick={() => { setFilter("java"); setPage(1); }}
+            >
+              <span>Java Runtimes</span>
+              <span class="filter-tab-count">{countForCategory("java")}</span>
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "instance" }}
+              onClick={() => { setFilter("instance"); setPage(1); }}
+            >
+              <span>Instances</span>
+              <span class="filter-tab-count">{countForCategory("instance")}</span>
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "modpack" }}
+              onClick={() => { setFilter("modpack"); setPage(1); }}
+            >
+              <span>Modpacks</span>
+              <span class="filter-tab-count">{countForCategory("modpack")}</span>
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              classList={{ active: filter() === "shader" }}
+              onClick={() => { setFilter("shader"); setPage(1); }}
+            >
+              <span>Shaders</span>
+              <span class="filter-tab-count">{countForCategory("shader")}</span>
+            </button>
+          </div>
+
+          <Show when={filteredHistory().length > 0}>
+            <span class="dl-page-range-hint">
+              Showing {(page() - 1) * pageSize() + 1}–{Math.min(page() * pageSize(), filteredHistory().length)} of {filteredHistory().length} items
+            </span>
+          </Show>
         </div>
+
+        <Show when={filteredHistory().length > 0} fallback={
+          <div class="dl-empty-well">
+            No downloads found in this category.
+          </div>
+        }>
+          <div class="dl-grid">
+            <For each={paginatedHistory()}>
+              {(dl) => <DownloadCard entry={dl} timeAgo={timeAgo} />}
+            </For>
+          </div>
+        </Show>
       </Show>
     </div>
   );
@@ -473,10 +647,10 @@ const ActiveDownloadCard: Component<{ entry: DownloadEntry; position?: number }>
   return (
     <div class="dl-queue-card">
       <div class="dl-queue-main">
-        <div class="dl-queue-icon">
+        <div class="dl-queue-icon" classList={{ "dl-queue-icon--java": dl().category === "java" }}>
           <Show when={cardIcon()} fallback={
             dl().category === "java" ? (
-              <span class="dl-queue-icon-fallback" style="display:flex;align-items:center;justify-content:center;color:var(--accent);">
+              <span class="dl-queue-icon-fallback" style="display:flex;align-items:center;justify-content:center;color:var(--java-amber, #f59e0b);">
                 <IconCoffee />
               </span>
             ) : (
@@ -596,10 +770,10 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
   return (
     <div class="card card--inst dl-card" classList={{ "dl-card-failed": failed() }}>
       <div class="card-body">
-        <div class="dl-card-icon">
+        <div class="dl-card-icon" classList={{ "dl-card-icon--java": dl().category === "java" }}>
           <Show when={cardIcon()} fallback={
             dl().category === "java" ? (
-              <span class="dl-card-icon-fallback" style="display:flex;align-items:center;justify-content:center;color:var(--accent);">
+              <span class="dl-card-icon-fallback" style="display:flex;align-items:center;justify-content:center;color:var(--java-amber, #f59e0b);">
                 <IconCoffee />
               </span>
             ) : (

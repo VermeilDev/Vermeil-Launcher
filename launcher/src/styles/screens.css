@@ -3683,24 +3683,35 @@
 
 
 /* ============================================================
-   Download history grid & cards — 3-column card layout
+   Downloads screen — Bento Architecture with Constrained
+   Container Ceiling (1180px auto-centered canvas matching Accounts & Settings).
    ============================================================ */
+.downloads-screen {
+  display: flex;
+  flex-direction: column;
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 .dl-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
-@media (max-width: 1080px) {
+@media (max-width: 860px) {
   .dl-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 680px) {
+@media (max-width: 560px) {
   .dl-grid {
     grid-template-columns: 1fr;
   }
 }
+
 /* Current & Active Downloads */
 .dl-empty-well {
   color: var(--muted);
@@ -3711,6 +3722,61 @@
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
   text-align: center;
   margin-bottom: var(--space-4);
+}
+
+/* Idle Queue Plate (Compact & Polished) */
+.dl-queue-idle-plate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: var(--space-4);
+}
+.dl-queue-idle-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dl-queue-idle-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  background: var(--success-soft);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  flex-shrink: 0;
+}
+.dl-queue-idle-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.dl-queue-idle-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.badge--idle {
+  border-color: var(--border-strong) !important;
+  color: var(--text-faint) !important;
+}
+.badge--active {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent-rim) !important;
+}
+.badge--count {
+  color: var(--text) !important;
+  border-color: var(--border-strong) !important;
+  background: var(--surface-panel) !important;
 }
 
 .dl-active-card {
@@ -4113,10 +4179,103 @@
   object-fit: cover;
 }
 .dl-card-icon-fallback {
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
   color: var(--muted);
 }
+/* Explicit SVG Sizing Guarantee for Download Icons */
+.dl-card-icon svg,
+.dl-card-icon-fallback svg,
+.dl-queue-icon svg {
+  width: 20px;
+  height: 20px;
+}
+/* Specialized Java Runtime Icon Styling */
+.dl-card-icon--java,
+.dl-queue-icon--java {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #f59e0b !important;
+}
+.dl-card-icon--java svg,
+.dl-queue-icon--java svg {
+  width: 22px !important;
+  height: 22px !important;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.3));
+}
+
+/* Category Filter Bar */
+.dl-history-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.category-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-tab {
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  box-shadow: var(--btn-depth-neutral);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 0;
+  user-select: none;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              background 0.12s, border-color 0.12s, color 0.12s, filter 0.12s;
+}
+.filter-tab:hover {
+  transform: translateY(1px);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  color: var(--text);
+  border-color: var(--border-hover);
+  filter: brightness(1.08);
+}
+.filter-tab:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
+}
+.filter-tab.active {
+  background: var(--surface-raised);
+  color: #ffffff;
+  border-color: var(--accent);
+  border-left: 3px solid var(--accent);
+  font-weight: 700;
+}
+.filter-tab-count {
+  font-size: 9.5px;
+  padding: 1px 5px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+}
+.filter-tab.active .filter-tab-count {
+  color: var(--accent-rim);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.dl-page-range-hint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
 .dl-card-body {
   flex: 1;
   min-width: 0;
