@@ -9,6 +9,7 @@ on:
 
 jobs:
   release:
+    if: github.repository == 'VermeilDev/Vermeil-Launcher'
     strategy:
       fail-fast: false
       matrix:
@@ -109,6 +110,7 @@ jobs:
   # without inflating GitHub release asset download counts or triggering API rate limits.
   publish-updater-manifest:
     needs: release
+    if: github.repository == 'VermeilDev/Vermeil-Launcher'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   close:
+    if: github.repository == 'VermeilDev/Vermeil-Launcher'
     runs-on: ubuntu-latest
     steps:
       - name: Close Pull Request
