@@ -5432,22 +5432,22 @@
 }
 
 .create-hero-card:hover {
-  transform: translateY(-3px);
+  /* Card remains solidly grounded to give mechanical button press clean contrast */
 }
 
 .create-hero-card--accent:hover {
   border-color: var(--accent);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-soft);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-soft);
 }
 
 .create-hero-card--info:hover {
   border-color: var(--info, #38bdf8);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
 .create-hero-card--warn:hover {
   border-color: var(--warn, #f59e0b);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.2);
 }
 
 .create-hero-card-top {
@@ -5547,7 +5547,7 @@
   letter-spacing: 0.3px;
 }
 
-/* 3D Tactile Buttons on Chooser Cards */
+/* 3-Stage Mechanical Action Button Physics */
 .create-hero-btn {
   width: 100%;
   height: 38px;
@@ -5562,44 +5562,62 @@
   letter-spacing: 0.5px;
   cursor: pointer;
   border: 1px solid var(--border);
+  border-radius: 0;
+  outline: none;
+  box-sizing: border-box;
   background: var(--surface-raised);
   color: var(--text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 0 rgba(0, 0, 0, 0.4);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.create-hero-btn:hover {
-  transform: translateY(1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 0 rgba(0, 0, 0, 0.4);
-  filter: brightness(1.08);
-}
-
-.create-hero-btn:active {
-  transform: translateY(3px);
-  box-shadow: none;
+  transform: translateY(0);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.12s ease;
 }
 
 .create-hero-btn svg {
   width: 14px;
   height: 14px;
-  transition: transform 0.15s;
+  transition: transform 0.15s ease;
 }
 
-.create-hero-card:hover .create-hero-btn svg {
+/* Hover State (Y = 1px, 2px shelf) — only triggers when hovering the button itself */
+.create-hero-btn:hover {
+  transform: translateY(1px);
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.create-hero-btn:hover svg {
   transform: translateX(3px);
 }
 
+/* Active State (Y = 3px, 0px shelf) — bottoms out firmly into the mounting plane */
+.create-hero-btn:active,
+.create-hero-btn:active:hover {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0 0 transparent !important;
+  filter: brightness(0.96);
+}
+
+/* Accent Variant (Custom Setup) */
 .create-hero-btn--accent {
   background: var(--accent);
   color: var(--accent-contrast, #ffffff);
   border-color: var(--accent-strong, var(--accent));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 0 color-mix(in srgb, var(--accent) 70%, #000);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--btn-depth-primary);
 }
 
 .create-hero-btn--accent:hover {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--btn-depth-primary-pressed);
 }
 
+.create-hero-btn--accent:active,
+.create-hero-btn--accent:active:hover {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0 0 transparent !important;
+}
+
+/* Info Variant (Install Modpack) */
 .create-hero-btn--info {
   background: #0284c7;
   color: #fff;
@@ -5611,6 +5629,13 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 #075985;
 }
 
+.create-hero-btn--info:active,
+.create-hero-btn--info:active:hover {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0 0 transparent !important;
+}
+
+/* Warn Variant (Import Archive) */
 .create-hero-btn--warn {
   background: #b45309;
   color: #fff;
@@ -5620,6 +5645,12 @@
 
 .create-hero-btn--warn:hover {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 #78350f;
+}
+
+.create-hero-btn--warn:active,
+.create-hero-btn--warn:active:hover {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0 0 transparent !important;
 }
 
 /* Subtle Isolation Footer Hint */
