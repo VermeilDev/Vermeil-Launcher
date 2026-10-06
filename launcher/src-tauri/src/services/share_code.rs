@@ -824,8 +824,13 @@ pub async fn export_instance_share_code(instance_id: &str) -> Result<String, Str
 
     if let Some(ref pid) = inst.source_project_id {
         if !pid.is_empty() {
-            let is_cf = inst.source_platforms.iter().any(|p| p == "curseforge")
-                || pid.chars().all(|c| c.is_ascii_digit());
+            let is_cf = if inst.source_platforms.iter().any(|p| p == "curseforge") {
+                true
+            } else if inst.source_platforms.iter().any(|p| p == "modrinth") {
+                false
+            } else {
+                pid.chars().all(|c| c.is_ascii_digit())
+            };
             if !is_cf {
                 // Modrinth Modpack: resolve exact Modrinth version_id & dependencies list
                 let ver_url = format!("https://api.modrinth.com/v2/project/{}/version", pid);
