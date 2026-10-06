@@ -111,10 +111,25 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
         }
     }
 
-    if instance.mods.iter().any(|m| m.source == "curseforge")
-        && !instance.source_platforms.iter().any(|p| p == "curseforge")
-    {
-        instance.source_platforms.push("curseforge".to_string());
+    // Ensure instance source_platforms reflects authentic modpack origin:
+    // 1. Custom instances (source_project_id is None) must never have modpack platform badges.
+    // 2. Modpack instances must have strictly one platform badge (where it was installed from).
+    if instance.source_project_id.is_none() {
+        if !instance.source_platforms.is_empty() {
+            instance.source_platforms.clear();
+            modified = true;
+        }
+    } else if instance.source_platforms.len() > 1 {
+        let is_cf = instance
+            .source_project_id
+            .as_deref()
+            .map(|pid| pid.parse::<u64>().is_ok())
+            .unwrap_or(false);
+        instance.source_platforms = vec![if is_cf {
+            "curseforge".to_string()
+        } else {
+            "modrinth".to_string()
+        }];
         modified = true;
     }
 

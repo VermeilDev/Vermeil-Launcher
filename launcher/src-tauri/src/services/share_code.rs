@@ -1851,17 +1851,6 @@ pub async fn import_share_code(
         }
     }
 
-    let mut source_platforms = Vec::new();
-    if mod_entries.iter().any(|m| m.source == "modrinth") {
-        source_platforms.push("modrinth".to_string());
-    }
-    if mod_entries.iter().any(|m| m.source == "curseforge") {
-        source_platforms.push("curseforge".to_string());
-    }
-    if source_platforms.is_empty() {
-        source_platforms.push("modrinth".to_string());
-    }
-
     let instance = if let Some(mut base_inst) = base_inst_opt {
         for delta in mod_entries {
             let base_fname = delta
@@ -1916,7 +1905,7 @@ pub async fn import_share_code(
             total_play_seconds: 0,
             created_at: chrono::Utc::now().to_rfc3339(),
             source_project_id: None,
-            source_platforms,
+            source_platforms: Vec::new(),
             source_version: Some("VML1 Share Code".to_string()),
             companion_enabled: crate::services::settings_service::load().await.unwrap_or_default().enable_companion_mod,
             companion_version: None,

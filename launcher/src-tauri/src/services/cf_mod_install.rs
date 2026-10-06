@@ -474,11 +474,6 @@ async fn install_cf_one(
     let mut instance: Instance =
         serde_json::from_str(&content).map_err(|e| format!("Parse instance.json: {}", e))?;
 
-    let cf_platform = "curseforge".to_string();
-    if !instance.source_platforms.contains(&cf_platform) {
-        instance.source_platforms.push(cf_platform);
-    }
-
     match instance.mods.iter().position(|m| m.project_id == mod_id) {
         Some(pos) => {
             let previous = instance.mods[pos].clone();

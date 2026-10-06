@@ -205,10 +205,7 @@ pub async fn import_zip(
     let (mod_tasks, mod_entries, blocked) =
         build_mod_tasks(&manifest.files, &mods_dir, api_key, &manifest.minecraft.version, loader_str).await?;
 
-    let mut source_platforms = vec!["curseforge".to_string()];
-    if mod_entries.iter().any(|m| m.source == "modrinth") {
-        source_platforms.push("modrinth".to_string());
-    }
+    let source_platforms = vec!["curseforge".to_string()];
 
     // Build instance metadata
     let instance = Instance {

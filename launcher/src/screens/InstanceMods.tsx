@@ -1772,11 +1772,15 @@ const InstanceMods: Component = () => {
               </span>
             </Show>
             <span class="inst-pill-tag inst-pill-version">{instance()?.game_version}</span>
-            <Show when={(instance()?.source_platforms || []).includes("modrinth")}>
-              <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth"><IconModrinth /></span>
-            </Show>
-            <Show when={(instance()?.source_platforms || []).includes("curseforge")}>
-              <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge"><IconCurseForge /></span>
+            <Show when={(instance()?.source_platforms || []).length > 0}>
+              <Show
+                when={instance()?.source_platforms[0] === "curseforge"}
+                fallback={
+                  <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth"><IconModrinth /></span>
+                }
+              >
+                <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge"><IconCurseForge /></span>
+              </Show>
             </Show>
             <Show when={instance()?.ingame_cape_supported}>
               <span class="badge badge--companion tip-below" data-tip="Companion mod">

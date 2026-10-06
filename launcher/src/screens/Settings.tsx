@@ -2409,11 +2409,15 @@ const Settings: Component = () => {
                                   <div class="inst-card-badges">
                                     <div class="inst-card-badges-track">
                                       <span class={`badge badge--loader ${loaderBadgeClass(inst.loader.type)}`}>{loaderLabel(inst.loader.type)}</span>
-                                      <Show when={(inst.source_platforms || []).includes("modrinth")}>
-                                        <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth"><IconModrinth /></span>
-                                      </Show>
-                                      <Show when={(inst.source_platforms || []).includes("curseforge")}>
-                                        <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge"><IconCurseForge /></span>
+                                      <Show when={(inst.source_platforms || []).length > 0}>
+                                        <Show
+                                          when={inst.source_platforms[0] === "curseforge"}
+                                          fallback={
+                                            <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth"><IconModrinth /></span>
+                                          }
+                                        >
+                                          <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge"><IconCurseForge /></span>
+                                        </Show>
                                       </Show>
                                       <Show when={inst.ingame_cape_supported}>
                                         <span class="badge badge--companion tip-below" data-tip="Companion mod">
