@@ -1377,11 +1377,17 @@
   box-shadow: 0 3px 0 #047857;
 }
 .btn--success:hover:not(:disabled) {
+  background: #10b981;
+  border-color: #34d399;
+  color: #ffffff;
   transform: translateY(1px);
   box-shadow: 0 2px 0 #047857;
   filter: brightness(1.08);
 }
 .btn--success:active:not(:disabled) {
+  background: #10b981;
+  border-color: #34d399;
+  color: #ffffff;
   transform: translateY(3px);
   box-shadow: 0 0 0 #047857;
 }

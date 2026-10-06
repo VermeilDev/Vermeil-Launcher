@@ -144,17 +144,29 @@ function checkModCompatibility(
     return false;
   }
 
-  // Loader check for mods only (datapacks, resource packs, shaders run on any loader)
-  if (category === "mod" && loader && loader !== "vanilla") {
-    const knownLoaders = ["fabric", "forge", "neoforge", "quilt"];
-    const modLoaders = (mod.categories || []).map(c => c.toLowerCase()).filter(c => knownLoaders.includes(c));
-    if (modLoaders.length > 0) {
-      const targetLoader = loader.toLowerCase();
-      if (targetLoader === "quilt" && (modLoaders.includes("quilt") || modLoaders.includes("fabric"))) {
-        return true;
-      }
-      if (!modLoaders.includes(targetLoader)) {
+  const knownLoaders = ["fabric", "forge", "neoforge", "quilt"];
+  const cats = (mod.categories || []).map(c => c.toLowerCase());
+  const hasCodeLoaders = cats.some(c => knownLoaders.includes(c));
+
+  if (category === "datapack") {
+    if (hasCodeLoaders && !cats.includes("datapack") && !cats.includes("vanilla")) {
+      return false;
+    }
+  } else if (category === "mod") {
+    if (loader === "vanilla") {
+      if (hasCodeLoaders && !cats.includes("datapack") && !cats.includes("vanilla")) {
         return false;
+      }
+    } else if (loader) {
+      const modLoaders = cats.filter(c => knownLoaders.includes(c));
+      if (modLoaders.length > 0) {
+        const targetLoader = loader.toLowerCase();
+        if (targetLoader === "quilt" && (modLoaders.includes("quilt") || modLoaders.includes("fabric"))) {
+          return true;
+        }
+        if (!modLoaders.includes(targetLoader)) {
+          return false;
+        }
       }
     }
   }

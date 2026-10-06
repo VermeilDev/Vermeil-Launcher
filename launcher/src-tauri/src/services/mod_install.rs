@@ -225,7 +225,11 @@ async fn install_one(
                 "No versions of this dependency exist on Modrinth.".to_string()
             } else {
                 let mut bits = Vec::new();
-                if project_type.checks_loader()
+                if project_type == ProjectType::DataPack {
+                    if !all_loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack") || l.eq_ignore_ascii_case("vanilla")) {
+                        bits.push("supports code mods, but requires a datapack variant".to_string());
+                    }
+                } else if project_type.checks_loader()
                     && !all_loaders.iter().any(|l| l == loader)
                 {
                     bits.push(format!(
@@ -694,10 +698,37 @@ pub(crate) fn is_version_compatible(
     {
         return false;
     }
-    if !project_type.checks_loader() || loader.is_empty() {
-        return true;
+    match project_type {
+        ProjectType::DataPack => {
+            v.loaders.is_empty()
+                || v.loaders
+                    .iter()
+                    .any(|l| l.eq_ignore_ascii_case("datapack") || l.eq_ignore_ascii_case("vanilla"))
+        }
+        ProjectType::ResourcePack | ProjectType::Shader | ProjectType::Modpack => true,
+        ProjectType::Mod => {
+            if loader.is_empty() {
+                return true;
+            }
+            if loader.eq_ignore_ascii_case("vanilla") {
+                return v.loaders.iter().any(|l| {
+                    l.eq_ignore_ascii_case("datapack") || l.eq_ignore_ascii_case("vanilla")
+                });
+            }
+            if v.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
+                return true;
+            }
+            let target = loader.to_lowercase();
+            if target == "quilt" {
+                v.loaders.iter().any(|l| {
+                    let lower = l.to_lowercase();
+                    lower == "quilt" || lower == "fabric"
+                })
+            } else {
+                v.loaders.iter().any(|l| l.eq_ignore_ascii_case(&target))
+            }
+        }
     }
-    v.loaders.iter().any(|l| l.eq_ignore_ascii_case(loader) || l.eq_ignore_ascii_case("datapack"))
 }
 
 /// Is this version on the stable release channel? Modrinth's `version_type` is
@@ -738,21 +769,34 @@ pub(crate) fn find_preferred_version<'a>(
     loader: &str,
     game_version: &str,
 ) -> Option<&'a ModrinthVersion> {
-    let loader_ok = |v: &ModrinthVersion| {
-        if !project_type.checks_loader() || loader.is_empty() {
-            return true;
-        }
-        if v.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
-            return true;
-        }
-        let target = loader.to_lowercase();
-        if target == "quilt" {
-            v.loaders.iter().any(|l| {
-                let lower = l.to_lowercase();
-                lower == "quilt" || lower == "fabric"
-            })
-        } else {
-            v.loaders.iter().any(|l| l.eq_ignore_ascii_case(&target))
+    let loader_ok = |v: &ModrinthVersion| -> bool {
+        match project_type {
+            ProjectType::DataPack => {
+                v.loaders.is_empty()
+                    || v.loaders
+                        .iter()
+                        .any(|l| l.eq_ignore_ascii_case("datapack") || l.eq_ignore_ascii_case("vanilla"))
+            }
+            ProjectType::ResourcePack | ProjectType::Shader | ProjectType::Modpack => true,
+            ProjectType::Mod => {
+                if loader.is_empty() {
+                    return true;
+                }
+                if loader.eq_ignore_ascii_case("vanilla") {
+                    return v.loaders.iter().any(|l| {
+                        l.eq_ignore_ascii_case("datapack") || l.eq_ignore_ascii_case("vanilla")
+                    });
+                }
+                let target = loader.to_lowercase();
+                if target == "quilt" {
+                    v.loaders.iter().any(|l| {
+                        let lower = l.to_lowercase();
+                        lower == "quilt" || lower == "fabric"
+                    })
+                } else {
+                    v.loaders.iter().any(|l| l.eq_ignore_ascii_case(&target))
+                }
+            }
         }
     };
 
@@ -781,14 +825,14 @@ pub(crate) fn find_preferred_version<'a>(
         return lenient;
     }
 
-    // Pass 3 — datapack-as-mod (Modrinth's `isVersionCompatible` accepts a mod
-    // that ships as a datapack on any loader instance).
-    if project_type == ProjectType::Mod {
+    // Pass 3 — datapack-as-mod fallback (Modrinth accepts a mod
+    // that ships as a datapack on any loader instance when no native mod build exists).
+    if project_type == ProjectType::Mod && !loader.eq_ignore_ascii_case("vanilla") {
         let datapack = pick_preferring_stable(versions, |v| {
             v.game_versions
                 .iter()
                 .any(|g| compatible_game_version(g, game_version))
-                && v.loaders.iter().any(|l| l == "datapack")
+                && v.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack"))
         });
         if datapack.is_some() {
             return datapack;
@@ -1353,5 +1397,37 @@ mod tests {
         let mut v = version("v", "release", &["1.21.1"], &["fabric"]);
         v.version_type = None;
         assert!(is_stable_channel(&v));
+    }
+
+    /// A datapack project with newer NeoForge/Fabric code-mod releases and an older
+    /// datapack release must pick the datapack release, not the code-mod release.
+    #[test]
+    fn datapack_does_not_pick_neoforge_or_fabric_code_mods() {
+        let versions = vec![
+            version("2.12.3", "release", &["1.21.1"], &["neoforge"]),
+            version("2.12.0", "release", &["1.21.1"], &["fabric"]),
+            version("1.3.6", "release", &["1.21.1"], &["datapack"]),
+        ];
+        let picked =
+            find_preferred_version(&versions, ProjectType::DataPack, "neoforge", "1.21.1").unwrap();
+        assert_eq!(picked.id, "1.3.6");
+
+        // Even on vanilla, it must pick the datapack and never the neoforge jar
+        let picked_vanilla =
+            find_preferred_version(&versions, ProjectType::DataPack, "vanilla", "1.21.1").unwrap();
+        assert_eq!(picked_vanilla.id, "1.3.6");
+    }
+
+    /// On a vanilla instance, code-only mods are rejected while datapacks are accepted.
+    #[test]
+    fn vanilla_instance_accepts_datapacks_and_rejects_code_mods() {
+        let neoforge_mod = version("mod-neo", "release", &["1.21.1"], &["neoforge"]);
+        let datapack_mod = version("mod-dp", "release", &["1.21.1"], &["datapack"]);
+
+        assert!(!is_version_compatible(&neoforge_mod, ProjectType::Mod, "vanilla", "1.21.1"));
+        assert!(is_version_compatible(&datapack_mod, ProjectType::Mod, "vanilla", "1.21.1"));
+
+        assert!(!is_version_compatible(&neoforge_mod, ProjectType::DataPack, "vanilla", "1.21.1"));
+        assert!(is_version_compatible(&datapack_mod, ProjectType::DataPack, "vanilla", "1.21.1"));
     }
 }
