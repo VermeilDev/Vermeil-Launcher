@@ -40,6 +40,8 @@ pub struct ModrinthProject {
     pub client_side: Option<String>,
     #[serde(default)]
     pub server_side: Option<String>,
+    #[serde(default)]
+    pub date_modified: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -433,6 +435,51 @@ pub async fn get_versions_by_hashes(
     resp.json::<std::collections::HashMap<String, ModrinthVersion>>()
         .await
         .map_err(|e| format!("Parse Modrinth version_files response: {}", e))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModrinthProjectDetails {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub icon_url: Option<String>,
+    pub downloads: u64,
+    pub follows: u32,
+    pub date_modified: Option<String>,
+    pub author: Option<String>,
+}
+
+/// Fetch project metadata for a single project from Modrinth `/v2/project/{id|slug}`.
+pub async fn get_project(project_id: &str) -> Result<ModrinthProjectDetails, String> {
+    let url = format!("{}/project/{}", MODRINTH_API, project_id);
+    let token = resolve_modrinth_token().await;
+    let mut req = crate::util::http::HTTP.get(&url);
+    if let Some(ref t) = token {
+        req = req.header("Authorization", t);
+    }
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("Modrinth project request failed: {}", e))?;
+    if !resp.status().is_success() {
+        return Err(format!("Modrinth project returned HTTP {}", resp.status()));
+    }
+    let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    let downloads = body.get("downloads").and_then(|d| d.as_u64()).unwrap_or(0);
+    let follows = body.get("followers").and_then(|f| f.as_u64()).unwrap_or(0) as u32;
+    let date_modified = body.get("updated").and_then(|u| u.as_str()).map(str::to_string);
+    let description = body.get("description").and_then(|d| d.as_str()).map(str::to_string);
+    let title = body.get("title").and_then(|t| t.as_str()).map(str::to_string);
+    let icon_url = body.get("icon_url").and_then(|i| i.as_str()).map(str::to_string);
+
+    Ok(ModrinthProjectDetails {
+        title,
+        description,
+        icon_url,
+        downloads,
+        follows,
+        date_modified,
+        author: None,
+    })
 }
 
 #[cfg(test)]

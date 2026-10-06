@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Component, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { ContentVersion, ModHit, getCfModFiles, getModVersions } from "../ipc/commands";
+import { ContentVersion, ModHit, getCfModFiles, getModVersions, getProjectDetails } from "../ipc/commands";
 import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
 import {
   IconBolt,
+  IconClock,
   IconDownload,
   IconHeart,
   IconCheck,
@@ -55,7 +56,7 @@ function channelLabel(channel: string): string {
   }
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -76,10 +77,48 @@ const ModDetailModal: Component<Props> = (props) => {
   const [showAll, setShowAll] = createSignal(false);
   const [selectedVersionId, setSelectedVersionId] = createSignal<string | null>(null);
 
+  const [liveDownloads, setLiveDownloads] = createSignal<number | null>(null);
+  const [liveFollows, setLiveFollows] = createSignal<number | null>(null);
+  const [liveDateModified, setLiveDateModified] = createSignal<string | null>(null);
+  const [liveDescription, setLiveDescription] = createSignal<string | null>(null);
+
   const effectiveSource = (): "modrinth" | "curseforge" =>
     props.source === "curseforge" || /^\d+$/.test(props.mod?.project_id || "")
       ? "curseforge"
       : "modrinth";
+
+  const downloadsCount = () => liveDownloads() ?? props.mod?.downloads ?? 0;
+  const followsCount = () => liveFollows() ?? props.mod?.follows ?? 0;
+  const dateModified = () => liveDateModified() ?? props.mod?.date_modified ?? null;
+
+  // Hydrate live project metrics (especially in installed mode where downloads/follows start at 0)
+  createEffect(() => {
+    const m = props.mod;
+    if (!m) {
+      setLiveDownloads(null);
+      setLiveFollows(null);
+      setLiveDateModified(null);
+      setLiveDescription(null);
+      return;
+    }
+
+    setLiveDownloads(m.downloads || 0);
+    setLiveFollows(m.follows || 0);
+    setLiveDateModified(m.date_modified || null);
+    setLiveDescription(m.description || "");
+
+    const src = effectiveSource();
+    getProjectDetails(src, m.project_id)
+      .then((details) => {
+        if (details.downloads !== undefined) setLiveDownloads(details.downloads);
+        if (details.follows !== undefined) setLiveFollows(details.follows);
+        if (details.date_modified) setLiveDateModified(details.date_modified);
+        if (details.description && !m.description) setLiveDescription(details.description);
+      })
+      .catch((e) => {
+        console.debug("Failed to enrich project details:", e);
+      });
+  });
 
   // Capture phase + stopImmediatePropagation: closes the modal on Escape
   // without triggering parent navigation away from the instance screen.
@@ -245,7 +284,7 @@ const ModDetailModal: Component<Props> = (props) => {
             {/* Body */}
             <div class="modal-body mod-detail-body">
               {/* Recessed description plate */}
-              <p class="mod-detail-summary">{mod().description}</p>
+              <p class="mod-detail-summary">{liveDescription() || mod().description}</p>
 
               {/* 4-column metric stats */}
               <div class="mod-detail-stats">
@@ -254,16 +293,30 @@ const ModDetailModal: Component<Props> = (props) => {
                     <IconDownload /> Downloads
                   </span>
                   <span class="mod-detail-stat-value">
-                    {formatDownloads(mod().downloads)}
+                    {formatDownloads(downloadsCount())}
                   </span>
                 </div>
                 <div class="mod-detail-stat">
-                  <span class="mod-detail-stat-label">
-                    <IconHeart /> Followers
-                  </span>
-                  <span class="mod-detail-stat-value">
-                    {formatDownloads(mod().follows)}
-                  </span>
+                  <Show
+                    when={effectiveSource() === "curseforge"}
+                    fallback={
+                      <>
+                        <span class="mod-detail-stat-label">
+                          <IconHeart /> Followers
+                        </span>
+                        <span class="mod-detail-stat-value">
+                          {formatDownloads(followsCount())}
+                        </span>
+                      </>
+                    }
+                  >
+                    <span class="mod-detail-stat-label">
+                      <IconClock /> Updated
+                    </span>
+                    <span class="mod-detail-stat-value">
+                      {formatDate(dateModified()) || "Recent"}
+                    </span>
+                  </Show>
                 </div>
                 <div class="mod-detail-stat">
                   <span class="mod-detail-stat-label">Game Versions</span>

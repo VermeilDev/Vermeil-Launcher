@@ -3,8 +3,9 @@
 
 import { Component, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { ContentVersion, ModHit, getCfModFiles, getModVersions } from "../ipc/commands";
-import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
+import { formatDownloads, formatSize, formatVersionRange, formatDate } from "../lib/format";
 import {
+  IconClock,
   IconDownload,
   IconHeart,
   IconLayers,
@@ -53,13 +54,6 @@ function channelLabel(channel: string): string {
     default:
       return channel || "Unknown";
   }
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) => {
@@ -213,12 +207,26 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
                     </span>
                   </div>
                   <div class="modpack-detail-stat">
-                    <span class="modpack-detail-stat-label">
-                      <IconHeart /> Followers
-                    </span>
-                    <span class="modpack-detail-stat-value">
-                      {formatDownloads(pack().follows)}
-                    </span>
+                    <Show
+                      when={props.source === "curseforge"}
+                      fallback={
+                        <>
+                          <span class="modpack-detail-stat-label">
+                            <IconHeart /> Followers
+                          </span>
+                          <span class="modpack-detail-stat-value">
+                            {formatDownloads(pack().follows)}
+                          </span>
+                        </>
+                      }
+                    >
+                      <span class="modpack-detail-stat-label">
+                        <IconClock /> Updated
+                      </span>
+                      <span class="modpack-detail-stat-value">
+                        {formatDate(pack().date_modified) || "Recent"}
+                      </span>
+                    </Show>
                   </div>
                   <div class="modpack-detail-stat">
                     <span class="modpack-detail-stat-label">Game Versions</span>

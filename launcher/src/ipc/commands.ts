@@ -121,6 +121,8 @@ export interface ModHit {
   author?: string | null;
   /** Content category/project type (e.g. "mod", "resourcepack", "shader", "datapack"). */
   project_type?: string | null;
+  /** ISO-8601 last modified / updated timestamp. */
+  date_modified?: string | null;
 }
 
 export interface ModSearchResult {
@@ -447,6 +449,20 @@ export const getModVersions = (projectId: string, loader: string, gameVersion: s
 /** CurseForge equivalent. Only the API's first page of 50 files is available. */
 export const getCfModFiles = (modId: string, loader: string, gameVersion: string) =>
   invoke<ContentVersion[]>("get_cf_mod_files", { modId, loader, gameVersion });
+
+export interface ProjectDetails {
+  title?: string | null;
+  description?: string | null;
+  icon_url?: string | null;
+  downloads: number;
+  follows: number;
+  date_modified?: string | null;
+  author?: string | null;
+}
+
+/** Fetch fresh metrics and metadata for a single project from Modrinth or CurseForge. */
+export const getProjectDetails = (source: string, projectId: string) =>
+  invoke<ProjectDetails>("get_project_details", { source, projectId });
 
 export interface ApiKeyTestResult {
   success: boolean;

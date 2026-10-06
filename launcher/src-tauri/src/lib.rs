@@ -318,6 +318,7 @@ pub fn run() {
             mods::get_cf_mod_files,
             mods::test_curseforge_key,
             mods::test_modrinth_token,
+            mods::get_project_details,
             // Settings
             settings::get_settings,
             settings::save_settings,

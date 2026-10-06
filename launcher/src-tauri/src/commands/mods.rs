@@ -37,6 +37,7 @@ pub struct ModHit {
     /// expose an author (rare).
     pub author: Option<String>,
     pub project_type: Option<String>,
+    pub date_modified: Option<String>,
 }
 
 #[tauri::command]
@@ -88,6 +89,7 @@ pub async fn search_mods(
                 version_name: h.version_name,
                 author: h.author,
                 project_type: Some(h.project_type),
+                date_modified: h.date_modified,
             })
             .collect(),
     })
@@ -134,6 +136,7 @@ pub async fn search_modpacks(
                 version_name: h.version_name,
                 author: h.author,
                 project_type: Some(h.project_type),
+                date_modified: h.date_modified,
             })
             .collect(),
     })
@@ -193,6 +196,7 @@ pub async fn search_curseforge(
                 version_name: h.version_name,
                 author: h.author,
                 project_type: h.project_type,
+                date_modified: h.date_modified,
             })
             .collect(),
     })
@@ -508,6 +512,50 @@ pub async fn test_modrinth_token(token: Option<String>) -> Result<ApiKeyTestResu
                 message: format!("Invalid token (HTTP {})", status),
             })
         }
+    }
+}
+
+#[derive(Serialize)]
+pub struct ProjectDetails {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub icon_url: Option<String>,
+    pub downloads: u64,
+    pub follows: u32,
+    pub date_modified: Option<String>,
+    pub author: Option<String>,
+}
+
+/// Fetch complete metrics and metadata for a single project (Modrinth or CurseForge).
+/// Used by detail dialogs and installed content views to hydrate live downloads and update timestamps.
+#[tauri::command]
+pub async fn get_project_details(
+    source: String,
+    project_id: String,
+) -> Result<ProjectDetails, String> {
+    if source == "curseforge" || project_id.chars().all(|c| c.is_ascii_digit()) {
+        let api_key = resolve_cf_api_key().await?;
+        let meta = crate::services::curseforge::fetch_project_meta(&api_key, &project_id).await;
+        Ok(ProjectDetails {
+            title: meta.name,
+            description: meta.summary,
+            icon_url: meta.icon_url,
+            downloads: meta.download_count,
+            follows: 0,
+            date_modified: meta.date_modified,
+            author: meta.author,
+        })
+    } else {
+        let details = crate::services::modrinth::get_project(&project_id).await?;
+        Ok(ProjectDetails {
+            title: details.title,
+            description: details.description,
+            icon_url: details.icon_url,
+            downloads: details.downloads,
+            follows: details.follows,
+            date_modified: details.date_modified,
+            author: details.author,
+        })
     }
 }
 

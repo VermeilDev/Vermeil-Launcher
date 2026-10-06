@@ -12,9 +12,9 @@ import ModDetailModal from "../modals/ModDetailModal";
 import CompanionDetailModal from "../modals/CompanionDetailModal";
 import ChangeLoaderModal, { openChangeLoaderModal } from "../modals/ChangeLoaderModal";
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
-import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
+import { formatDownloads, formatSize, formatVersionRange, formatDate } from "../lib/format";
 import { searchMods, installModToInstance, installCfModToInstance, listInstanceFiles, listInstanceWorlds, openInstanceFolder, deleteInstance, renameInstance, updateInstanceOptions, toggleModInInstance, removeModFromInstance, removeModsFromInstance, checkModUpdates, applyModUpdate, ModUpdate, cloneInstance, getSettings, saveSettings, setInstanceIcon, clearInstanceIcon, searchCurseforge, getPresetJvmArgs, getKnownPresetArgs, getSystemMemory, getEffectiveMemory, EffectiveMemory, ModHit, FileEntry, WorldEntry, closeLogsWindow, syncInstanceMods, setInstanceCompanionEnabled, getInstance, exportShareCode, getModVersions, getCfModFiles, launchInstance, stopInstance, getGameVersions } from "../ipc/commands";
-import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconReload, IconGrid, IconList, IconShuffle } from "../components/Icons";
+import { IconArrowLeft, IconBolt, IconClock, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconReload, IconGrid, IconList, IconShuffle } from "../components/Icons";
 import SelectionDock from "../components/SelectionDock";
 import TactileSwitch from "../components/TactileSwitch";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
@@ -3126,9 +3126,19 @@ const InstanceMods: Component = () => {
                     <div class="mod-card-footer">
                       <div class="mod-card-meta">
                         <span class="mod-meta-stat"><IconDownload /> {formatDownloads(mod.downloads)}</span>
-                        <Show when={mod.follows > 0}>
-                          <span>·</span>
-                          <span class="mod-meta-stat"><IconHeart /> {formatDownloads(mod.follows)}</span>
+                        <Show
+                          when={modSource() === "curseforge"}
+                          fallback={
+                            <Show when={mod.follows > 0}>
+                              <span>·</span>
+                              <span class="mod-meta-stat"><IconHeart /> {formatDownloads(mod.follows)}</span>
+                            </Show>
+                          }
+                        >
+                          <Show when={!!mod.date_modified}>
+                            <span>·</span>
+                            <span class="mod-meta-stat"><IconClock /> {formatDate(mod.date_modified)}</span>
+                          </Show>
                         </Show>
                         <Show when={mod.client_side || mod.server_side}>
                           {" · "}

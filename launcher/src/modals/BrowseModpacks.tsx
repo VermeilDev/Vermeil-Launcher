@@ -24,6 +24,7 @@ import {
   IconModrinth,
   IconCurseForge,
   IconLayers,
+  IconClock,
   IconDownload,
   IconHeart,
   IconArrowLeft,
@@ -33,7 +34,7 @@ import {
   IconGrid,
   IconList,
 } from "../components/Icons";
-import { formatDownloads, formatVersionRange } from "../lib/format";
+import { formatDownloads, formatVersionRange, formatDate } from "../lib/format";
 import ModpackDetailModal from "./ModpackDetailModal";
 
 const PAGE_SIZE = 12;
@@ -605,9 +606,20 @@ const BrowseModpacks: Component = () => {
                           <span class="modpack-stat-item tip-below" data-tip="Downloads">
                             <IconDownload /> {formatDownloads(pack.downloads)}
                           </span>
-                          <span class="modpack-stat-item tip-below" data-tip="Followers">
-                            <IconHeart /> {formatDownloads(pack.follows)}
-                          </span>
+                          <Show
+                            when={modSource() === "curseforge"}
+                            fallback={
+                              <span class="modpack-stat-item tip-below" data-tip="Followers">
+                                <IconHeart /> {formatDownloads(pack.follows)}
+                              </span>
+                            }
+                          >
+                            <Show when={!!pack.date_modified}>
+                              <span class="modpack-stat-item tip-below" data-tip="Last Updated">
+                                <IconClock /> {formatDate(pack.date_modified)}
+                              </span>
+                            </Show>
+                          </Show>
                         </div>
                         <div class="modpack-card-actions">
                           <button

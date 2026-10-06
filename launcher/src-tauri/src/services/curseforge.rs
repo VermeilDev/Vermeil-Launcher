@@ -101,6 +101,8 @@ struct CfMod {
     download_count: u64,
     #[serde(rename = "thumbsUpCount")]
     thumbs_up_count: u32,
+    #[serde(rename = "dateModified", default)]
+    date_modified: Option<String>,
     logo: Option<CfLogo>,
     categories: Vec<CfCategory>,
     /// Author list. CurseForge always returns at least one for published
@@ -175,6 +177,7 @@ pub struct CfHit {
     /// Primary author display name (first entry in CurseForge's authors array).
     pub author: Option<String>,
     pub project_type: Option<String>,
+    pub date_modified: Option<String>,
 }
 
 pub struct CfSearchResult {
@@ -364,6 +367,7 @@ pub async fn search(
             version_name,
             author: m.authors.into_iter().next().map(|a| a.name),
             project_type: project_type_from_class_id(m.class_id),
+            date_modified: m.date_modified,
         }
     }).collect();
 
@@ -651,6 +655,8 @@ pub struct ProjectMeta {
     pub author: Option<String>,
     pub class_id: Option<u32>,
     pub website_url: Option<String>,
+    pub download_count: u64,
+    pub date_modified: Option<String>,
 }
 
 fn parse_project_meta_item(item: &serde_json::Value) -> ProjectMeta {
@@ -680,6 +686,8 @@ fn parse_project_meta_item(item: &serde_json::Value) -> ProjectMeta {
             Some(chosen.to_string())
         }
     });
+    let download_count = item.get("downloadCount").and_then(|d| d.as_u64()).unwrap_or(0);
+    let date_modified = item.get("dateModified").and_then(|d| d.as_str()).map(str::to_string);
 
     ProjectMeta {
         name,
@@ -688,6 +696,8 @@ fn parse_project_meta_item(item: &serde_json::Value) -> ProjectMeta {
         author,
         class_id,
         website_url,
+        download_count,
+        date_modified,
     }
 }
 
