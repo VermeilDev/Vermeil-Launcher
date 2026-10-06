@@ -245,27 +245,19 @@
 
 .inst-card-badges {
   position: relative;
-  container-type: inline-size;
-  container-name: card-badges;
   display: flex;
   align-items: center;
   margin-top: 2px;
   width: 100%;
-  overflow: hidden;
-  /* Right-edge soft fade mask at rest indicating more content */
-  mask-image: linear-gradient(to right, black calc(100% - 18px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 18px), transparent 100%);
-  transition: mask-image 0.25s ease, -webkit-mask-image 0.25s ease;
+  overflow: visible;
 }
 
 .inst-card-badges-track {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  width: max-content;
+  width: 100%;
   flex-shrink: 0;
-  transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
-  will-change: transform;
 }
 
 .inst-card-badges > *,
@@ -274,41 +266,85 @@
 }
 
 .inst-card-badges .badge--vnum {
-  max-width: 110px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Hover-triggered ping-pong marquee animation:
-   min(0px, calc(100cqw - 100% - 2px)) translates by the exact overflow distance.
-   If badges fit in the card, this evaluates to 0px and never shifts. */
-@keyframes inst-badge-marquee {
-  0%, 16% {
-    transform: translateX(0);
+/* Smart overflow pill & popover */
+.badge--overflow-pill {
+  background: var(--surface-raised);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 0 5px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.badge--overflow-pill:hover {
+  background: var(--accent);
+  color: var(--accent-contrast, #ffffff);
+}
+
+.badge-popover {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #14121c;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 14px var(--accent-glow);
+  padding: 5px 7px;
+  border-radius: var(--radius-xs);
+  z-index: 120;
+  gap: 4px;
+  white-space: nowrap;
+  animation: badge-popover-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.badge-popover::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--border-strong);
+}
+
+@keyframes badge-popover-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
   }
-  48%, 76% {
-    transform: translateX(min(0px, calc(100cqw - 100% - 2px)));
-  }
-  92%, 100% {
-    transform: translateX(0);
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
-.card--inst:hover .inst-card-badges,
-.card.card--inst:hover .inst-card-badges {
-  /* Soften right-edge mask on hover so the end badges remain crisp */
-  mask-image: linear-gradient(to right, black calc(100% - 6px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 6px), transparent 100%);
+.badge--overflow-pill:hover .badge-popover {
+  display: inline-flex;
+  align-items: center;
 }
 
-.card--inst:hover .inst-card-badges-track,
-.card.card--inst:hover .inst-card-badges-track {
-  animation: inst-badge-marquee 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.badge-popover .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card--inst:hover .inst-card-badges-track,
-  .card.card--inst:hover .inst-card-badges-track {
-    animation: none !important;
-  }
+/* Elevate card on overflow pill hover so popover floats cleanly above sibling cards */
+.card--inst:has(.badge--overflow-pill:hover) {
+  z-index: 60;
 }
 
 /* Arrow indicator for navigation-oriented instance cards (e.g. Settings instance list) */

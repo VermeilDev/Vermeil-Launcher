@@ -6,6 +6,7 @@ import { instances, showToast, refreshPinnedInstanceIds, currentTheme } from "..
 import { getSettings, saveSettings } from "../ipc/commands";
 import { IconCheck, IconSearch } from "../components/Icons";
 import { resolveAssetUrl } from "../lib/assets";
+import { formatMemoryGb } from "../lib/format";
 
 /**
  * Dock pin manager. Lets the user pick up to 6 instances to surface as
@@ -185,7 +186,9 @@ const PinInstancesModal: Component = () => {
                               <span class={`pin-badge pin-badge-loader pin-badge-loader-${inst.loader.type}`}>
                                 {inst.loader.type}
                               </span>
-                              <span class="pin-badge pin-badge-ram">{inst.java.memory_max_mb} MB</span>
+                              <span class="pin-badge pin-badge-ram">
+                                {formatMemoryGb(inst.java.memory_max_mb)}
+                              </span>
                               <Show when={inst.mod_count > 0}>
                                 <span class="pin-badge pin-badge-mods">{inst.mod_count} mods</span>
                               </Show>

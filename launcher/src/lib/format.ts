@@ -15,6 +15,16 @@ export function formatSize(bytes: number): string {
   return bytes + " B";
 }
 
+/** Format allocated RAM in GB, e.g. 4096 -> "4 GB", 6144 -> "6 GB", 4000 -> "3.9 GB". */
+export function formatMemoryGb(mb: number | null | undefined): string {
+  const val = mb ?? 4096;
+  const gb = val / 1024;
+  if (Number.isInteger(gb)) {
+    return `${gb} GB`;
+  }
+  return `${Math.round(gb * 10) / 10} GB`;
+}
+
 /**
  * A project's supported MC versions as a single range, e.g. `1.8.9–1.21.4`.
  *

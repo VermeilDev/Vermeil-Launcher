@@ -53,7 +53,7 @@ import Dropdown from "../components/Dropdown";
 import SelectionDock from "../components/SelectionDock";
 import { loaderBadgeClass, loaderLabel } from "../lib/loader";
 import { resolveAssetUrl } from "../lib/assets";
-import { formatSize } from "../lib/format";
+import { formatMemoryGb, formatSize } from "../lib/format";
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
 
 /** Library sort modes. Persisted in localStorage so the choice sticks between
@@ -488,38 +488,79 @@ const Library: Component = () => {
                 <IconPin />
               </span>
             </Show>
-            <Show when={!inst.last_played && (!inst.total_play_seconds || inst.total_play_seconds === 0)}>
-              <span class="badge badge--unplayed">Unplayed</span>
-            </Show>
             <span class="badge badge--version">{inst.game_version}</span>
             <span class={`badge badge--loader ${loaderBadgeClass(inst.loader?.type || "vanilla")}`}>
               {loaderLabel(inst.loader?.type || "vanilla")}
             </span>
-            <Show when={inst.source_project_id && inst.source_version}>
-              <span class="badge badge--vnum">
-                {inst.source_version}
-              </span>
-            </Show>
-            <span class="badge badge--ram">{inst.java?.memory_max_mb ?? 4096} MB</span>
-            <Show when={(inst.source_platforms || []).length > 0}>
-              <Show
-                when={inst.source_platforms[0] === "curseforge"}
-                fallback={
-                  <span class="badge badge--source badge--modrinth tip-below" data-tip="Modrinth">
-                    <IconModrinth />
-                  </span>
-                }
-              >
-                <span class="badge badge--source badge--curseforge tip-below" data-tip="CurseForge">
-                  <IconCurseForge />
+            <span class="badge badge--ram">
+              {formatMemoryGb(inst.java?.memory_max_mb)}
+            </span>
+
+            {(() => {
+              const hasUnplayed = !inst.last_played && (!inst.total_play_seconds || inst.total_play_seconds === 0);
+              const hasVnum = Boolean(inst.source_project_id && inst.source_version);
+              const hasSource = (inst.source_platforms || []).length > 0;
+              const isCurseForge = hasSource && inst.source_platforms[0] === "curseforge";
+              const hasCompanion = Boolean(inst.ingame_cape_supported);
+
+              const extraCount = (hasUnplayed ? 1 : 0) + (hasVnum ? 1 : 0) + (hasSource ? 1 : 0) + (hasCompanion ? 1 : 0);
+
+              if (extraCount <= 1) {
+                return (
+                  <>
+                    <Show when={hasUnplayed}>
+                      <span class="badge badge--unplayed">Unplayed</span>
+                    </Show>
+                    <Show when={hasVnum}>
+                      <span class="badge badge--vnum tip-below" data-tip={`Pack version ${inst.source_version}`}>
+                        {inst.source_version}
+                      </span>
+                    </Show>
+                    <Show when={hasSource}>
+                      <span
+                        class={`badge badge--source ${isCurseForge ? "badge--curseforge" : "badge--modrinth"} tip-below`}
+                        data-tip={isCurseForge ? "CurseForge" : "Modrinth"}
+                      >
+                        {isCurseForge ? <IconCurseForge /> : <IconModrinth />}
+                      </span>
+                    </Show>
+                    <Show when={hasCompanion}>
+                      <span class="badge badge--companion tip-below" data-tip="Companion mod">
+                        <img src="/logo.png" alt="Vermeil" draggable={false} />
+                      </span>
+                    </Show>
+                  </>
+                );
+              }
+
+              return (
+                <span class="badge badge--overflow-pill" onClick={(e) => e.stopPropagation()}>
+                  +{extraCount}
+                  <div class="badge-popover" onClick={(e) => e.stopPropagation()}>
+                    <Show when={hasUnplayed}>
+                      <span class="badge badge--unplayed">Unplayed</span>
+                    </Show>
+                    <Show when={hasVnum}>
+                      <span class="badge badge--vnum" data-tip={`Pack version ${inst.source_version}`}>
+                        {inst.source_version}
+                      </span>
+                    </Show>
+                    <Show when={hasSource}>
+                      <span class={`badge badge--source ${isCurseForge ? "badge--curseforge" : "badge--modrinth"}`}>
+                        {isCurseForge ? <IconCurseForge /> : <IconModrinth />}
+                        <span>{isCurseForge ? "CurseForge" : "Modrinth"}</span>
+                      </span>
+                    </Show>
+                    <Show when={hasCompanion}>
+                      <span class="badge badge--companion">
+                        <img src="/logo.png" alt="Vermeil" draggable={false} />
+                        <span>Companion</span>
+                      </span>
+                    </Show>
+                  </div>
                 </span>
-              </Show>
-            </Show>
-            <Show when={inst.ingame_cape_supported}>
-              <span class="badge badge--companion tip-below" data-tip="Companion mod">
-                <img src="/logo.png" alt="Vermeil" draggable={false} />
-              </span>
-            </Show>
+              );
+            })()}
           </div>
         </div>
       </div>
