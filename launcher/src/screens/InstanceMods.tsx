@@ -13,7 +13,7 @@ import ChangeLoaderModal, { openChangeLoaderModal } from "../modals/ChangeLoader
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
 import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
 import { searchMods, installModToInstance, installCfModToInstance, listInstanceFiles, listInstanceWorlds, openInstanceFolder, deleteInstance, renameInstance, updateInstanceOptions, toggleModInInstance, removeModFromInstance, removeModsFromInstance, checkModUpdates, applyModUpdate, ModUpdate, cloneInstance, getSettings, saveSettings, setInstanceIcon, clearInstanceIcon, searchCurseforge, getPresetJvmArgs, getKnownPresetArgs, getSystemMemory, getEffectiveMemory, EffectiveMemory, ModHit, FileEntry, WorldEntry, closeLogsWindow, syncInstanceMods, setInstanceCompanionEnabled, getInstance, exportShareCode, getModVersions, getCfModFiles, launchInstance, stopInstance, getGameVersions } from "../ipc/commands";
-import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconGrid, IconList, IconShuffle } from "../components/Icons";
+import { IconArrowLeft, IconBolt, IconMonitor, IconGlobe, IconTrash, IconTrash2, IconArrowUp, IconArrowDown, IconSearch, IconModrinth, IconCurseForge, IconSettings, IconCube, IconWand, IconShirt, IconX, IconCheck, IconAlertTriangle, IconFolderOpen, IconLayers, IconImage, IconDownload, IconHeart, IconShare2, IconPin, IconPackage, IconPlay, IconRefresh, IconReload, IconGrid, IconList, IconShuffle } from "../components/Icons";
 import SelectionDock from "../components/SelectionDock";
 import TactileSwitch from "../components/TactileSwitch";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
@@ -218,8 +218,16 @@ const InstanceMods: Component = () => {
   const handlePlayOrStop = async () => {
     const inst = instance();
     if (!inst) return;
+    if (isLaunchingThis()) {
+      try {
+        await stopInstance();
+      } catch (err) {
+        showToast({ title: "Stop failed", message: String(err), type: "error" });
+      }
+      return;
+    }
     if (launchingInstanceId()) {
-      showToast({ title: "Launching in progress", message: "Please wait for the current launch to finish.", type: "info" });
+      showToast({ title: "Launching in progress", message: "Another instance is currently launching. Please wait a moment.", type: "info" });
       return;
     }
     if (isGameRunningThis()) {
@@ -248,7 +256,10 @@ const InstanceMods: Component = () => {
       await launchInstance(inst.id);
     } catch (err) {
       setGameRunning(false);
-      showToast({ title: "Launch failed", message: String(err), type: "error" });
+      const msg = String(err);
+      if (!msg.toLowerCase().includes("cancelled")) {
+        showToast({ title: "Launch failed", message: msg, type: "error" });
+      }
     } finally {
       setLaunchingInstanceId(null);
     }
@@ -1837,12 +1848,13 @@ const InstanceMods: Component = () => {
             <IconSettings />
           </button>
           <button
-            class={`inst-header-play-btn ${isGameRunningThis() ? "btn--stop" : "btn--play"} ${isCurrentInstanceInstalling() || isLaunchingThis() ? "btn--disabled" : ""}`}
+            class={`inst-header-play-btn ${isGameRunningThis() ? "btn--stop" : "btn--play"} ${isCurrentInstanceInstalling() ? "btn--disabled" : ""}`}
             onClick={handlePlayOrStop}
-            aria-label={isLaunchingThis() ? "Launching instance" : isGameRunningThis() ? "Stop running game" : "Launch instance"}
+            aria-label={isLaunchingThis() ? "Cancel launch" : isGameRunningThis() ? "Stop running game" : "Launch instance"}
+            data-tip={isLaunchingThis() ? "Click to cancel launch" : undefined}
           >
             <Show when={isLaunchingThis()}>
-              <IconDownload />
+              <span class="spin-icon"><IconReload /></span>
               <span>Launching...</span>
             </Show>
             <Show when={!isLaunchingThis()}>

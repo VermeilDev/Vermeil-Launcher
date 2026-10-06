@@ -981,6 +981,10 @@ pub async fn launch(
     // Clear previous log
     let _ = fs::write(&log_path, "");
 
+    if crate::commands::launch::is_launch_cancelled() {
+        return Err("Launch cancelled by user".to_string());
+    }
+
     // 1. Get version JSON
     let version = get_version_json(&instance.game_version).await?;
 
@@ -1019,6 +1023,9 @@ pub async fn launch(
     classpath_entries.push(client_jar);
 
     // 3. Find or download Java (do this BEFORE loader setup so NeoForge/Forge installer can reuse it)
+    if crate::commands::launch::is_launch_cancelled() {
+        return Err("Launch cancelled by user".to_string());
+    }
     let java = ensure_java(&instance.game_version).await?;
 
     // 4. Handle mod loader
@@ -1567,8 +1574,19 @@ pub async fn launch(
         }
     }
 
+    if crate::commands::launch::is_launch_cancelled() {
+        return Err("Launch cancelled by user".to_string());
+    }
     let mut child = cmd.spawn().map_err(|e| format!("Failed to launch: {}", e))?;
     let pid = child.id();
+    crate::commands::launch::GAME_PID.store(pid, std::sync::atomic::Ordering::SeqCst);
+
+    if crate::commands::launch::is_launch_cancelled() {
+        tracing::info!("Launch cancelled right as process {} spawned, killing immediately", pid);
+        let _ = child.kill();
+        crate::commands::launch::GAME_PID.store(0, std::sync::atomic::Ordering::SeqCst);
+        return Err("Launch cancelled by user".to_string());
+    }
 
     // Bring the game window to the foreground once it appears, and maximize
     // it too if the user enabled that. The launcher is typically a background

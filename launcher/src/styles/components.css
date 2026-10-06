@@ -5154,6 +5154,7 @@ select.field-input[size] { appearance: none; }
 /* Instance Context Bar Play / Stop Button */
 .inst-header-play-btn {
   height: 32px;
+  min-width: 120px;
   box-sizing: border-box;
   padding: 0 14px;
   display: inline-flex;

@@ -36,6 +36,14 @@ pub fn take_user_stopped() -> bool {
 /// Set to `true` while an instance is actively launching to prevent concurrent launch races.
 static IS_LAUNCHING: AtomicBool = AtomicBool::new(false);
 
+/// Set to `true` when the user cancels an in-flight launch before or during process start.
+pub static LAUNCH_CANCELLED: AtomicBool = AtomicBool::new(false);
+
+/// Check if launch cancellation was requested.
+pub fn is_launch_cancelled() -> bool {
+    LAUNCH_CANCELLED.load(Ordering::SeqCst)
+}
+
 #[tauri::command]
 pub async fn launch_instance(
     instance_id: String,
@@ -49,10 +57,14 @@ pub async fn launch_instance(
     if IS_LAUNCHING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
         return Err("A game instance is currently launching. Please wait a moment.".to_string());
     }
+    LAUNCH_CANCELLED.store(false, Ordering::SeqCst);
+    USER_STOPPED.store(false, Ordering::SeqCst);
+
     struct LaunchGuard;
     impl Drop for LaunchGuard {
         fn drop(&mut self) {
             IS_LAUNCHING.store(false, Ordering::SeqCst);
+            LAUNCH_CANCELLED.store(false, Ordering::SeqCst);
         }
     }
     let _launch_guard = LaunchGuard;
@@ -72,6 +84,10 @@ pub async fn launch_instance(
     // Get active account with proactive token freshness verification
     let (username, uuid, token) = crate::commands::auth::get_launch_account().await?;
 
+    if is_launch_cancelled() {
+        return Err("Launch cancelled by user".to_string());
+    }
+
     // Launch the game
     let pid = launch::launch(
         &instance,
@@ -82,6 +98,7 @@ pub async fn launch_instance(
         quick_play_server.as_deref(),
         Some(window.clone()),
     ).await?;
+
     GAME_PID.store(pid, Ordering::SeqCst);
     USER_STOPPED.store(false, Ordering::SeqCst);
 
@@ -336,33 +353,56 @@ pub async fn get_crash_report(path: String) -> Result<String, String> {
     fs::read_to_string(&canonical).map_err(|e| format!("Read crash report: {}", e))
 }
 
-#[tauri::command]
-pub async fn stop_instance() -> Result<(), String> {
-    let pid = GAME_PID.load(Ordering::SeqCst);
+/// Helper to terminate the game process gracefully or forcefully.
+pub async fn terminate_process(pid: u32, force: bool) {
     if pid == 0 {
-        return Err("No game is running".to_string());
+        return;
     }
-
-    // Mark that the user intentionally stopped the game, so the exit
-    // handler (in launch.rs background task) won't emit `game-crashed`.
-    USER_STOPPED.store(true, Ordering::SeqCst);
 
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
+        if force {
+            tracing::info!("Force-killing game process {}", pid);
+            let _ = std::process::Command::new("taskkill")
+                .args(["/F", "/PID", &pid.to_string()])
+                .creation_flags(crate::services::java::CREATE_NO_WINDOW)
+                .output();
+            return;
+        }
+
         // Send a graceful close (WM_CLOSE via taskkill without /F).
         // This triggers Minecraft's shutdown hook: saves worlds, flushes
         // chunks, closes connections — same as clicking the window X button.
         // CREATE_NO_WINDOW prevents the brief black console flash.
-        let _ = std::process::Command::new("taskkill")
+        let output = std::process::Command::new("taskkill")
             .args(["/PID", &pid.to_string()])
             .creation_flags(crate::services::java::CREATE_NO_WINDOW)
             .output();
 
-        // Wait up to 10s for the process to exit gracefully.
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        // If taskkill reports an error (e.g. process has no window yet and requires /F),
+        // don't hang for 10 seconds — terminate with /F immediately.
+        let need_force = match output {
+            Ok(ref out) => {
+                let err = String::from_utf8_lossy(&out.stderr);
+                !out.status.success() || err.contains("/F")
+            }
+            Err(_) => true,
+        };
+
+        if need_force {
+            tracing::info!("Process {} cannot be closed gracefully without window; force-killing", pid);
+            let _ = std::process::Command::new("taskkill")
+                .args(["/F", "/PID", &pid.to_string()])
+                .creation_flags(crate::services::java::CREATE_NO_WINDOW)
+                .output();
+            return;
+        }
+
+        // Wait up to 3s for the process to exit gracefully.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
         loop {
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
             // Check if process still exists
             let check = std::process::Command::new("tasklist")
                 .args(["/FI", &format!("PID eq {}", pid), "/NH", "/FO", "CSV"])
@@ -377,7 +417,7 @@ pub async fn stop_instance() -> Result<(), String> {
             }
             if std::time::Instant::now() >= deadline {
                 // Force-kill as last resort
-                tracing::warn!("Game PID {} didn't exit gracefully after 10s, force-killing", pid);
+                tracing::warn!("Game PID {} didn't exit gracefully after 3s, force-killing", pid);
                 let _ = std::process::Command::new("taskkill")
                     .args(["/F", "/PID", &pid.to_string()])
                     .creation_flags(crate::services::java::CREATE_NO_WINDOW)
@@ -388,17 +428,25 @@ pub async fn stop_instance() -> Result<(), String> {
     }
     #[cfg(not(target_os = "windows"))]
     {
+        if force {
+            tracing::info!("Force-killing game process {}", pid);
+            let _ = std::process::Command::new("kill")
+                .args(["-9", &pid.to_string()])
+                .output();
+            return;
+        }
+
         // Send SIGTERM for graceful shutdown (triggers JVM shutdown hooks).
         let _ = std::process::Command::new("kill")
             .args(&["-TERM", &pid.to_string()])
             .output();
 
-        // Wait up to 10s, then force-kill.
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        // Wait up to 3s, then force-kill.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
         loop {
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
             let check = std::process::Command::new("kill")
-                .args(&["-0", &pid.to_string()])
+                .args(["-0", &pid.to_string()])
                 .output();
             if let Ok(output) = check {
                 if !output.status.success() {
@@ -407,7 +455,7 @@ pub async fn stop_instance() -> Result<(), String> {
                 }
             }
             if std::time::Instant::now() >= deadline {
-                tracing::warn!("Game PID {} didn't exit gracefully after 10s, force-killing", pid);
+                tracing::warn!("Game PID {} didn't exit gracefully after 3s, force-killing", pid);
                 let _ = std::process::Command::new("kill")
                     .args(&["-9", &pid.to_string()])
                     .output();
@@ -415,7 +463,31 @@ pub async fn stop_instance() -> Result<(), String> {
             }
         }
     }
+}
 
+#[tauri::command]
+pub async fn stop_instance() -> Result<(), String> {
+    let is_launching = IS_LAUNCHING.load(Ordering::SeqCst);
+    let pid = GAME_PID.load(Ordering::SeqCst);
+
+    if !is_launching && pid == 0 {
+        return Err("No game is running".to_string());
+    }
+
+    let already_requested_stop = USER_STOPPED.load(Ordering::SeqCst);
+    USER_STOPPED.store(true, Ordering::SeqCst);
+
+    if is_launching {
+        tracing::info!("Aborting launch in progress (pid: {})", pid);
+        LAUNCH_CANCELLED.store(true, Ordering::SeqCst);
+        if pid != 0 {
+            terminate_process(pid, true).await;
+            GAME_PID.store(0, Ordering::SeqCst);
+        }
+        return Ok(());
+    }
+
+    terminate_process(pid, already_requested_stop).await;
     GAME_PID.store(0, Ordering::SeqCst);
     Ok(())
 }
