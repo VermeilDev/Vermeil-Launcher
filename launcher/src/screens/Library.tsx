@@ -497,20 +497,16 @@ const Library: Component = () => {
             </span>
 
             {(() => {
-              const hasUnplayed = !inst.last_played && (!inst.total_play_seconds || inst.total_play_seconds === 0);
               const hasVnum = Boolean(inst.source_project_id && inst.source_version);
               const hasSource = (inst.source_platforms || []).length > 0;
               const isCurseForge = hasSource && inst.source_platforms[0] === "curseforge";
               const hasCompanion = Boolean(inst.ingame_cape_supported);
 
-              const extraCount = (hasUnplayed ? 1 : 0) + (hasVnum ? 1 : 0) + (hasSource ? 1 : 0) + (hasCompanion ? 1 : 0);
+              const extraCount = (hasVnum ? 1 : 0) + (hasSource ? 1 : 0) + (hasCompanion ? 1 : 0);
 
               if (extraCount <= 1) {
                 return (
                   <>
-                    <Show when={hasUnplayed}>
-                      <span class="badge badge--unplayed">Unplayed</span>
-                    </Show>
                     <Show when={hasVnum}>
                       <span class="badge badge--vnum tip-below" data-tip={`Pack version ${inst.source_version}`}>
                         {inst.source_version}
@@ -537,9 +533,6 @@ const Library: Component = () => {
                 <span class="badge badge--overflow-pill" onClick={(e) => e.stopPropagation()}>
                   +{extraCount}
                   <div class="badge-popover" onClick={(e) => e.stopPropagation()}>
-                    <Show when={hasUnplayed}>
-                      <span class="badge badge--unplayed">Unplayed</span>
-                    </Show>
                     <Show when={hasVnum}>
                       <span class="badge badge--vnum" data-tip={`Pack version ${inst.source_version}`}>
                         {inst.source_version}
