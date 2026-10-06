@@ -272,8 +272,13 @@ async fn install_one(
     // Deliberately before the download: a redundant install then costs no
     // bandwidth, and a version another mod pins can be respected without first
     // fetching a file we'd only have to delete again.
+    let is_datapack = category == "datapack"
+        || (version.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack"))
+            && (version.loaders.len() == 1 || loader == "vanilla"));
+    let effective_category = if is_datapack { "datapack" } else { category };
+
     let instance_dir = paths::instances_dir().join(instance_id);
-    let target_folder = match category {
+    let target_folder = match effective_category {
         "resourcepack" => "resourcepacks",
         "shader" => "shaderpacks",
         "datapack" => "datapacks",
@@ -380,7 +385,7 @@ async fn install_one(
         icon_url,
         local_icon_path,
         description,
-        category: category.to_string(),
+        category: effective_category.to_string(),
         author,
         loaders: version.loaders.clone(),
         game_versions: version.game_versions.clone(),
@@ -692,7 +697,7 @@ pub(crate) fn is_version_compatible(
     if !project_type.checks_loader() || loader.is_empty() {
         return true;
     }
-    v.loaders.iter().any(|l| l == loader || l == "datapack")
+    v.loaders.iter().any(|l| l.eq_ignore_ascii_case(loader) || l.eq_ignore_ascii_case("datapack"))
 }
 
 /// Is this version on the stable release channel? Modrinth's `version_type` is
@@ -735,6 +740,9 @@ pub(crate) fn find_preferred_version<'a>(
 ) -> Option<&'a ModrinthVersion> {
     let loader_ok = |v: &ModrinthVersion| {
         if !project_type.checks_loader() || loader.is_empty() {
+            return true;
+        }
+        if v.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
             return true;
         }
         let target = loader.to_lowercase();

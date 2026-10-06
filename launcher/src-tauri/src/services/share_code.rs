@@ -965,6 +965,7 @@ pub async fn export_instance_share_code(instance_id: &str) -> Result<String, Str
         let category_enum = match m.category.as_str() {
             "shader" | "shaders" => 1u8,
             "resourcepack" | "resourcepacks" => 2u8,
+            "datapack" | "datapacks" => 3u8,
             _ => 0u8,
         };
 
@@ -1507,10 +1508,12 @@ pub async fn import_share_code(
     let mods_dir = minecraft_dir.join("mods");
     let shaderpacks_dir = minecraft_dir.join("shaderpacks");
     let resourcepacks_dir = minecraft_dir.join("resourcepacks");
+    let datapacks_dir = minecraft_dir.join("datapacks");
 
     fs::create_dir_all(&mods_dir).map_err(|e| e.to_string())?;
     fs::create_dir_all(&shaderpacks_dir).map_err(|e| e.to_string())?;
     fs::create_dir_all(&resourcepacks_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&datapacks_dir).map_err(|e| e.to_string())?;
 
     // Cache instance icon if a valid CDN URL was provided (only for base modpacks,
     // never borrow an individual mod's icon for a custom creation)
@@ -1529,6 +1532,7 @@ pub async fn import_share_code(
         match cat {
             1 => &shaderpacks_dir,
             2 => &resourcepacks_dir,
+            3 => &datapacks_dir,
             _ => &mods_dir,
         }
     };
@@ -1536,6 +1540,7 @@ pub async fn import_share_code(
         match cat {
             1 => "shader",
             2 => "resourcepack",
+            3 => "datapack",
             _ => "mod",
         }
     };

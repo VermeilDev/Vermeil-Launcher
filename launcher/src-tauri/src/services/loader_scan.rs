@@ -620,6 +620,11 @@ pub fn is_mod_compatible_with_loader(loader: &LoaderType, mod_loaders: &[String]
         return true;
     }
 
+    // Datapacks are universally compatible with all loaders, including Vanilla
+    if mod_loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
+        return true;
+    }
+
     let target = match loader {
         LoaderType::Fabric => "fabric",
         LoaderType::Quilt => "quilt",
@@ -653,8 +658,10 @@ mod tests {
         assert!(is_mod_compatible_with_loader(&LoaderType::Fabric, &[]));
         assert!(is_mod_compatible_with_loader(&LoaderType::Neoforge, &[]));
 
-        // Vanilla runs no mods
+        // Vanilla runs no code mods, but runs datapacks
         assert!(!is_mod_compatible_with_loader(&LoaderType::Vanilla, &[format!("fabric")]));
+        assert!(is_mod_compatible_with_loader(&LoaderType::Vanilla, &[format!("datapack")]));
+        assert!(is_mod_compatible_with_loader(&LoaderType::Fabric, &[format!("datapack")]));
 
         // Fabric mods
         let fabric = vec!["fabric".to_string(), "quilt".to_string()];

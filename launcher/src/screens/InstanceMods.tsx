@@ -74,6 +74,42 @@ function detectCategory(mod: ModHit, currentLoader?: string): "mod" | "resourcep
   return "mod";
 }
 
+function resolveItemCategory(
+  item: any,
+  currentLoader?: string,
+  filter?: "all" | "mod" | "resourcepack" | "shader" | "datapack"
+): "mod" | "resourcepack" | "shader" | "datapack" {
+  if (!item) return filter && filter !== "all" ? filter : "mod";
+
+  const rawCat = (item.category || "").toLowerCase();
+  if (rawCat === "resourcepack" || rawCat === "shader" || rawCat === "datapack") {
+    return rawCat;
+  }
+
+  const loaders = (item.loaders as string[] | undefined) || [];
+  if (loaders.some((l) => l.toLowerCase() === "datapack")) {
+    const ldr = currentLoader?.toLowerCase();
+    if (!ldr || ldr === "vanilla" || loaders.length === 1 || !loaders.some((l) => CODE_LOADERS.has(l.toLowerCase()))) {
+      return "datapack";
+    }
+  }
+
+  if (filter && filter !== "all") {
+    return filter;
+  }
+
+  if ("categories" in item) {
+    return detectCategory(item as ModHit, currentLoader);
+  }
+
+  const ptype = (item.project_type || "").toLowerCase();
+  if (ptype === "resourcepack" || ptype === "shader" || ptype === "datapack") {
+    return ptype;
+  }
+
+  return rawCat === "mod" ? "mod" : detectCategory(item as ModHit, currentLoader);
+}
+
 function categoryLabel(cat: string): string {
   switch (cat) {
     case "resourcepack": return "Resource Pack";
@@ -86,7 +122,7 @@ function categoryLabel(cat: string): string {
 /**
  * Test whether a mod search hit claims compatibility with the target instance.
  *
- * For resource packs and shaders, only Minecraft version compatibility applies.
+ * For resource packs, shaders, and datapacks, only Minecraft version compatibility applies.
  * For mods, loader compatibility is also validated.
  */
 function checkModCompatibility(
@@ -108,7 +144,7 @@ function checkModCompatibility(
     return false;
   }
 
-  // Loader check for mods/datapacks
+  // Loader check for mods only (datapacks, resource packs, shaders run on any loader)
   if (category === "mod" && loader && loader !== "vanilla") {
     const knownLoaders = ["fabric", "forge", "neoforge", "quilt"];
     const modLoaders = (mod.categories || []).map(c => c.toLowerCase()).filter(c => knownLoaders.includes(c));
@@ -138,10 +174,13 @@ function formatPlaytime(seconds: number): string {
 }
 
 function isInstalledModCompatible(mod: any, instanceLoaderType?: string): boolean {
-  if (!instanceLoaderType || (mod.category || "mod") !== "mod") return true;
-  if (instanceLoaderType === "vanilla") return false;
+  if (!instanceLoaderType) return true;
+  const cat = resolveItemCategory(mod, instanceLoaderType);
+  if (cat !== "mod") return true;
   const loaders = mod.loaders as string[] | undefined;
   if (!loaders || loaders.length === 0) return true;
+  if (loaders.some((l) => l.toLowerCase() === "datapack")) return true;
+  if (instanceLoaderType.toLowerCase() === "vanilla") return false;
   const target = instanceLoaderType.toLowerCase();
   if (target === "quilt") {
     return loaders.some((l) => {
@@ -153,6 +192,8 @@ function isInstalledModCompatible(mod: any, instanceLoaderType?: string): boolea
 }
 
 function getInstalledModDisplayLoader(mod: any, instanceLoaderType?: string): string {
+  const cat = resolveItemCategory(mod, instanceLoaderType);
+  if (cat === "datapack") return "datapack";
   const loaders = mod.loaders as string[] | undefined;
   if (loaders && loaders.length > 0) {
     if (instanceLoaderType) {
@@ -1168,7 +1209,7 @@ const InstanceMods: Component = () => {
     const f = installedFilter();
     const q = installedSearch().trim().toLowerCase();
     const filtered = mods.filter((m: any) => {
-      const cat = (m as any).category || "mod";
+      const cat = resolveItemCategory(m, instance()?.loader?.type);
       if (f !== "all" && cat !== f) return false;
       // Managed companion mod jars are rendered as the dedicated managed card, not in the general mod grid.
       if (m.filename && m.filename.startsWith("vermeil-") && m.filename.includes("+")) return false;
@@ -1267,7 +1308,7 @@ const InstanceMods: Component = () => {
   const handleInstallMod = (mod: ModHit, versionId?: string) => {
     const inst = instance();
     if (!inst) return;
-    const cat = (mod as any).category || (mod as any).project_type || (browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter());
+    const cat = resolveItemCategory(mod, inst.loader.type, browseFilter());
     enqueueInstallTask({
       title: mod.title,
       projectId: mod.project_id,
@@ -1347,7 +1388,7 @@ const InstanceMods: Component = () => {
   const handleCardInstall = async (mod: ModHit, forcePrompt: boolean = false) => {
     const inst = instance();
     if (!inst) return;
-    const cat = browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter();
+    const cat = resolveItemCategory(mod, inst.loader.type, browseFilter());
     if (!forcePrompt && checkModCompatibility(mod, inst.game_version, inst.loader.type, cat)) {
       handleInstallMod(mod);
       return;
@@ -1406,7 +1447,7 @@ const InstanceMods: Component = () => {
     if (map.has(mod.project_id)) {
       map.delete(mod.project_id);
     } else {
-      const cat = browseFilter() === "all" ? detectCategory(mod, instance()?.loader?.type) : browseFilter();
+      const cat = resolveItemCategory(mod, instance()?.loader?.type, browseFilter());
       map.set(mod.project_id, { mod, category: cat });
     }
     setSelectedItems(map);
@@ -1459,7 +1500,7 @@ const InstanceMods: Component = () => {
     if (!inst) return;
     const modTitle = mod.title || mod.filename;
     const isCf = mod.source === "curseforge" || (mod.source === "modpack" && /^\d+$/.test(mod.project_id));
-    const cat = (mod as any).category || "mod";
+    const cat = resolveItemCategory(mod, inst.loader.type);
     enqueueInstallTask({
       title: modTitle,
       projectId: mod.project_id,
@@ -1579,7 +1620,7 @@ const InstanceMods: Component = () => {
   const installedActiveCount = (): number => {
     const mods = instanceMods();
     const f = installedFilter();
-    return f === "all" ? mods.length : mods.filter((m: any) => ((m as any).category || "mod") === f).length;
+    return f === "all" ? mods.length : mods.filter((m: any) => resolveItemCategory(m, instance()?.loader?.type) === f).length;
   };
 
   /// Loaders we recognize on Modrinth project `categories`. Modrinth bundles
@@ -2551,7 +2592,7 @@ const InstanceMods: Component = () => {
                     disabled={(() => {
                       const mods = instanceMods();
                       if (installedFilter() === "all") return mods.length === 0;
-                      return mods.filter((m: any) => ((m as any).category || "mod") === installedFilter()).length === 0;
+                      return mods.filter((m: any) => resolveItemCategory(m, instance()?.loader?.type) === installedFilter()).length === 0;
                     })()}
                     onClick={() => {
                       const next = !installedSelectMode();
@@ -2769,13 +2810,15 @@ const InstanceMods: Component = () => {
                       sits in the user's eye-line right below the title. */}
                   <Show when={instance()}>
                     {(() => {
-                      const isMod = ((mod as any).category || "mod") === "mod";
-                      const isCompatible = isInstalledModCompatible(mod, instance()?.loader.type);
-                      const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader.type);
+                      const itemCat = resolveItemCategory(mod, instance()?.loader?.type);
+                      const isMod = itemCat === "mod";
+                      const isDatapack = itemCat === "datapack";
+                      const isCompatible = isInstalledModCompatible(mod, instance()?.loader?.type);
+                      const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader?.type);
                       const loaderLabel = displayLoader.charAt(0).toUpperCase() + displayLoader.slice(1);
                       return (
                         <div class="mod-card-tags">
-                          <Show when={isMod}>
+                          <Show when={isMod || isDatapack}>
                             <span class={`mod-tag mod-tag-loader loader-${displayLoader.toLowerCase()}`}>
                               {loaderLabel}
                             </span>
@@ -2809,9 +2852,9 @@ const InstanceMods: Component = () => {
                     })()}
                   </Show>
                   <div class="mod-card-footer">
-                    <div class="mod-card-meta">{(mod as any).category || "mod"} · {mod.enabled ? "Enabled" : "Disabled"}</div>
+                    <div class="mod-card-meta">{categoryLabel(resolveItemCategory(mod, instance()?.loader?.type))} · {mod.enabled ? "Enabled" : "Disabled"}</div>
                     <div class="mod-card-actions">
-                      <Show when={modUpdates().has(mod.project_id) && isInstalledModCompatible(mod, instance()?.loader.type)}>
+                      <Show when={modUpdates().has(mod.project_id) && isInstalledModCompatible(mod, instance()?.loader?.type)}>
                         <button
                           class="btn btn--sm btn--success btn--mod-update tip-right"
                           disabled={installedSelectMode() || isTaskQueuedOrActive(mod.project_id, instance()?.id)}
@@ -2832,16 +2875,17 @@ const InstanceMods: Component = () => {
                         </button>
                       </Show>
                       {(() => {
-                        const isMod = ((mod as any).category || "mod") === "mod";
-                        const isCompatible = isInstalledModCompatible(mod, instance()?.loader.type);
+                        const itemCat = resolveItemCategory(mod, instance()?.loader?.type);
+                        const isMod = itemCat === "mod";
+                        const isCompatible = isInstalledModCompatible(mod, instance()?.loader?.type);
                         const isLocked = installedSelectMode() || (!mod.enabled && !isCompatible);
-                        const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader.type);
+                        const displayLoader = getInstalledModDisplayLoader(mod, instance()?.loader?.type);
                         const loaderLabel = displayLoader.charAt(0).toUpperCase() + displayLoader.slice(1);
                         const toggleTip = !isCompatible && !mod.enabled
                           ? `Cannot enable: built for ${loaderLabel}, incompatible with ${instance()!.loader.type}`
                           : mod.enabled
-                          ? "Disable mod"
-                          : "Enable mod";
+                          ? `Disable ${itemCat}`
+                          : `Enable ${itemCat}`;
                         return (
                           <>
                             <Show when={isMod && !isCompatible && mod.project_id}>
@@ -3099,7 +3143,7 @@ const InstanceMods: Component = () => {
                     <div class="mod-card-desc">{mod.description}</div>
                     <div class="mod-card-tags">
                       {(() => {
-                        const currentCat = detectCategory(mod, instance()?.loader?.type);
+                        const currentCat = resolveItemCategory(mod, instance()?.loader?.type, browseFilter());
                         const tags = extractCardTags(mod.categories);
                         return (
                           <>
@@ -3427,7 +3471,7 @@ const InstanceMods: Component = () => {
         source={detailModSource()}
         loader={instance()?.loader?.type ?? ""}
         gameVersion={instance()?.game_version ?? ""}
-        category={detailMod() ? ((detailMod() as any).category || (detailMod() as any).project_type || (browseFilter() === "all" ? detectCategory(detailMod()!, instance()?.loader?.type) : browseFilter())) : "mod"}
+        category={detailMod() ? resolveItemCategory(detailMod(), instance()?.loader?.type, browseFilter()) : "mod"}
         loaders={detailMod() ? extractLoaders(detailMod()!.categories) : []}
         installedVersionId={instanceMods().find((m: any) => m.project_id === detailMod()?.project_id)?.version_id}
         busy={isTaskQueuedOrActive(detailMod()?.project_id || "", instance()?.id)}

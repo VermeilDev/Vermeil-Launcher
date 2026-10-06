@@ -74,7 +74,42 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
             modified = true;
         }
 
-        if m.category == "mod" {
+        // If the entry has loaders containing "datapack", ensure its category is "datapack".
+        // This heals entries where Modrinth's `project_type: "mod"` or an upstream classification
+        // erroneously tagged a datapack as a mod.
+        let is_datapack = m.category == "datapack"
+            || (m.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack"))
+                && (m.loaders.len() == 1 || instance.loader.loader_type == LoaderType::Vanilla));
+
+        if is_datapack && m.category != "datapack" {
+            m.category = "datapack".to_string();
+            modified = true;
+        }
+
+        if m.category == "datapack" {
+            let datapacks_dir = instance_dir.join(".minecraft").join("datapacks");
+            let mods_path = mods_dir.join(&m.filename);
+            let clean_name = m.filename.trim_end_matches(".disabled").to_string();
+
+            if mods_path.exists() {
+                let _ = fs::create_dir_all(&datapacks_dir);
+                let target = datapacks_dir.join(&clean_name);
+                let _ = fs::rename(&mods_path, &target);
+                m.filename = clean_name.clone();
+                m.enabled = true;
+                modified = true;
+            } else if m.filename.ends_with(".disabled") {
+                // If it was auto-disabled on Vanilla due to the loader incompatibility bug, re-enable it
+                let disabled_path = datapacks_dir.join(&m.filename);
+                if disabled_path.exists() {
+                    let target = datapacks_dir.join(&clean_name);
+                    let _ = fs::rename(&disabled_path, &target);
+                    m.filename = clean_name;
+                    m.enabled = true;
+                    modified = true;
+                }
+            }
+        } else if m.category == "mod" {
             let current_path = mods_dir.join(&m.filename);
             if m.loaders.is_empty() && current_path.exists() {
                 let detected = crate::services::loader_scan::detect_jar_loaders(&current_path);
@@ -567,10 +602,14 @@ pub async fn change_loader(
     let has_disabled_mods = instance.mods.iter().any(|m| m.category == "mod" && !m.enabled);
 
     if loader_type == LoaderType::Vanilla {
-        // Vanilla cannot load mods
+        // Vanilla cannot load mods (datapacks, resource packs, shaders are preserved)
         if disable_mods && mods_dir.exists() {
             for entry in &mut instance.mods {
                 if entry.category == "mod" && entry.enabled {
+                    if entry.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
+                        entry.category = "datapack".to_string();
+                        continue;
+                    }
                     let title = entry.title.clone().unwrap_or_else(|| entry.filename.clone());
                     let current_path = mods_dir.join(&entry.filename);
                     let new_name = if entry.filename.ends_with(".disabled") {

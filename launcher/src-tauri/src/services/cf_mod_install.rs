@@ -89,6 +89,9 @@ pub fn is_file_compatible(f: &CfFileInfo, game_version: &str, loader: &str) -> b
         return false;
     }
     if !loader.is_empty() && !f.loaders.is_empty() {
+        if f.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack")) {
+            return true;
+        }
         let target = loader.to_lowercase();
         let matches = if target == "quilt" {
             f.loaders.iter().any(|l| {
@@ -331,8 +334,13 @@ async fn install_cf_one(
 
     let file_version_id = file.file_id.to_string();
 
+    let is_datapack = category == "datapack"
+        || (file.loaders.iter().any(|l| l.eq_ignore_ascii_case("datapack"))
+            && (file.loaders.len() == 1 || loader == "vanilla"));
+    let effective_category = if is_datapack { "datapack" } else { category };
+
     let instance_dir = paths::instances_dir().join(instance_id);
-    let folder = target_folder(category);
+    let folder = target_folder(effective_category);
     let target_dir = instance_dir.join(".minecraft").join(folder);
 
     let meta_path = instance_dir.join("instance.json");
@@ -462,7 +470,7 @@ async fn install_cf_one(
         icon_url,
         local_icon_path,
         description: None,
-        category: category.to_string(),
+        category: effective_category.to_string(),
         author,
         loaders: file.loaders.clone(),
         game_versions: file.game_versions.clone(),
