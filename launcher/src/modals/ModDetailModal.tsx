@@ -76,6 +76,11 @@ const ModDetailModal: Component<Props> = (props) => {
   const [showAll, setShowAll] = createSignal(false);
   const [selectedVersionId, setSelectedVersionId] = createSignal<string | null>(null);
 
+  const effectiveSource = (): "modrinth" | "curseforge" =>
+    props.source === "curseforge" || /^\d+$/.test(props.mod?.project_id || "")
+      ? "curseforge"
+      : "modrinth";
+
   // Capture phase + stopImmediatePropagation: closes the modal on Escape
   // without triggering parent navigation away from the instance screen.
   createEffect(() => {
@@ -115,7 +120,8 @@ const ModDetailModal: Component<Props> = (props) => {
       return;
     }
 
-    const cacheKey = `${props.source}:${m.project_id}:${props.loader}:${props.gameVersion}:${props.category}`;
+    const src = effectiveSource();
+    const cacheKey = `${src}:${m.project_id}:${props.loader}:${props.gameVersion}:${props.category}`;
     const cached = versionCache.get(cacheKey);
     if (cached) {
       setVersions(cached);
@@ -129,7 +135,7 @@ const ModDetailModal: Component<Props> = (props) => {
     setError(null);
 
     const fetchPromise =
-      props.source === "curseforge"
+      src === "curseforge"
         ? getCfModFiles(m.project_id, props.loader, props.gameVersion)
         : getModVersions(m.project_id, props.loader, props.gameVersion, props.category);
 
@@ -216,11 +222,11 @@ const ModDetailModal: Component<Props> = (props) => {
                     <span class="modal-title mod-detail-title">{mod().title}</span>
                     <span
                       class={`mod-source-badge ${
-                        props.source === "modrinth" ? "source-mr" : "source-cf"
+                        effectiveSource() === "modrinth" ? "source-mr" : "source-cf"
                       }`}
                     >
                       <Show
-                        when={props.source === "modrinth"}
+                        when={effectiveSource() === "modrinth"}
                         fallback={<><IconCurseForge /> CurseForge</>}
                       >
                         <><IconModrinth /> Modrinth</>

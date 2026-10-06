@@ -372,11 +372,11 @@ async fn install_cf_one(
     }
 
     // === Download ===
-    let (download_url, resolved_source) = match file.download_url.as_ref() {
-        Some(u) => (u.clone(), "curseforge".to_string()),
+    let download_url = match file.download_url.as_ref() {
+        Some(u) => u.clone(),
         None => {
             // Check if Modrinth has this exact file via SHA-1
-            let mut cross_resolved: Option<(String, String)> = None;
+            let mut cross_resolved: Option<String> = None;
             if let Some(sha1) = file.hashes.first() {
                 if let Ok(map) = crate::services::modrinth::get_versions_by_hashes(&[sha1.clone()]).await {
                     if let Some(version) = map.get(sha1) {
@@ -392,7 +392,7 @@ async fn install_cf_one(
                                 file.file_name,
                                 version.project_id
                             );
-                            cross_resolved = Some((f.url.clone(), "modrinth".to_string()));
+                            cross_resolved = Some(f.url.clone());
                         }
                     }
                 }
@@ -447,7 +447,7 @@ async fn install_cf_one(
 
     let mut mod_entry = ModEntry {
         id: file_version_id.clone(),
-        source: resolved_source.clone(),
+        source: "curseforge".to_string(),
         project_id: mod_id.to_string(),
         version_id: file_version_id,
         filename: file.file_name.clone(),
@@ -474,8 +474,9 @@ async fn install_cf_one(
     let mut instance: Instance =
         serde_json::from_str(&content).map_err(|e| format!("Parse instance.json: {}", e))?;
 
-    if !instance.source_platforms.contains(&resolved_source) {
-        instance.source_platforms.push(resolved_source);
+    let cf_platform = "curseforge".to_string();
+    if !instance.source_platforms.contains(&cf_platform) {
+        instance.source_platforms.push(cf_platform);
     }
 
     match instance.mods.iter().position(|m| m.project_id == mod_id) {

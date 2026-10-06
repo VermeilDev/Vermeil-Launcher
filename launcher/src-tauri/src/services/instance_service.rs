@@ -66,6 +66,14 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
             }
         }
 
+        // If an entry has a purely numeric project_id (CurseForge database integer),
+        // ensure its source is "curseforge". This repairs entries where an SHA-1 fallback
+        // download from Modrinth CDN erroneously marked source as "modrinth".
+        if m.source == "modrinth" && m.project_id.parse::<u64>().is_ok() && !m.project_id.is_empty() {
+            m.source = "curseforge".to_string();
+            modified = true;
+        }
+
         if m.category == "mod" {
             let current_path = mods_dir.join(&m.filename);
             if m.loaders.is_empty() && current_path.exists() {
@@ -101,6 +109,13 @@ fn sanitize_instance_json(instance: &mut Instance, meta_path: &std::path::Path) 
                 );
             }
         }
+    }
+
+    if instance.mods.iter().any(|m| m.source == "curseforge")
+        && !instance.source_platforms.iter().any(|p| p == "curseforge")
+    {
+        instance.source_platforms.push("curseforge".to_string());
+        modified = true;
     }
 
     if instance.icon.starts_with("data:") {
@@ -628,11 +643,11 @@ pub async fn change_loader(
                 continue;
             }
 
-            let is_modrinth = (entry.source == "modrinth"
-                || (entry.source == "modpack" && entry.project_id.parse::<u64>().is_err()))
+            let is_cf_id = entry.project_id.parse::<u64>().is_ok();
+            let is_modrinth = (entry.source == "modrinth" || entry.source == "modpack")
+                && !is_cf_id
                 && !entry.project_id.is_empty();
-            let is_curseforge = (entry.source == "curseforge"
-                || (entry.source == "modpack" && entry.project_id.parse::<u64>().is_ok()))
+            let is_curseforge = (entry.source == "curseforge" || is_cf_id)
                 && !entry.project_id.is_empty();
 
             if is_modrinth {

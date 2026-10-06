@@ -1113,7 +1113,8 @@ const InstanceMods: Component = () => {
       });
       return;
     }
-    const src: "modrinth" | "curseforge" = mod.source === "curseforge" ? "curseforge" : "modrinth";
+    const isCf = mod.source === "curseforge" || /^\d+$/.test(mod.project_id);
+    const src: "modrinth" | "curseforge" = isCf ? "curseforge" : "modrinth";
     setDetailModSource(src);
     const hit: ModHit = {
       project_id: mod.project_id,
@@ -1280,7 +1281,7 @@ const InstanceMods: Component = () => {
       },
       execute: async (dlId: string) => {
         try {
-          const isCf = (mod as any).source === "curseforge" || detailModSource() === "curseforge" || (contentTab() === "browse" && modSource() === "curseforge");
+          const isCf = (mod as any).source === "curseforge" || detailModSource() === "curseforge" || (contentTab() === "browse" && modSource() === "curseforge") || /^\d+$/.test(mod.project_id);
           const resultJson = isCf
             ? await installCfModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat, versionId)
             : await installModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat, versionId);
