@@ -273,6 +273,14 @@ async fn install_one(
     // bandwidth, and a version another mod pins can be respected without first
     // fetching a file we'd only have to delete again.
     let instance_dir = paths::instances_dir().join(instance_id);
+    let target_folder = match category {
+        "resourcepack" => "resourcepacks",
+        "shader" => "shaderpacks",
+        "datapack" => "datapacks",
+        _ => "mods",
+    };
+    let target_dir = instance_dir.join(".minecraft").join(target_folder);
+
     let meta_path = instance_dir.join("instance.json");
     let installed_before: Option<ModEntry> = fs::read_to_string(&meta_path)
         .ok()
@@ -280,8 +288,10 @@ async fn install_one(
         .and_then(|inst| inst.mods.into_iter().find(|m| m.project_id == project_id));
 
     if let Some(ref prev) = installed_before {
-        // Already on exactly this version — nothing to download or rewrite.
-        if prev.version_id == version.id {
+        let prev_file = target_dir.join(&prev.filename);
+        // Already on exactly this version and file exists on disk — nothing to download or rewrite,
+        // unless the user explicitly requested a reinstall on a root install.
+        if prev.version_id == version.id && prev_file.exists() && (!is_root || !had_explicit_version) {
             return Ok(prev.clone());
         }
 
@@ -345,13 +355,6 @@ async fn install_one(
     };
 
     // === Download into the right folder for the category ===
-    let target_folder = match category {
-        "resourcepack" => "resourcepacks",
-        "shader" => "shaderpacks",
-        "datapack" => "datapacks",
-        _ => "mods",
-    };
-    let target_dir = instance_dir.join(".minecraft").join(target_folder);
     fs::create_dir_all(&target_dir)
         .map_err(|e| format!("Create {}: {}", target_folder, e))?;
 

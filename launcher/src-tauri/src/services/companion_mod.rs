@@ -475,6 +475,101 @@ fn read_dir_names(mods: &Path) -> Vec<String> {
     out
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompanionBuild {
+    pub file: String,
+    pub version: String,
+    pub minecraft_versions: Vec<String>,
+    pub loaders: Vec<String>,
+    pub size: u64,
+    pub is_active: bool,
+}
+
+/// List available companion builds for the instance's game version and loader.
+pub async fn get_available_builds(instance: &Instance) -> Result<Vec<CompanionBuild>, String> {
+    let manifest = fetch_manifest().await?;
+    let loader = instance.loader.loader_type.as_str();
+    let mods = mods_dir(&instance.id);
+    let installed_names = read_dir_names(&mods);
+
+    let mut builds = Vec::new();
+    for entry in manifest.entries {
+        let mc_match = entry.minecraft_versions.iter().any(|v| v == &instance.game_version);
+        let loader_match = entry.loaders.iter().any(|l| l == loader || (loader == "quilt" && l == "fabric"));
+        if mc_match && loader_match {
+            let version = parse_managed_filename(&entry.file)
+                .map(|(_, v, _)| v.to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+            let is_active = installed_names.iter().any(|n| {
+                let clean = n.strip_suffix(DISABLED_SUFFIX).unwrap_or(n);
+                clean == entry.file
+            });
+            builds.push(CompanionBuild {
+                file: entry.file,
+                version,
+                minecraft_versions: entry.minecraft_versions,
+                loaders: entry.loaders,
+                size: entry.size,
+                is_active,
+            });
+        }
+    }
+    builds.sort_by(|a, b| version_compare(&b.version, &a.version));
+    Ok(builds)
+}
+
+/// Reinstall or switch to a specific companion build on this instance.
+pub async fn install_build(instance: &Instance, file_name: Option<&str>) -> Result<String, String> {
+    let manifest = fetch_manifest().await?;
+    let loader = instance.loader.loader_type.as_str();
+
+    let entry = if let Some(target_file) = file_name {
+        manifest
+            .entries
+            .into_iter()
+            .find(|e| e.file == target_file)
+            .ok_or_else(|| format!("Companion build '{}' not found in manifest", target_file))?
+    } else {
+        manifest
+            .entries
+            .into_iter()
+            .find(|e| {
+                e.minecraft_versions.iter().any(|v| v == &instance.game_version)
+                    && e.loaders.iter().any(|l| l == loader || (loader == "quilt" && l == "fabric"))
+            })
+            .ok_or_else(|| {
+                format!("No companion build for Minecraft {} ({})", instance.game_version, loader)
+            })?
+    };
+
+    let mods = mods_dir(&instance.id);
+    fs::create_dir_all(&mods).map_err(|e| format!("create mods dir: {}", e))?;
+
+    // Download / verify from central cache
+    let central_path = ensure_central_jar(&entry).await?;
+    let dest = if instance.companion_enabled {
+        mods.join(&entry.file)
+    } else {
+        mods.join(format!("{}{}", entry.file, DISABLED_SUFFIX))
+    };
+
+    // Remove any previous companion jars first so clean replace happens
+    for name in read_dir_names(&mods) {
+        if is_managed(&name) {
+            let _ = fs::remove_file(mods.join(name));
+        }
+    }
+
+    fs::copy(&central_path, &dest).map_err(|e| format!("copy companion jar: {}", e))?;
+    tracing::info!("Installed companion mod build {} to instance {}", entry.file, instance.id);
+
+    let version = parse_managed_filename(&entry.file)
+        .map(|(_, v, _)| v.to_string())
+        .unwrap_or_else(|| "installed".to_string());
+
+    Ok(version)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -570,5 +665,12 @@ mod tests {
         assert!(is_managed_active_for_loader("vermeil-fabric-0.2.4+mc26.3.jar", "quilt"));
         assert!(!is_managed_active_for_loader("vermeil-fabric-0.2.4+mc26.3.jar", "neoforge"));
         assert!(is_managed_active_for_loader("vermeil-neoforge-0.2.4+mc26.3.jar", "neoforge"));
+    }
+
+    #[test]
+    fn test_companion_build_sorting() {
+        let mut versions = vec!["0.2.0", "0.2.5", "0.2.4", "0.1.9"];
+        versions.sort_by(|a, b| version_compare(b, a));
+        assert_eq!(versions, vec!["0.2.5", "0.2.4", "0.2.0", "0.1.9"]);
     }
 }

@@ -481,6 +481,36 @@ pub async fn set_instance_companion_enabled(id: String, enabled: bool) -> Result
     Ok(())
 }
 
+/// Query available Vermeil companion builds compatible with this instance.
+#[tauri::command]
+pub async fn get_instance_companion_builds(
+    id: String,
+) -> Result<Vec<crate::services::companion_mod::CompanionBuild>, String> {
+    let instance = instance_service::get_by_id(&id)
+        .await
+        .map_err(|e| e.to_string())?;
+    crate::services::companion_mod::get_available_builds(&instance).await
+}
+
+/// Reinstall or switch the Vermeil companion mod build on this instance.
+#[tauri::command]
+pub async fn reinstall_instance_companion(
+    id: String,
+    file: Option<String>,
+) -> Result<String, String> {
+    let mut instance = instance_service::get_by_id(&id)
+        .await
+        .map_err(|e| e.to_string())?;
+    let ver = crate::services::companion_mod::install_build(&instance, file.as_deref()).await?;
+    instance.companion_version = Some(ver.clone());
+    let meta_path = crate::util::paths::instances_dir().join(&id).join("instance.json");
+    if let Ok(json) = serde_json::to_string_pretty(&instance) {
+        let _ = std::fs::write(&meta_path, json);
+    }
+    crate::util::platform::update_windows_estimated_size();
+    Ok(ver)
+}
+
 /// Remove the in-game cape entirely.
 #[tauri::command]
 pub async fn clear_ingame_cape() -> Result<(), String> {

@@ -332,6 +332,9 @@ async fn install_cf_one(
     let file_version_id = file.file_id.to_string();
 
     let instance_dir = paths::instances_dir().join(instance_id);
+    let folder = target_folder(category);
+    let target_dir = instance_dir.join(".minecraft").join(folder);
+
     let meta_path = instance_dir.join("instance.json");
     let installed_before: Option<ModEntry> = fs::read_to_string(&meta_path)
         .ok()
@@ -339,7 +342,8 @@ async fn install_cf_one(
         .and_then(|inst| inst.mods.into_iter().find(|m| m.project_id == mod_id));
 
     if let Some(ref prev) = installed_before {
-        if prev.version_id == file_version_id {
+        let prev_file = target_dir.join(&prev.filename);
+        if prev.version_id == file_version_id && prev_file.exists() && (!is_root || !had_explicit_file) {
             return Ok(prev.clone());
         }
         if prev.pinned && !had_explicit_file {
@@ -421,8 +425,6 @@ async fn install_cf_one(
         }
     };
 
-    let folder = target_folder(category);
-    let target_dir = instance_dir.join(".minecraft").join(folder);
     fs::create_dir_all(&target_dir).map_err(|e| format!("Create {}: {}", folder, e))?;
 
     let task = DownloadTask {

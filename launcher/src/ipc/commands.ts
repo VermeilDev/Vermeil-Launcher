@@ -855,10 +855,27 @@ export const setIngameCape = (
 export const setIngameCapeEnabled = (enabled: boolean) =>
   invoke<void>("set_ingame_cape_enabled", { enabled });
 
+export interface CompanionBuild {
+  file: string;
+  version: string;
+  minecraft_versions: string[];
+  loaders: string[];
+  size: number;
+  is_active: boolean;
+}
+
 /** Per-instance on/off for the Vermeil companion mod. Default on for supported
  *  instances; off disables the managed jar in place (no re-download to re-enable). */
 export const setInstanceCompanionEnabled = (id: string, enabled: boolean) =>
   invoke<void>("set_instance_companion_enabled", { id, enabled });
+
+/** Query available Vermeil companion builds compatible with this instance. */
+export const getInstanceCompanionBuilds = (id: string) =>
+  invoke<CompanionBuild[]>("get_instance_companion_builds", { id });
+
+/** Reinstall or switch the Vermeil companion mod build on this instance. */
+export const reinstallInstanceCompanion = (id: string, file?: string) =>
+  invoke<string>("reinstall_instance_companion", { id, file });
 
 /** Remove the in-game cape entirely. */
 export const clearIngameCape = () => invoke<void>("clear_ingame_cape");

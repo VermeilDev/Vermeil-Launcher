@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, createSignal, createEffect, createMemo, createResource, untrack, For, Show, onMount, onCleanup } from "solid-js";
+import { Component, createSignal, createEffect, createMemo, createResource, untrack, on, For, Show, onMount, onCleanup } from "solid-js";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { setActiveScreen, instances, activeInstanceId, setActiveInstanceId, refetchInstances, refreshPinnedInstanceIds, pinnedInstanceIds, initialInstanceTab, gameRunning, setGameRunning, clearGameLogs, completeDownload, failDownload, startBulkBatch, endBulkBatch, showToast, gameLogsFor, setDockHidden, setDockPagination, logsPoppedOut, currentTheme, ensureAccountOrPrompt, downloads, launchingInstanceId, setLaunchingInstanceId } from "../App";
 import { reportDependencyIssues, DependencyIssue } from "../components/DependencyIssuesModal";
@@ -9,6 +9,7 @@ import { contentVersion } from "../lib/contentVersion";
 import { loaderLabel, loaderBadgeClass, loaderBannerColor } from "../lib/loader";
 import Dropdown, { DropdownOption } from "../components/Dropdown";
 import ModDetailModal from "../modals/ModDetailModal";
+import CompanionDetailModal from "../modals/CompanionDetailModal";
 import ChangeLoaderModal, { openChangeLoaderModal } from "../modals/ChangeLoaderModal";
 import { openPinInstancesModal } from "../modals/PinInstancesModal";
 import { formatDownloads, formatSize, formatVersionRange } from "../lib/format";
@@ -521,8 +522,10 @@ const InstanceMods: Component = () => {
   const PAGE_SIZE = 12;
   const [installedPage, setInstalledPage] = createSignal(1);
   const [modSource, setModSource] = createSignal<"modrinth" | "curseforge">("modrinth");
-  /** Browse result shown in the detail overlay, if any. */
+  /** Project shown in the detail overlay, if any. */
   const [detailMod, setDetailMod] = createSignal<ModHit | null>(null);
+  const [detailModSource, setDetailModSource] = createSignal<"modrinth" | "curseforge">("modrinth");
+  const [companionModalOpen, setCompanionModalOpen] = createSignal(false);
 
   interface IncompatiblePrompt {
     mod: ModHit;
@@ -1074,8 +1077,15 @@ const InstanceMods: Component = () => {
     modSource();
     browseFilter();
     currentPage();
-    setDetailMod(null);
+    if (contentTab() === "browse") {
+      setDetailMod(null);
+    }
   });
+
+  createEffect(on([contentTab, mainTab], () => {
+    setDetailMod(null);
+    setCompanionModalOpen(false);
+  }, { defer: true }));
 
   /**
    * Card click. Multi-select owns the gesture while it's active; otherwise the
@@ -1086,7 +1096,45 @@ const InstanceMods: Component = () => {
       if (!isModInstalled(mod.project_id)) toggleSelectItem(mod);
       return;
     }
+    setDetailModSource(modSource());
     setDetailMod(mod);
+  };
+
+  /**
+   * Click an installed content card to inspect its details, change its version,
+   * or reinstall it.
+   */
+  const handleInstalledCardClick = (mod: any) => {
+    if (!mod.project_id) {
+      showToast({
+        title: "Local file",
+        message: "This is a locally added file with no online repository linked.",
+        type: "info",
+      });
+      return;
+    }
+    const src: "modrinth" | "curseforge" = mod.source === "curseforge" ? "curseforge" : "modrinth";
+    setDetailModSource(src);
+    const hit: ModHit = {
+      project_id: mod.project_id,
+      slug: mod.project_id,
+      title: mod.title || mod.filename,
+      description: mod.description || "",
+      icon_url: mod.icon_url || null,
+      downloads: 0,
+      follows: 0,
+      client_side: null,
+      server_side: null,
+      categories: mod.loaders || [],
+      versions: mod.game_versions || [],
+      latest_version: mod.version_id,
+      version_name: mod.version_number,
+      author: mod.author,
+      project_type: mod.category || "mod",
+    };
+    (hit as any).category = mod.category || "mod";
+    (hit as any).source = src;
+    setDetailMod(hit);
   };
 
   const handleSourceToggle = () => {
@@ -1218,7 +1266,7 @@ const InstanceMods: Component = () => {
   const handleInstallMod = (mod: ModHit, versionId?: string) => {
     const inst = instance();
     if (!inst) return;
-    const cat = browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter();
+    const cat = (mod as any).category || (mod as any).project_type || (browseFilter() === "all" ? detectCategory(mod, inst.loader.type) : browseFilter());
     enqueueInstallTask({
       title: mod.title,
       projectId: mod.project_id,
@@ -1232,7 +1280,8 @@ const InstanceMods: Component = () => {
       },
       execute: async (dlId: string) => {
         try {
-          const resultJson = modSource() === "curseforge"
+          const isCf = (mod as any).source === "curseforge" || detailModSource() === "curseforge" || (contentTab() === "browse" && modSource() === "curseforge");
+          const resultJson = isCf
             ? await installCfModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat, versionId)
             : await installModToInstance(inst.id, mod.project_id, inst.loader.type, inst.game_version, cat, versionId);
           setLocalInstalled(prev => { const s = new Set(prev); s.add(mod.project_id); return s; });
@@ -2592,7 +2641,17 @@ const InstanceMods: Component = () => {
                 not deleted, so re-enabling needs no re-download). The jar itself
                 is launcher-managed, so there's no delete affordance. */}
             <Show when={showCompanion() && installedPage() === 1}>
-              <div class="card card--mod" style={(instance()?.companion_enabled === false || installedSelectMode()) ? "opacity:0.45" : ""}>
+              <div
+                class="card card--mod"
+                style={{
+                  opacity: (instance()?.companion_enabled === false || installedSelectMode()) ? "0.45" : "1",
+                  cursor: installedSelectMode() ? "default" : "pointer",
+                }}
+                onClick={() => {
+                  if (installedSelectMode()) return;
+                  setCompanionModalOpen(true);
+                }}
+              >
                 <div class="mod-card-header">
                   <div class="mod-card-icon mod-card-icon--companion">
                     <img src="/logo.png" alt="" draggable={false} />
@@ -2649,7 +2708,7 @@ const InstanceMods: Component = () => {
                   class={`card card--mod ${installedSelectMode() && selectedInstalled().has(mod.id) ? "mod-item-selected" : ""}`}
                   style={{
                     opacity: mod.enabled ? (isDeletingInstalled() && selectedInstalled().has(mod.id) ? "0.4" : "1") : "0.5",
-                    cursor: installedSelectMode() ? "pointer" : "default",
+                    cursor: "pointer",
                   }}
                   onClick={() => {
                     if (installedSelectMode()) {
@@ -2657,7 +2716,9 @@ const InstanceMods: Component = () => {
                       if (s.has(mod.id)) s.delete(mod.id);
                       else s.add(mod.id);
                       setSelectedInstalled(s);
+                      return;
                     }
+                    handleInstalledCardClick(mod);
                   }}
                 >
                   <Show when={installedSelectMode()}>
@@ -3099,175 +3160,7 @@ const InstanceMods: Component = () => {
               </div>
               </Show>
             </div>
-            {/* Detail overlay. Outside the grid, so opening it can't reflow the
-                results behind it. */}
-            <ModDetailModal
-              mod={detailMod()}
-              source={modSource()}
-              loader={instance()?.loader?.type ?? ""}
-              /* The instance's version, deliberately NOT the free-text version
-                 box. That box scopes the *search*; compatibility has to be judged
-                 against the instance we'd install into, which is the version
-                 `handleInstallMod` passes. Using the box here let the picker
-                 label a version compatible that the installer then resolved
-                 differently — or, on CurseForge, silently substituted. */
-              gameVersion={instance()?.game_version ?? ""}
-              category={browseFilter() === "all" ? (detailMod() ? detectCategory(detailMod()!, instance()?.loader?.type) : "mod") : browseFilter()}
-              loaders={detailMod() ? extractLoaders(detailMod()!.categories) : []}
-              installedVersionId={instanceMods().find((m: any) => m.project_id === detailMod()?.project_id)?.version_id}
-              busy={isTaskQueuedOrActive(detailMod()?.project_id || "", instance()?.id)}
-              onClose={() => setDetailMod(null)}
-              /* Close on install. The install-progress popup and toasts sit at
-                 z-index 9998/9999, well above the modal overlay's 50, so leaving
-                 the overlay open would let them land on top of its controls.
-                 Closing also matches the intent — the choice has been made. */
-              onInstall={(v) => {
-                const m = detailMod();
-                if (!m) return;
-                setDetailMod(null);
-                handleInstallMod(m, v.id);
-              }}
-            />
-            {/* Compatibility Confirmation Modal */}
-            <Show when={incompatiblePrompt()}>
-              {(prompt) => (
-                <div class="modal-overlay" onClick={() => setIncompatiblePrompt(null)}>
-                  <div
-                    class="modal panel panel--bracketed"
-                    style="max-width: 500px; width: 100%;"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div class="modal-header">
-                      <div class="modal-header-left">
-                        <span class="card-section-tag tag-settings-accent">
-                          COMPATIBILITY NOTICE
-                        </span>
-                        <span class="modal-title">
-                          No Matching Version Found
-                        </span>
-                      </div>
-                    </div>
 
-                    <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
-                      {/* Target Content Banner */}
-                      <div style="display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm, 4px);">
-                        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm, 4px); overflow: hidden; background: var(--surface-panel); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border);">
-                          <Show
-                            when={prompt().mod.icon_url}
-                            fallback={<span style="color: var(--accent);"><IconPackage /></span>}
-                          >
-                            <img
-                              src={prompt().mod.icon_url!}
-                              alt=""
-                              style="width: 100%; height: 100%; object-fit: cover;"
-                            />
-                          </Show>
-                        </div>
-                        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
-                          <span style="font-weight: 600; font-size: var(--fs-md, 14px); color: var(--text-bright, #fff); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            {prompt().mod.title}
-                          </span>
-                          <span style="font-size: var(--fs-xs, 12px); color: var(--text-muted); text-transform: capitalize;">
-                            {prompt().category === "resourcepack" ? "Resource Pack" : prompt().category === "shader" ? "Shader Pack" : prompt().category}
-                            {prompt().mod.author ? ` · by ${prompt().mod.author}` : ""}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Explanation Text */}
-                      <div style="font-size: var(--fs-sm, 13px); line-height: 1.5; color: var(--text);">
-                        <p style="margin: 0 0 10px 0;">
-                          No release strictly targeting <strong>Minecraft {prompt().gameVersion}</strong>
-                          <Show when={prompt().category === "mod" && prompt().loader && prompt().loader !== "vanilla"}>
-                            {" "}(<strong>{prompt().loader}</strong>)
-                          </Show>{" "}
-                          was found for this {prompt().category === "resourcepack" ? "resource pack" : prompt().category === "shader" ? "shader" : "content"}.
-                        </p>
-                        <Show
-                          when={prompt().category === "resourcepack" || prompt().category === "shader"}
-                          fallback={
-                            <p style="margin: 0; color: var(--warn);">
-                              Installing an incompatible mod may cause Minecraft to crash during startup or corrupt instance state.
-                            </p>
-                          }
-                        >
-                          <p style="margin: 0; color: var(--text-muted);">
-                            Resource packs and shaders frequently continue to work across Minecraft releases. You can force-install the latest available build or browse all files.
-                          </p>
-                        </Show>
-                      </div>
-
-                      {/* Version details box */}
-                      <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); font-size: var(--fs-xs, 12px);">
-                        <div style="display: flex; justify-content: space-between; gap: 12px;">
-                          <span style="color: var(--text-muted);">Instance target:</span>
-                          <span style="font-weight: 500; color: var(--text-bright);">
-                            Minecraft {prompt().gameVersion}
-                            <Show when={prompt().loader && prompt().loader !== "vanilla"}>
-                              {" "}· {prompt().loader}
-                            </Show>
-                          </span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; gap: 12px;">
-                          <span style="color: var(--text-muted);">Latest available build:</span>
-                          <span style="font-weight: 500; color: var(--accent);">
-                            <Show when={!prompt().resolvingVersion} fallback={"Resolving..."}>
-                              {prompt().latestVersionName || prompt().latestVersionId || "Latest release"}
-                            </Show>
-                          </span>
-                        </div>
-                        <Show when={prompt().supportedVersions.length > 0}>
-                          <div style="display: flex; justify-content: space-between; gap: 12px;">
-                            <span style="color: var(--text-muted);">Known versions:</span>
-                            <span style="color: var(--text); text-align: right; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" data-tip={prompt().supportedVersions.join(", ")}>
-                              {prompt().supportedVersions.slice(0, 5).join(", ")}
-                              {prompt().supportedVersions.length > 5 ? ` +${prompt().supportedVersions.length - 5} more` : ""}
-                            </span>
-                          </div>
-                        </Show>
-                      </div>
-                    </div>
-
-                    {/* Modal Footer with Actions */}
-                    <div class="modal-footer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                      <button
-                        type="button"
-                        class="btn btn--subtle"
-                        onClick={() => setIncompatiblePrompt(null)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn--secondary"
-                        onClick={() => {
-                          const p = prompt();
-                          setIncompatiblePrompt(null);
-                          setDetailMod(p.mod);
-                        }}
-                      >
-                        Browse All Versions
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn--primary"
-                        disabled={prompt().resolvingVersion || !prompt().latestVersionId}
-                        onClick={() => {
-                          const p = prompt();
-                          setIncompatiblePrompt(null);
-                          if (p.latestVersionId) {
-                            handleInstallMod(p.mod, p.latestVersionId);
-                          }
-                        }}
-                      >
-                        <IconDownload />
-                        <span>Install Latest Anyway</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Show>
             {/* Bulk install floating dock */}
             <Show when={selectMode() && selectedItems().size > 0 && !bulkInstalling()}>
               <SelectionDock
@@ -3511,6 +3404,181 @@ const InstanceMods: Component = () => {
             </div>
           </div>
         </Show>
+      </Show>
+
+      {/* Detail overlay. Rendered at screen root so it displays over any active tab (Installed, Browse, Files). */}
+      <ModDetailModal
+        mod={detailMod()}
+        source={detailModSource()}
+        loader={instance()?.loader?.type ?? ""}
+        gameVersion={instance()?.game_version ?? ""}
+        category={detailMod() ? ((detailMod() as any).category || (detailMod() as any).project_type || (browseFilter() === "all" ? detectCategory(detailMod()!, instance()?.loader?.type) : browseFilter())) : "mod"}
+        loaders={detailMod() ? extractLoaders(detailMod()!.categories) : []}
+        installedVersionId={instanceMods().find((m: any) => m.project_id === detailMod()?.project_id)?.version_id}
+        busy={isTaskQueuedOrActive(detailMod()?.project_id || "", instance()?.id)}
+        onClose={() => setDetailMod(null)}
+        onInstall={(v) => {
+          const m = detailMod();
+          if (!m) return;
+          setDetailMod(null);
+          handleInstallMod(m, v.id);
+        }}
+      />
+
+      {/* Vermeil Companion Mod detail and reinstall modal */}
+      <CompanionDetailModal
+        instanceId={instance()?.id ?? ""}
+        gameVersion={instance()?.game_version ?? ""}
+        loader={instance()?.loader?.type ?? ""}
+        companionVersion={instance()?.companion_version || (instanceDetail() as any)?.companion_version}
+        companionEnabled={instance()?.companion_enabled}
+        isOpen={companionModalOpen()}
+        onClose={() => setCompanionModalOpen(false)}
+        onChanged={async () => {
+          await refetchInstances();
+          await refetchDetail();
+        }}
+      />
+
+      {/* Compatibility Confirmation Modal */}
+      <Show when={incompatiblePrompt()}>
+        {(prompt) => (
+          <div class="modal-overlay" onClick={() => setIncompatiblePrompt(null)}>
+            <div
+              class="modal panel panel--bracketed"
+              style="max-width: 500px; width: 100%;"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div class="modal-header">
+                <div class="modal-header-left">
+                  <span class="card-section-tag tag-settings-accent">
+                    COMPATIBILITY NOTICE
+                  </span>
+                  <span class="modal-title">
+                    No Matching Version Found
+                  </span>
+                </div>
+              </div>
+
+              <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                {/* Target Content Banner */}
+                <div style="display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm, 4px);">
+                  <div style="width: 44px; height: 44px; border-radius: var(--radius-sm, 4px); overflow: hidden; background: var(--surface-panel); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border);">
+                    <Show
+                      when={prompt().mod.icon_url}
+                      fallback={<span style="color: var(--accent);"><IconPackage /></span>}
+                    >
+                      <img
+                        src={prompt().mod.icon_url!}
+                        alt=""
+                        style="width: 100%; height: 100%; object-fit: cover;"
+                      />
+                    </Show>
+                  </div>
+                  <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
+                    <span style="font-weight: 600; font-size: var(--fs-md, 14px); color: var(--text-bright, #fff); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {prompt().mod.title}
+                    </span>
+                    <span style="font-size: var(--fs-xs, 12px); color: var(--text-muted); text-transform: capitalize;">
+                      {prompt().category === "resourcepack" ? "Resource Pack" : prompt().category === "shader" ? "Shader Pack" : prompt().category}
+                      {prompt().mod.author ? ` · by ${prompt().mod.author}` : ""}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Explanation Text */}
+                <div style="font-size: var(--fs-sm, 13px); line-height: 1.5; color: var(--text);">
+                  <p style="margin: 0 0 10px 0;">
+                    No release strictly targeting <strong>Minecraft {prompt().gameVersion}</strong>
+                    <Show when={prompt().category === "mod" && prompt().loader && prompt().loader !== "vanilla"}>
+                      {" "}(<strong>{prompt().loader}</strong>)
+                    </Show>{" "}
+                    was found for this {prompt().category === "resourcepack" ? "resource pack" : prompt().category === "shader" ? "shader" : "content"}.
+                  </p>
+                  <Show
+                    when={prompt().category === "resourcepack" || prompt().category === "shader"}
+                    fallback={
+                      <p style="margin: 0; color: var(--warn);">
+                        Installing an incompatible mod may cause Minecraft to crash during startup or corrupt instance state.
+                      </p>
+                    }
+                  >
+                    <p style="margin: 0; color: var(--text-muted);">
+                      Resource packs and shaders frequently continue to work across Minecraft releases. You can force-install the latest available build or browse all files.
+                    </p>
+                  </Show>
+                </div>
+
+                {/* Version details box */}
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); font-size: var(--fs-xs, 12px);">
+                  <div style="display: flex; justify-content: space-between; gap: 12px;">
+                    <span style="color: var(--text-muted);">Instance target:</span>
+                    <span style="font-weight: 500; color: var(--text-bright);">
+                      Minecraft {prompt().gameVersion}
+                      <Show when={prompt().loader && prompt().loader !== "vanilla"}>
+                        {" "}· {prompt().loader}
+                      </Show>
+                    </span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; gap: 12px;">
+                    <span style="color: var(--text-muted);">Latest available build:</span>
+                    <span style="font-weight: 500; color: var(--accent);">
+                      <Show when={!prompt().resolvingVersion} fallback={"Resolving..."}>
+                        {prompt().latestVersionName || prompt().latestVersionId || "Latest release"}
+                      </Show>
+                    </span>
+                  </div>
+                  <Show when={prompt().supportedVersions.length > 0}>
+                    <div style="display: flex; justify-content: space-between; gap: 12px;">
+                      <span style="color: var(--text-muted);">Known versions:</span>
+                      <span style="color: var(--text); text-align: right; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" data-tip={prompt().supportedVersions.join(", ")}>
+                        {prompt().supportedVersions.slice(0, 5).join(", ")}
+                        {prompt().supportedVersions.length > 5 ? ` +${prompt().supportedVersions.length - 5} more` : ""}
+                      </span>
+                    </div>
+                  </Show>
+                </div>
+              </div>
+
+              {/* Modal Footer with Actions */}
+              <div class="modal-footer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                <button
+                  type="button"
+                  class="btn btn--subtle"
+                  onClick={() => setIncompatiblePrompt(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--secondary"
+                  onClick={() => {
+                    const p = prompt();
+                    setIncompatiblePrompt(null);
+                    setDetailMod(p.mod);
+                  }}
+                >
+                  Browse All Versions
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--primary"
+                  disabled={prompt().resolvingVersion || !prompt().latestVersionId}
+                  onClick={() => {
+                    const p = prompt();
+                    setIncompatiblePrompt(null);
+                    if (p.latestVersionId) {
+                      handleInstallMod(p.mod, p.latestVersionId);
+                    }
+                  }}
+                >
+                  <IconDownload />
+                  <span>Install Latest Anyway</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Show>
 
       </Show>

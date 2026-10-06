@@ -12,6 +12,7 @@ import {
   IconModrinth,
   IconCurseForge,
   IconSearch,
+  IconRefresh,
 } from "../components/Icons";
 
 interface Props {
@@ -516,9 +517,9 @@ const ModDetailModal: Component<Props> = (props) => {
                 </button>
                 <button
                   type="button"
-                  class="btn btn--primary"
+                  class={`btn ${isSelectedInstalled() ? "btn--secondary" : "btn--primary"}`}
                   disabled={
-                    props.busy || !selectedVersionObj() || isSelectedInstalled()
+                    props.busy || !selectedVersionObj()
                   }
                   onClick={() => {
                     const v = selectedVersionObj();
@@ -532,12 +533,12 @@ const ModDetailModal: Component<Props> = (props) => {
                         <>
                           <IconDownload />{" "}
                           {selectedVersionObj()
-                            ? `Install ${selectedVersionObj()!.name}`
-                            : "Install Mod"}
+                            ? (props.installedVersionId ? `Switch to ${selectedVersionObj()!.name}` : `Install ${selectedVersionObj()!.name}`)
+                            : "Install"}
                         </>
                       }
                     >
-                      <><IconCheck /> Installed</>
+                      <><IconRefresh /> Reinstall {selectedVersionObj()?.name}</>
                     </Show>
                   </Show>
                 </button>
