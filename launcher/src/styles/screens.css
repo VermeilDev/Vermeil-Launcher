@@ -4321,13 +4321,21 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.dl-card-meta .badge--vnum {
+  max-width: 85px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .dl-card-time {
   font-size: 9px;
   color: var(--muted);
   margin-left: auto;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 

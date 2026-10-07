@@ -388,7 +388,7 @@ const Downloads: Component = () => {
                     <span class="badge badge--version">{activeContentItem()!.gameVersion}</span>
                   </Show>
                   <Show when={activeContentItem()?.versionNumber}>
-                    <span class="badge badge--vnum">
+                    <span class="badge badge--vnum tip-below" data-tip={activeContentItem()!.versionNumber}>
                       {activeContentItem()!.versionNumber}
                     </span>
                   </Show>
@@ -690,7 +690,7 @@ const ActiveDownloadCard: Component<{ entry: DownloadEntry; position?: number }>
               <span class="badge badge--version">{cardGameVersion()}</span>
             </Show>
             <Show when={cardVersionNumber()}>
-              <span class="badge badge--vnum">{cardVersionNumber()}</span>
+              <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>{cardVersionNumber()}</span>
             </Show>
           </div>
         </div>
@@ -810,16 +810,47 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
             </span>
           </div>
           <div class="dl-card-meta">
-            <span class="badge">{getCategoryLabel(dl().category)}</span>
-            <Show when={cardLoader()}>
-              <span class={`badge badge--loader badge--${cardLoader()}`}>{cardLoader()}</span>
-            </Show>
-            <Show when={cardGameVersion() && dl().category !== "java"}>
-              <span class="badge badge--version">{cardGameVersion()}</span>
-            </Show>
-            <Show when={cardVersionNumber()}>
-              <span class="badge badge--vnum">{cardVersionNumber()}</span>
-            </Show>
+            {(() => {
+              const hasCat = Boolean(dl().category);
+              const hasLoader = Boolean(cardLoader());
+              const hasGv = Boolean(cardGameVersion() && dl().category !== "java");
+              const hasVnum = Boolean(cardVersionNumber());
+
+              const coreCount = (hasCat ? 1 : 0) + (hasLoader ? 1 : 0) + (hasGv ? 1 : 0);
+              const extraCount = hasVnum ? 1 : 0;
+              const shouldOverflow = (coreCount + extraCount > 3) && extraCount > 0;
+
+              return (
+                <>
+                  <Show when={hasCat}>
+                    <span class="badge">{getCategoryLabel(dl().category)}</span>
+                  </Show>
+                  <Show when={hasLoader}>
+                    <span class={`badge badge--loader badge--${cardLoader()}`}>{cardLoader()}</span>
+                  </Show>
+                  <Show when={hasGv}>
+                    <span class="badge badge--version">{cardGameVersion()}</span>
+                  </Show>
+                  <Show when={hasVnum && !shouldOverflow}>
+                    <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>
+                      {cardVersionNumber()}
+                    </span>
+                  </Show>
+                  <Show when={shouldOverflow}>
+                    <span class="badge badge--overflow-pill" onClick={(e) => e.stopPropagation()}>
+                      +{extraCount}
+                      <div class="badge-popover" onClick={(e) => e.stopPropagation()}>
+                        <Show when={hasVnum}>
+                          <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>
+                            {cardVersionNumber()}
+                          </span>
+                        </Show>
+                      </div>
+                    </span>
+                  </Show>
+                </>
+              );
+            })()}
             <span class="dl-card-time">{props.timeAgo(dl().timestamp)}</span>
           </div>
         </div>

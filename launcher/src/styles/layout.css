@@ -133,7 +133,8 @@ body:has(.news-modal-overlay) [data-tip]:hover {
 }
 
 /* Unmask and unclip badge tracks when hovering tooltips inside them */
-.inst-card-badges:has([data-tip]:hover) {
+.inst-card-badges:has([data-tip]:hover),
+.dl-card-meta:has([data-tip]:hover) {
   overflow: visible !important;
   mask-image: none !important;
   -webkit-mask-image: none !important;
