@@ -1522,6 +1522,10 @@ pub async fn launch(
         let _ = fs::write(&options_path, &content);
     }
 
+    // 7c. Sync Quick Join deck servers into instance servers.dat so the servers
+    // are immediately available in the Minecraft Multiplayer screen when playing regularly.
+    crate::services::server_ping::sync_quick_servers_to_instance(&game_dir);
+
     // Ensure the companion mod jar matches the in-game cape state: install the
     // version/loader-matched jar into mods/ when the cape is on (download-on-
     // demand, the first time it's needed), or remove our managed jar when off /

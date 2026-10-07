@@ -287,7 +287,7 @@ pub fn update_cached_server_ping(info: &ServerPingInfo) {
     }
 }
 
-/// Add or update a server entry in the Quick Join deck (max 5 servers).
+/// Add or update a server entry in the Quick Join deck (max 6 servers).
 pub fn save_quick_server(entry: QuickServerEntry) -> Result<Vec<QuickServerEntry>, AppError> {
     let _lock = QUICK_SERVERS_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let mut servers = get_quick_servers().unwrap_or_default();
@@ -319,18 +319,18 @@ pub fn save_quick_server(entry: QuickServerEntry) -> Result<Vec<QuickServerEntry
             existing.favicon = entry.favicon;
         }
     } else {
-        if servers.len() >= 5 {
+        if servers.len() >= 6 {
             return Err(AppError::Other(
-                "Maximum limit of 5 servers reached in Quick Join deck".into(),
+                "Maximum limit of 6 servers reached in Quick Join deck".into(),
             ));
         }
         servers.push(entry);
     }
 
     save_quick_servers_internal(&servers)?;
+    sync_quick_servers_to_all_instances();
     Ok(servers)
 }
-
 
 /// Remove a server entry from the Quick Join deck.
 pub fn remove_quick_server(address: &str) -> Result<Vec<QuickServerEntry>, AppError> {
@@ -340,4 +340,410 @@ pub fn remove_quick_server(address: &str) -> Result<Vec<QuickServerEntry>, AppEr
     servers.retain(|s| s.address.trim().to_lowercase() != normalized);
     save_quick_servers_internal(&servers)?;
     Ok(servers)
+}
+
+/// Represents a parsed server entry from Minecraft's binary `servers.dat` (uncompressed NBT).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ServerDatEntry {
+    pub name: String,
+    pub ip: String,
+    pub accept_textures: Option<i8>,
+    pub icon: Option<String>,
+}
+
+/// Skips a single NBT payload given its tag type byte.
+fn skip_nbt_tag(tag_type: u8, data: &[u8], cursor: &mut usize) -> bool {
+    match tag_type {
+        0x01 => {
+            if *cursor + 1 > data.len() { return false; }
+            *cursor += 1;
+        }
+        0x02 => {
+            if *cursor + 2 > data.len() { return false; }
+            *cursor += 2;
+        }
+        0x03 | 0x05 => {
+            if *cursor + 4 > data.len() { return false; }
+            *cursor += 4;
+        }
+        0x04 | 0x06 => {
+            if *cursor + 8 > data.len() { return false; }
+            *cursor += 8;
+        }
+        0x07 => {
+            if *cursor + 4 > data.len() { return false; }
+            let len = i32::from_be_bytes([data[*cursor], data[*cursor + 1], data[*cursor + 2], data[*cursor + 3]]);
+            *cursor += 4;
+            if len > 0 {
+                let bytes = len as usize;
+                if *cursor + bytes > data.len() { return false; }
+                *cursor += bytes;
+            }
+        }
+        0x08 => {
+            if *cursor + 2 > data.len() { return false; }
+            let len = u16::from_be_bytes([data[*cursor], data[*cursor + 1]]) as usize;
+            *cursor += 2;
+            if *cursor + len > data.len() { return false; }
+            *cursor += len;
+        }
+        0x09 => {
+            if *cursor + 5 > data.len() { return false; }
+            let elem_type = data[*cursor];
+            let len = i32::from_be_bytes([data[*cursor + 1], data[*cursor + 2], data[*cursor + 3], data[*cursor + 4]]);
+            *cursor += 5;
+            if len > 0 {
+                for _ in 0..len {
+                    if !skip_nbt_tag(elem_type, data, cursor) { return false; }
+                }
+            }
+        }
+        0x0a => {
+            while *cursor < data.len() {
+                let sub_type = data[*cursor];
+                *cursor += 1;
+                if sub_type == 0x00 { break; }
+                if *cursor + 2 > data.len() { return false; }
+                let name_len = u16::from_be_bytes([data[*cursor], data[*cursor + 1]]) as usize;
+                *cursor += 2 + name_len;
+                if !skip_nbt_tag(sub_type, data, cursor) { return false; }
+            }
+        }
+        0x0b => {
+            if *cursor + 4 > data.len() { return false; }
+            let len = i32::from_be_bytes([data[*cursor], data[*cursor + 1], data[*cursor + 2], data[*cursor + 3]]);
+            *cursor += 4;
+            if len > 0 {
+                let bytes = (len as usize) * 4;
+                if *cursor + bytes > data.len() { return false; }
+                *cursor += bytes;
+            }
+        }
+        0x0c => {
+            if *cursor + 4 > data.len() { return false; }
+            let len = i32::from_be_bytes([data[*cursor], data[*cursor + 1], data[*cursor + 2], data[*cursor + 3]]);
+            *cursor += 4;
+            if len > 0 {
+                let bytes = (len as usize) * 8;
+                if *cursor + bytes > data.len() { return false; }
+                *cursor += bytes;
+            }
+        }
+        _ => return false,
+    }
+    true
+}
+
+/// Parses an uncompressed NBT `servers.dat` byte buffer into a list of `ServerDatEntry`.
+pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
+    let mut servers = Vec::new();
+    if data.len() < 3 || data[0] != 0x0a {
+        return servers;
+    }
+    const SERVERS_LIST_SIG: &[u8] = b"\x09\x00\x07servers\x0a";
+    let Some(pos) = data.windows(SERVERS_LIST_SIG.len()).position(|w| w == SERVERS_LIST_SIG) else {
+        return servers;
+    };
+
+    let count_pos = pos + SERVERS_LIST_SIG.len();
+    if count_pos + 4 > data.len() {
+        return servers;
+    }
+    let count = i32::from_be_bytes([
+        data[count_pos],
+        data[count_pos + 1],
+        data[count_pos + 2],
+        data[count_pos + 3],
+    ]);
+    if count <= 0 {
+        return servers;
+    }
+
+    let mut cursor = count_pos + 4;
+    for _ in 0..count {
+        if cursor >= data.len() {
+            break;
+        }
+        let mut name: Option<String> = None;
+        let mut ip: Option<String> = None;
+        let mut accept_textures: Option<i8> = None;
+        let mut icon: Option<String> = None;
+
+        while cursor < data.len() {
+            let tag_type = data[cursor];
+            cursor += 1;
+            if tag_type == 0x00 {
+                break;
+            }
+            if cursor + 2 > data.len() {
+                break;
+            }
+            let name_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+            cursor += 2;
+            if cursor + name_len > data.len() {
+                break;
+            }
+            let tag_name = String::from_utf8_lossy(&data[cursor..cursor + name_len]).to_string();
+            cursor += name_len;
+
+            match (tag_type, tag_name.as_str()) {
+                (0x01, "acceptTextures") => {
+                    if cursor < data.len() {
+                        accept_textures = Some(data[cursor] as i8);
+                        cursor += 1;
+                    }
+                }
+                (0x08, "name") => {
+                    if cursor + 2 <= data.len() {
+                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                        cursor += 2;
+                        if cursor + str_len <= data.len() {
+                            name = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                            cursor += str_len;
+                        }
+                    }
+                }
+                (0x08, "ip") => {
+                    if cursor + 2 <= data.len() {
+                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                        cursor += 2;
+                        if cursor + str_len <= data.len() {
+                            ip = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                            cursor += str_len;
+                        }
+                    }
+                }
+                (0x08, "icon") => {
+                    if cursor + 2 <= data.len() {
+                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                        cursor += 2;
+                        if cursor + str_len <= data.len() {
+                            icon = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                            cursor += str_len;
+                        }
+                    }
+                }
+                _ => {
+                    if !skip_nbt_tag(tag_type, data, &mut cursor) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if let Some(ip) = ip {
+            servers.push(ServerDatEntry {
+                name: name.unwrap_or_else(|| ip.clone()),
+                ip,
+                accept_textures,
+                icon,
+            });
+        }
+    }
+
+    servers
+}
+
+/// Writes a list of `ServerDatEntry` into an uncompressed NBT `servers.dat` file atomically.
+pub fn write_servers_dat(path: &std::path::Path, servers: &[ServerDatEntry]) -> std::io::Result<()> {
+    let mut buf = Vec::new();
+
+    // TAG_Compound (0x0a), name "" (length 0)
+    buf.push(0x0a);
+    buf.extend_from_slice(&0u16.to_be_bytes());
+
+    // TAG_List "servers"
+    buf.push(0x09);
+    buf.extend_from_slice(&(7u16).to_be_bytes());
+    buf.extend_from_slice(b"servers");
+
+    // Element type: TAG_Compound (0x0a)
+    buf.push(0x0a);
+
+    // List count: i32 BE
+    buf.extend_from_slice(&(servers.len() as i32).to_be_bytes());
+
+    for s in servers {
+        // "name": TAG_String (0x08)
+        buf.push(0x08);
+        buf.extend_from_slice(&(4u16).to_be_bytes());
+        buf.extend_from_slice(b"name");
+        let name_bytes = s.name.as_bytes();
+        buf.extend_from_slice(&(name_bytes.len() as u16).to_be_bytes());
+        buf.extend_from_slice(name_bytes);
+
+        // "ip": TAG_String (0x08)
+        buf.push(0x08);
+        buf.extend_from_slice(&(2u16).to_be_bytes());
+        buf.extend_from_slice(b"ip");
+        let ip_bytes = s.ip.as_bytes();
+        buf.extend_from_slice(&(ip_bytes.len() as u16).to_be_bytes());
+        buf.extend_from_slice(ip_bytes);
+
+        // "icon": TAG_String (0x08)
+        if let Some(ref icon) = s.icon {
+            if !icon.is_empty() {
+                buf.push(0x08);
+                buf.extend_from_slice(&(4u16).to_be_bytes());
+                buf.extend_from_slice(b"icon");
+                let icon_bytes = icon.as_bytes();
+                buf.extend_from_slice(&(icon_bytes.len() as u16).to_be_bytes());
+                buf.extend_from_slice(icon_bytes);
+            }
+        }
+
+        // "acceptTextures": TAG_Byte (0x01)
+        buf.push(0x01);
+        buf.extend_from_slice(&(14u16).to_be_bytes());
+        buf.extend_from_slice(b"acceptTextures");
+        buf.push(s.accept_textures.unwrap_or(1) as u8);
+
+        // TAG_End
+        buf.push(0x00);
+    }
+
+    // Root TAG_End
+    buf.push(0x00);
+
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let temp_path = path.with_extension("tmp");
+    std::fs::write(&temp_path, &buf)?;
+    std::fs::rename(&temp_path, path)?;
+
+    Ok(())
+}
+
+/// Synchronizes the launcher's Quick Join servers into an instance's `.minecraft/servers.dat`.
+/// Preserves any existing servers already present in `servers.dat` while ensuring all Quick Join servers are available.
+pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
+    let quick_servers = match get_quick_servers() {
+        Ok(s) if !s.is_empty() => s,
+        _ => return,
+    };
+
+    let servers_dat_path = game_dir.join("servers.dat");
+    let mut current_servers = if servers_dat_path.exists() {
+        if let Ok(bytes) = std::fs::read(&servers_dat_path) {
+            parse_servers_dat(&bytes)
+        } else {
+            Vec::new()
+        }
+    } else {
+        Vec::new()
+    };
+
+    let mut modified = false;
+
+    for qs in &quick_servers {
+        let qs_addr_norm = qs.address.trim().to_lowercase();
+        if qs_addr_norm.is_empty() {
+            continue;
+        }
+
+        if let Some(existing) = current_servers.iter_mut().find(|s| s.ip.trim().to_lowercase() == qs_addr_norm) {
+            if !qs.name.trim().is_empty() && (existing.name == "Minecraft Server" || existing.name.is_empty()) {
+                existing.name = qs.name.clone();
+                modified = true;
+            }
+            if existing.icon.is_none() && qs.favicon.is_some() {
+                existing.icon = qs.favicon.clone();
+                modified = true;
+            }
+        } else {
+            current_servers.push(ServerDatEntry {
+                name: if qs.name.trim().is_empty() { qs.address.clone() } else { qs.name.clone() },
+                ip: qs.address.clone(),
+                accept_textures: Some(1),
+                icon: qs.favicon.clone(),
+            });
+            modified = true;
+        }
+    }
+
+    if modified || !servers_dat_path.exists() {
+        if let Err(e) = write_servers_dat(&servers_dat_path, &current_servers) {
+            tracing::warn!("Failed to sync servers.dat for instance at {:?}: {}", game_dir, e);
+        } else {
+            tracing::info!("Synced {} Quick Join servers into {:?}", current_servers.len(), servers_dat_path);
+        }
+    }
+}
+
+/// Synchronizes the launcher's Quick Join servers into all existing instances on disk.
+pub fn sync_quick_servers_to_all_instances() {
+    let instances_dir = crate::util::paths::instances_dir();
+    let Ok(entries) = std::fs::read_dir(instances_dir) else { return; };
+    for entry in entries.flatten() {
+        let game_dir = entry.path().join(".minecraft");
+        if game_dir.exists() {
+            sync_quick_servers_to_instance(&game_dir);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_and_write_servers_dat_roundtrip() {
+        let temp_dir = std::env::temp_dir().join(format!("vermeil_test_servers_{}", uuid::Uuid::new_v4()));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let servers_path = temp_dir.join("servers.dat");
+
+        let sample_servers = vec![
+            ServerDatEntry {
+                name: "Hypixel Network".to_string(),
+                ip: "mc.hypixel.net".to_string(),
+                accept_textures: Some(1),
+                icon: Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==".to_string()),
+            },
+            ServerDatEntry {
+                name: "DonutSMP".to_string(),
+                ip: "donutsmp.net".to_string(),
+                accept_textures: Some(2),
+                icon: None,
+            },
+        ];
+
+        let write_res = write_servers_dat(&servers_path, &sample_servers);
+        assert!(write_res.is_ok());
+
+        let raw_bytes = std::fs::read(&servers_path).expect("Failed to read test servers.dat");
+        let parsed = parse_servers_dat(&raw_bytes);
+
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0].name, "Hypixel Network");
+        assert_eq!(parsed[0].ip, "mc.hypixel.net");
+        assert_eq!(parsed[0].accept_textures, Some(1));
+        assert_eq!(parsed[0].icon.as_deref(), Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="));
+
+        assert_eq!(parsed[1].name, "DonutSMP");
+        assert_eq!(parsed[1].ip, "donutsmp.net");
+        assert_eq!(parsed[1].accept_textures, Some(2));
+        assert_eq!(parsed[1].icon, None);
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_parse_real_hypixel_servers_dat() {
+        // Raw bytes extracted from real vanilla servers.dat containing Hypixel
+        let raw: &[u8] = &[
+            0x0a, 0x00, 0x00, 0x09, 0x00, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x0a, 0x00, 0x00,
+            0x00, 0x01, 0x01, 0x00, 0x06, 0x68, 0x69, 0x64, 0x64, 0x65, 0x6e, 0x01, 0x08, 0x00, 0x02, 0x69,
+            0x70, 0x00, 0x0e, 0x6d, 0x63, 0x2e, 0x68, 0x79, 0x70, 0x69, 0x78, 0x65, 0x6c, 0x2e, 0x6e, 0x65,
+            0x74, 0x08, 0x00, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x10, 0x4d, 0x69, 0x6e, 0x65, 0x63, 0x72,
+            0x61, 0x66, 0x74, 0x20, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x01, 0x00, 0x0e, 0x61, 0x63, 0x63,
+            0x65, 0x70, 0x74, 0x54, 0x65, 0x78, 0x74, 0x75, 0x72, 0x65, 0x73, 0x01, 0x00, 0x00,
+        ];
+
+        let parsed = parse_servers_dat(raw);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].ip, "mc.hypixel.net");
+        assert_eq!(parsed[0].name, "Minecraft Server");
+        assert_eq!(parsed[0].accept_textures, Some(1));
+    }
 }
