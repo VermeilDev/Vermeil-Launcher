@@ -1,21 +1,22 @@
-## 0.1.0 (Alpha Build 6)
+## 0.1.0 (Alpha Build 7)
 
 ### Added
 
-- Compatibility warning confirmation step in the Change Mod Loader flow to inform users of loader API breaking changes and crash risks
-- Automatic mod conversion pipeline when switching mod loaders, querying compatible builds across Modrinth and CurseForge
+- Transfers and downloads manager with real-time speed metrics, active queue controls, and Java distribution icons
+- Version switching and one-click reinstallation for installed mods and the companion mod client
+- Native data pack support for vanilla Minecraft instances, including install and update pipelines
+- Live download metrics and updated timestamps for installed CurseForge and Modrinth content
 
 ### Changed
 
-- Redesigned Change Mod Loader modal with balanced Bento grid layout, searchable runtime versions, and height stability
-- Unified 3D tactile toggle switches across all screens and modal dialogs
-- Streamlined loader conversion pipeline and consolidated companion mod loader parity
-- Enhanced launcher self-updater with cache-busting, in-flight release detection, and background channel synchronization
-- Replaced wand icon with authentic anvil iconography for Forge and shuffle symbol for loader switching
+- Simplified instance card RAM badge to GB and added a smart overflow popover for crowded badge rows
+- Streamlined Create Instance chooser hub layout density and card interactions
+- Enhanced dock navigation and layout constraints across widescreen displays
 
 ### Fixed
 
-- Prevented enabling incompatible mods and restored authentic loader type badges in instance content views
-- Fixed dual Quilt-Fabric API queries and automatic conversion for incompatible mods
-- Resolved loader parity and Quilt fallback behavior during CurseForge downloads and imports
-- Prevented file rename collisions when enabling compatible mods during loader conversion
+- Anchored badge overflow popovers downward to prevent overlapping instance card titles and subtitles
+- Preserved CurseForge source metadata when resolving files via mirrors and self-healed numeric project identifiers
+- Enforced single source platform badge display for installed modpacks
+- Stabilized play button width during state transitions and supported clean launch cancellation
+- Decoupled instance card hover from internal controls and refined 3D tactile button press mechanics
