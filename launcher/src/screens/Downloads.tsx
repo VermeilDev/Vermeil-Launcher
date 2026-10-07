@@ -627,6 +627,10 @@ const ActiveDownloadCard: Component<{ entry: DownloadEntry; position?: number }>
   };
 
   const cardLoader = () => {
+    const cat = dl().category;
+    if (cat === "resourcepack" || cat === "datapack" || cat === "shader" || cat === "java") {
+      return undefined;
+    }
     if (dl().loader && dl().loader !== "modrinth" && dl().loader !== "curseforge") return dl().loader;
     const inst = matchingInstance();
     return inst?.loader?.type ?? dl().loader;
@@ -750,6 +754,10 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
   };
 
   const cardLoader = () => {
+    const cat = dl().category;
+    if (cat === "resourcepack" || cat === "datapack" || cat === "shader" || cat === "java") {
+      return undefined;
+    }
     if (dl().loader && dl().loader !== "modrinth" && dl().loader !== "curseforge") return dl().loader;
     const inst = matchingInstance();
     return inst?.loader?.type ?? dl().loader;
@@ -818,7 +826,7 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
 
               const coreCount = (hasCat ? 1 : 0) + (hasLoader ? 1 : 0) + (hasGv ? 1 : 0);
               const extraCount = hasVnum ? 1 : 0;
-              const shouldOverflow = (coreCount + extraCount > 3) && extraCount > 0;
+              const shouldOverflow = (coreCount + extraCount > 2) && extraCount > 0;
 
               return (
                 <>

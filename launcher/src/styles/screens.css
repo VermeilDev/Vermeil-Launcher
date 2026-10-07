@@ -4320,12 +4320,16 @@
 .dl-card-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 5px;
   flex-wrap: nowrap;
   min-width: 0;
 }
+.dl-card-meta .badge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
 .dl-card-meta .badge--vnum {
-  max-width: 85px;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4336,6 +4340,7 @@
   margin-left: auto;
   white-space: nowrap;
   flex-shrink: 0;
+  padding-left: 6px;
 }
 
 
