@@ -16,11 +16,15 @@ import {
   getDummySkinDataUrl,
   offlineDummyVariant,
   account,
+  activeCape,
 } from "../App";
-import { getSkinProfile } from "../ipc/commands";
+import { getSkinProfile, readCustomCapeSource, type CustomCape } from "../ipc/commands";
+import { CapeAnimator, clampRes, clampScale, clampRot } from "../lib/cape";
+import { normalizeHex } from "../lib/color";
 
 interface Props {
   skinUrl?: string | null;
+  capeUrl?: string | null;
   class?: string;
 }
 
@@ -40,6 +44,93 @@ const CharacterStage: Component<Props> = (props) => {
   let viewer: SkinViewer | undefined;
   let rimMesh: Mesh<CylinderGeometry, MeshBasicMaterial> | undefined;
   const [viewerReady, setViewerReady] = createSignal(false);
+  let capeAnimator: CapeAnimator | undefined;
+  let animatorCapeId: string | null = null;
+
+  const ensureAnimator = (): CapeAnimator => {
+    if (!capeAnimator && viewer) {
+      capeAnimator = new CapeAnimator(viewer, () => {
+        const cape = activeCape();
+        const t = cape?.customCape?.transform;
+        return {
+          dx: t?.dx ?? 0,
+          dy: t?.dy ?? 0,
+          scale: clampScale(t?.scale),
+          rot: clampRot(t?.rot),
+          bg: normalizeHex(t?.bg, "#2b2740"),
+          res: clampRes(t?.res),
+          solid: t?.solid ?? false,
+          elytra: false,
+        };
+      });
+    }
+    return capeAnimator!;
+  };
+
+  const startCapeAnimation = async (cape: CustomCape) => {
+    animatorCapeId = cape.id;
+    try {
+      const src = await readCustomCapeSource(cape.id);
+      if (animatorCapeId !== cape.id || !viewer) return;
+      const anim = ensureAnimator();
+      if (anim) {
+        await anim.start(src);
+      }
+    } catch (e) {
+      console.error("CharacterStage animated cape failed, falling back to static frame:", e);
+      try {
+        viewer?.loadCape(cape.texture, { backEquipment: "cape" });
+      } catch {}
+    }
+  };
+
+  const stopCapeAnimation = () => {
+    capeAnimator?.stop();
+    animatorCapeId = null;
+  };
+
+  const loadActiveCape = () => {
+    if (!viewer) return;
+    const propCape = props.capeUrl;
+    const currentActiveCape = activeCape();
+
+    // 1. Explicit prop override takes priority
+    if (propCape !== undefined) {
+      stopCapeAnimation();
+      if (propCape) {
+        viewer.loadCape(propCape, { backEquipment: "cape" }).catch((e) => {
+          console.error("CharacterStage prop cape load failed:", e);
+        });
+      } else {
+        viewer.resetCape();
+      }
+      return;
+    }
+
+    // 2. Global active cape
+    if (currentActiveCape) {
+      if (
+        currentActiveCape.type === "custom" &&
+        currentActiveCape.customCape?.transform.animated
+      ) {
+        if (animatorCapeId !== currentActiveCape.id) {
+          stopCapeAnimation();
+          startCapeAnimation(currentActiveCape.customCape);
+        }
+        return;
+      }
+
+      stopCapeAnimation();
+      viewer.loadCape(currentActiveCape.texture, { backEquipment: "cape" }).catch((e) => {
+        console.error("CharacterStage cape load failed:", e);
+      });
+      return;
+    }
+
+    // 3. Neither prop nor active cape set
+    stopCapeAnimation();
+    viewer.resetCape();
+  };
 
   const computeCanvasSize = () => {
     if (!viewer || !containerRef) return;
@@ -137,9 +228,12 @@ const CharacterStage: Component<Props> = (props) => {
 
     setViewerReady(true);
     loadActiveSkin();
+    loadActiveCape();
 
     onCleanup(() => {
       ro.disconnect();
+      stopCapeAnimation();
+      capeAnimator = undefined;
       viewer?.dispose();
       viewer = undefined;
     });
@@ -163,11 +257,29 @@ const CharacterStage: Component<Props> = (props) => {
     loadActiveSkin();
   });
 
-  // Pause render loop when game is running to save CPU/GPU
+  // Re-load cape when reactive dependencies change
+  createEffect(() => {
+    if (!viewerReady()) return;
+    activeCape();
+    void props.capeUrl;
+    loadActiveCape();
+  });
+
+  // Pause render loop and cape animator when game is running to save CPU/GPU
   createEffect(() => {
     const running = gameRunning();
-    if (!viewer || !viewer.animation) return;
-    viewer.animation.paused = running;
+    if (!viewer) return;
+    if (viewer.animation) {
+      viewer.animation.paused = running;
+    }
+    if (running) {
+      stopCapeAnimation();
+    } else {
+      const cape = activeCape();
+      if (cape?.type === "custom" && cape.customCape?.transform?.animated) {
+        startCapeAnimation(cape.customCape);
+      }
+    }
   });
 
   return (

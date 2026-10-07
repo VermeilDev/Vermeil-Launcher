@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Component, createSignal, createResource, createEffect, onCleanup, onMount, Show, For } from "solid-js";
-import { account, refetchAccount, showToast, refreshActiveSkin, setActiveSkinUrl, getDummySkinDataUrl, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, setDockHidden, setActiveScreen, currentTheme } from "../App";
+import { account, refetchAccount, showToast, refreshActiveSkin, setActiveSkinUrl, activeCape, setActiveCape, refreshActiveCape, getDummySkinDataUrl, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, setDockHidden, setActiveScreen, currentTheme } from "../App";
 import { getThemeDefinition } from "../lib/theme";
 import {
   getSkinProfile,
@@ -127,9 +127,15 @@ class IdleElytraAnimation extends IdleAnimation {
 // flicker: on every remount the selection reset to null, briefly highlighting
 // "No cape" until the async state load resolved. Module scope + a one-time load
 // means re-entering the screen reflects the real state immediately.
-const [activeCustomCapeId, setActiveCustomCapeId] = createSignal<string | null>(null);
-const [ingameCapeId, setIngameCapeId] = createSignal<string | null>(null);
-const [ingameEnabled, setIngameEnabled] = createSignal(false);
+const [activeCustomCapeId, setActiveCustomCapeId] = createSignal<string | null>(
+  activeCape()?.type === "custom" ? activeCape()!.id : null
+);
+const [ingameCapeId, setIngameCapeId] = createSignal<string | null>(
+  activeCape()?.type === "custom" ? activeCape()!.id : null
+);
+const [ingameEnabled, setIngameEnabled] = createSignal(
+  activeCape()?.type === "custom"
+);
 let ingameStateLoaded = false;
 
 /**
@@ -834,9 +840,10 @@ const Skins: Component = () => {
     try {
       await startMsLogin();
       await refetchAccount();
-      await refetchProfile();
+      const p = await refetchProfile();
       await refetchLocal();
       await refetchCustomCapes();
+      await refreshActiveCape(p);
       showToast({ title: "Account connected", message: "Signed in with Microsoft", type: "success" });
     } catch (e: any) {
       const msg = typeof e === "string" ? e : e?.message || "Login failed";
@@ -1135,6 +1142,7 @@ const Skins: Component = () => {
 
     if (isOfflineAccount()) {
       viewer?.resetCape();
+      setActiveCape(null);
       return;
     }
 
@@ -1151,7 +1159,8 @@ const Skins: Component = () => {
     try {
       if (capeId) await equipCape(capeId);
       else await unequipCape();
-      await refetchProfile();
+      const updatedProfile = await refetchProfile();
+      await refreshActiveCape(updatedProfile);
       setCapeCooldownUntil(Date.now() + 3000);
     } catch (e) {
       showToast({ title: "Cape change failed", message: String(e), type: "error" });
@@ -1178,6 +1187,12 @@ const Skins: Component = () => {
     // in-game from the just-saved transform, so a resolution / position / bg edit
     // takes effect in the game too — not only in the viewer.
     setActiveCustomCapeId(cape.id);
+    setActiveCape({
+      type: "custom",
+      id: cape.id,
+      texture: cape.texture,
+      customCape: cape,
+    });
     setIngameBusy(true);
     try {
       const { png, frameTimeMs } = await bakeForIngame(cape);
@@ -1202,11 +1217,14 @@ const Skins: Component = () => {
         try {
           await setIngameCapeEnabled(false);
           setIngameEnabled(false);
+          await refreshActiveCape(profile());
         } catch (e) {
           showToast({ title: "Couldn't remove in-game cape", message: String(e), type: "error" });
         } finally {
           setIngameBusy(false);
         }
+      } else {
+        await refreshActiveCape(profile());
       }
       return;
     }
@@ -1216,6 +1234,12 @@ const Skins: Component = () => {
     setActiveCustomCapeId(id);
     const cape = (customCapes() ?? []).find((c) => c.id === id);
     if (!cape) return;
+    setActiveCape({
+      type: "custom",
+      id: cape.id,
+      texture: cape.texture,
+      customCape: cape,
+    });
     setIngameBusy(true);
     try {
       const { png, frameTimeMs } = await bakeForIngame(cape);
@@ -1251,6 +1275,7 @@ const Skins: Component = () => {
         setIngameEnabled(false);
       }
       await refetchCustomCapes();
+      await refreshActiveCape(profile());
     } catch (e) {
       showToast({ title: "Remove failed", message: String(e), type: "error" });
     } finally {

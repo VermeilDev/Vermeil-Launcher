@@ -32,7 +32,7 @@ import PinInstancesModal from "./modals/PinInstancesModal";
 import { pinInstancesModalOpen, closePinInstancesModal } from "./modals/PinInstancesModal";
 import InstancePickerModal, { instancePickerModalOpen, closeInstancePickerModal } from "./modals/InstancePickerModal";
 import ServerRoutingModal, { serverRoutingModalOpen, closeServerRoutingModal } from "./modals/ServerRoutingModal";
-import { listInstances, getActiveAccount, getSettings, getSkinProfile, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant } from "./ipc/commands";
+import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape } from "./ipc/commands";
 import { listen } from "@tauri-apps/api/event";
 import { checkForUpdates } from "./services/updater";
 import { matchesKeybind, resolveBinding } from "./lib/keybinds";
@@ -735,15 +735,75 @@ export async function refreshActiveSkin() {
   }
 }
 
-// React to account changes — clear the URL on sign-out, fetch on sign-in.
+export interface ActiveCapeInfo {
+  type: "custom" | "mojang";
+  id: string;
+  texture: string;
+  customCape?: CustomCape;
+}
+
+const [activeCape, setActiveCape] = createSignal<ActiveCapeInfo | null>(null);
+export const activeCapeUrl = () => activeCape()?.texture ?? null;
+
+/**
+ * Re-fetch the active cape (custom cape or Mojang cape) and update the global signal.
+ * Custom capes take priority over Mojang capes when enabled in-game.
+ */
+export async function refreshActiveCape(cachedProfile?: any) {
+  try {
+    // 1. Check in-game custom cape state first
+    const ingame = await getIngameCape().catch(() => null);
+    if (ingame?.enabled && ingame.cape_id) {
+      const capes = await listCustomCapes().catch(() => [] as CustomCape[]);
+      const custom = capes.find((c) => c.id === ingame.cape_id);
+      if (custom) {
+        setActiveCape({
+          type: "custom",
+          id: custom.id,
+          texture: custom.texture,
+          customCape: custom,
+        });
+        return;
+      }
+    }
+
+    // 2. Fall back to Mojang active cape if user has a non-offline Microsoft account
+    const a = account();
+    if (a && !a.is_offline) {
+      const profile = cachedProfile !== undefined ? cachedProfile : await getSkinProfile().catch(() => null);
+      const activeMojang = profile?.capes?.find((c: any) => c.state === "ACTIVE");
+      if (activeMojang) {
+        setActiveCape({
+          type: "mojang",
+          id: activeMojang.id,
+          texture: activeMojang.texture,
+        });
+        return;
+      }
+    }
+
+    // 3. No cape active
+    setActiveCape(null);
+  } catch (e) {
+    console.error("Active cape fetch failed:", e);
+    setActiveCape(null);
+  }
+}
+
+// React to account changes — clear or re-fetch active skin and cape.
 createEffect(() => {
   const a = account();
   if (!a) {
     setActiveSkinUrl(null);
+    refreshActiveCape().catch(() => {});
     return;
   }
   refreshActiveSkin().catch(() => {});
+  refreshActiveCape().catch(() => {});
 });
+
+// Seed active cape on launcher startup
+refreshActiveCape().catch(() => {});
 
 // Offline 3D dummy mannequin skin & preview state. Kept in App.tsx so both
 // CharacterStage (Home screen) and the lazy-loaded Skins screen share it
@@ -758,7 +818,7 @@ export function getDummySkinDataUrl(variant: SkinVariant = "CLASSIC"): string {
 // Google Cloud connection state for settings backup and sync.
 const [cloudConnected, { refetch: refetchCloudStatus }] = createResource(isGoogleCloudConnected);
 
-export { activeScreen, setActiveScreen, activeInstanceId, setActiveInstanceId, initialInstanceTab, setInitialInstanceTab, gameLaunched, setGameLaunched, gameRunning, setGameRunning, launchingInstanceId, setLaunchingInstanceId, logsPoppedOut, setLogsPoppedOut, downloads, activeDownloadCount, isBulkInstall, bulkBatchSize, bulkDone, bulkProgress, instances, refetchInstances, account, refetchAccount, activeSkinUrl, setActiveSkinUrl, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, offline, showToast, updateToast, cloudConnected, refetchCloudStatus };
+export { activeScreen, setActiveScreen, activeInstanceId, setActiveInstanceId, initialInstanceTab, setInitialInstanceTab, gameLaunched, setGameLaunched, gameRunning, setGameRunning, launchingInstanceId, setLaunchingInstanceId, logsPoppedOut, setLogsPoppedOut, downloads, activeDownloadCount, isBulkInstall, bulkBatchSize, bulkDone, bulkProgress, instances, refetchInstances, account, refetchAccount, activeSkinUrl, setActiveSkinUrl, activeCape, setActiveCape, activeOfflineSkin, setActiveOfflineSkin, offlineDummyVariant, setOfflineDummyVariant, offline, showToast, updateToast, cloudConnected, refetchCloudStatus };
 
 const screenTitles: Record<Screen, string> = {
   home: "Home",
