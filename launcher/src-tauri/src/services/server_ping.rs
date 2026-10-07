@@ -349,6 +349,7 @@ pub struct ServerDatEntry {
     pub ip: String,
     pub accept_textures: Option<i8>,
     pub icon: Option<String>,
+    pub hidden: Option<i8>,
 }
 
 /// Skips a single NBT payload given its tag type byte.
@@ -405,6 +406,7 @@ fn skip_nbt_tag(tag_type: u8, data: &[u8], cursor: &mut usize) -> bool {
                 if sub_type == 0x00 { break; }
                 if *cursor + 2 > data.len() { return false; }
                 let name_len = u16::from_be_bytes([data[*cursor], data[*cursor + 1]]) as usize;
+                if *cursor + 2 + name_len > data.len() { return false; }
                 *cursor += 2 + name_len;
                 if !skip_nbt_tag(sub_type, data, cursor) { return false; }
             }
@@ -468,6 +470,7 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
         let mut ip: Option<String> = None;
         let mut accept_textures: Option<i8> = None;
         let mut icon: Option<String> = None;
+        let mut hidden: Option<i8> = None;
 
         while cursor < data.len() {
             let tag_type = data[cursor];
@@ -487,6 +490,12 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
             cursor += name_len;
 
             match (tag_type, tag_name.as_str()) {
+                (0x01, "hidden") => {
+                    if cursor < data.len() {
+                        hidden = Some(data[cursor] as i8);
+                        cursor += 1;
+                    }
+                }
                 (0x01, "acceptTextures") => {
                     if cursor < data.len() {
                         accept_textures = Some(data[cursor] as i8);
@@ -494,34 +503,40 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                     }
                 }
                 (0x08, "name") => {
-                    if cursor + 2 <= data.len() {
-                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
-                        cursor += 2;
-                        if cursor + str_len <= data.len() {
-                            name = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
-                            cursor += str_len;
-                        }
+                    if cursor + 2 > data.len() {
+                        break;
                     }
+                    let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                    cursor += 2;
+                    if cursor + str_len > data.len() {
+                        break;
+                    }
+                    name = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                    cursor += str_len;
                 }
                 (0x08, "ip") => {
-                    if cursor + 2 <= data.len() {
-                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
-                        cursor += 2;
-                        if cursor + str_len <= data.len() {
-                            ip = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
-                            cursor += str_len;
-                        }
+                    if cursor + 2 > data.len() {
+                        break;
                     }
+                    let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                    cursor += 2;
+                    if cursor + str_len > data.len() {
+                        break;
+                    }
+                    ip = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                    cursor += str_len;
                 }
                 (0x08, "icon") => {
-                    if cursor + 2 <= data.len() {
-                        let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
-                        cursor += 2;
-                        if cursor + str_len <= data.len() {
-                            icon = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
-                            cursor += str_len;
-                        }
+                    if cursor + 2 > data.len() {
+                        break;
                     }
+                    let str_len = u16::from_be_bytes([data[cursor], data[cursor + 1]]) as usize;
+                    cursor += 2;
+                    if cursor + str_len > data.len() {
+                        break;
+                    }
+                    icon = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                    cursor += str_len;
                 }
                 _ => {
                     if !skip_nbt_tag(tag_type, data, &mut cursor) {
@@ -537,6 +552,7 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                 ip,
                 accept_textures,
                 icon,
+                hidden,
             });
         }
     }
@@ -564,6 +580,16 @@ pub fn write_servers_dat(path: &std::path::Path, servers: &[ServerDatEntry]) -> 
     buf.extend_from_slice(&(servers.len() as i32).to_be_bytes());
 
     for s in servers {
+        // "hidden": TAG_Byte (0x01) — only written if explicitly hidden (Minecraft 1.20+ Quick Play)
+        if let Some(h) = s.hidden {
+            if h == 1 {
+                buf.push(0x01);
+                buf.extend_from_slice(&(6u16).to_be_bytes());
+                buf.extend_from_slice(b"hidden");
+                buf.push(0x01);
+            }
+        }
+
         // "name": TAG_String (0x08)
         buf.push(0x08);
         buf.extend_from_slice(&(4u16).to_be_bytes());
@@ -642,7 +668,17 @@ pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
             continue;
         }
 
-        if let Some(existing) = current_servers.iter_mut().find(|s| s.ip.trim().to_lowercase() == qs_addr_norm) {
+        if let Some(existing) = current_servers.iter_mut().find(|s| {
+            let existing_addr = s.ip.trim().to_lowercase();
+            existing_addr == qs_addr_norm
+                || (qs_addr_norm.ends_with(":25565") && existing_addr == qs_addr_norm.trim_end_matches(":25565"))
+                || (existing_addr.ends_with(":25565") && existing_addr.trim_end_matches(":25565") == qs_addr_norm)
+        }) {
+            // If the server was previously hidden by Minecraft's --quickPlayMultiplayer, unhide it so it shows in Multiplayer
+            if existing.hidden == Some(1) {
+                existing.hidden = None;
+                modified = true;
+            }
             if !qs.name.trim().is_empty() && (existing.name == "Minecraft Server" || existing.name.is_empty()) {
                 existing.name = qs.name.clone();
                 modified = true;
@@ -657,6 +693,7 @@ pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
                 ip: qs.address.clone(),
                 accept_textures: Some(1),
                 icon: qs.favicon.clone(),
+                hidden: None,
             });
             modified = true;
         }
@@ -699,12 +736,14 @@ mod tests {
                 ip: "mc.hypixel.net".to_string(),
                 accept_textures: Some(1),
                 icon: Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==".to_string()),
+                hidden: None,
             },
             ServerDatEntry {
                 name: "DonutSMP".to_string(),
                 ip: "donutsmp.net".to_string(),
                 accept_textures: Some(2),
                 icon: None,
+                hidden: None,
             },
         ];
 
@@ -719,11 +758,13 @@ mod tests {
         assert_eq!(parsed[0].ip, "mc.hypixel.net");
         assert_eq!(parsed[0].accept_textures, Some(1));
         assert_eq!(parsed[0].icon.as_deref(), Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="));
+        assert_eq!(parsed[0].hidden, None);
 
         assert_eq!(parsed[1].name, "DonutSMP");
         assert_eq!(parsed[1].ip, "donutsmp.net");
         assert_eq!(parsed[1].accept_textures, Some(2));
         assert_eq!(parsed[1].icon, None);
+        assert_eq!(parsed[1].hidden, None);
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
@@ -745,5 +786,15 @@ mod tests {
         assert_eq!(parsed[0].ip, "mc.hypixel.net");
         assert_eq!(parsed[0].name, "Minecraft Server");
         assert_eq!(parsed[0].accept_textures, Some(1));
+        assert_eq!(parsed[0].hidden, Some(1));
+    }
+
+    #[test]
+    fn test_servers_dat_corrupt_and_empty_buffers() {
+        let corrupt: &[u8] = &[0x0a, 0x00, 0x00, 0x09, 0x00, 0x07, 0x73, 0x65];
+        let parsed = parse_servers_dat(corrupt);
+        assert!(parsed.is_empty());
+
+        assert!(parse_servers_dat(&[]).is_empty());
     }
 }
