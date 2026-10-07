@@ -1,22 +1,18 @@
-## 0.1.0 (Alpha Build 7)
+## 0.1.0 (Alpha Build 8)
 
 ### Added
 
-- Transfers and downloads manager with real-time speed metrics, active queue controls, and Java distribution icons
-- Version switching and one-click reinstallation for installed mods and the companion mod client
-- Native data pack support for vanilla Minecraft instances, including install and update pipelines
-- Live download metrics and updated timestamps for installed CurseForge and Modrinth content
+- Support for equipped custom and official Mojang capes on the Home screen 3D player model, including full multi-frame animation playback for animated custom capes
+- Expanded Quick Play server deck capacity to 6 server entries with bidirectional synchronization to instance `servers.dat`
+- Smart badge overflow pill with popover inspector and version tooltips on download history cards
 
 ### Changed
 
-- Simplified instance card RAM badge to GB and added a smart overflow popover for crowded badge rows
-- Streamlined Create Instance chooser hub layout density and card interactions
-- Enhanced dock navigation and layout constraints across widescreen displays
+- Streamlined download history cards by omitting redundant loader tags on loader-agnostic content (resource packs, data packs, shaders, and Java runtimes)
+- Preserved custom mod tags losslessly when writing server entries to instance `servers.dat`
 
 ### Fixed
 
-- Anchored badge overflow popovers downward to prevent overlapping instance card titles and subtitles
-- Preserved CurseForge source metadata when resolving files via mirrors and self-healed numeric project identifiers
-- Enforced single source platform badge display for installed modpacks
-- Stabilized play button width during state transitions and supported clean launch cancellation
-- Decoupled instance card hover from internal controls and refined 3D tactile button press mechanics
+- Sanitized server icon base64 payloads in `servers.dat` to prevent Netty decoding crashes on legacy Minecraft 1.8.9
+- Prevented download history badge rows from overflowing or clipping relative timestamps on narrow views
+- Removed redundant cancel launch tooltip from the instance header play button
