@@ -350,6 +350,7 @@ pub struct ServerDatEntry {
     pub accept_textures: Option<i8>,
     pub icon: Option<String>,
     pub hidden: Option<i8>,
+    pub extra_tags: Vec<Vec<u8>>,
 }
 
 /// Skips a single NBT payload given its tag type byte.
@@ -442,26 +443,27 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
     if data.len() < 3 || data[0] != 0x0a {
         return servers;
     }
-    const SERVERS_LIST_SIG: &[u8] = b"\x09\x00\x07servers\x0a";
-    let Some(pos) = data.windows(SERVERS_LIST_SIG.len()).position(|w| w == SERVERS_LIST_SIG) else {
+    const SERVERS_LIST_PREFIX: &[u8] = b"\x09\x00\x07servers";
+    let Some(pos) = data.windows(SERVERS_LIST_PREFIX.len()).position(|w| w == SERVERS_LIST_PREFIX) else {
         return servers;
     };
 
-    let count_pos = pos + SERVERS_LIST_SIG.len();
-    if count_pos + 4 > data.len() {
+    let elem_type_pos = pos + SERVERS_LIST_PREFIX.len();
+    if elem_type_pos + 5 > data.len() {
         return servers;
     }
+    let elem_type = data[elem_type_pos];
     let count = i32::from_be_bytes([
-        data[count_pos],
-        data[count_pos + 1],
-        data[count_pos + 2],
-        data[count_pos + 3],
+        data[elem_type_pos + 1],
+        data[elem_type_pos + 2],
+        data[elem_type_pos + 3],
+        data[elem_type_pos + 4],
     ]);
-    if count <= 0 {
+    if count <= 0 || elem_type != 0x0a {
         return servers;
     }
 
-    let mut cursor = count_pos + 4;
+    let mut cursor = elem_type_pos + 5;
     for _ in 0..count {
         if cursor >= data.len() {
             break;
@@ -471,8 +473,10 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
         let mut accept_textures: Option<i8> = None;
         let mut icon: Option<String> = None;
         let mut hidden: Option<i8> = None;
+        let mut extra_tags: Vec<Vec<u8>> = Vec::new();
 
         while cursor < data.len() {
+            let tag_start = cursor;
             let tag_type = data[cursor];
             cursor += 1;
             if tag_type == 0x00 {
@@ -542,6 +546,7 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                     if !skip_nbt_tag(tag_type, data, &mut cursor) {
                         break;
                     }
+                    extra_tags.push(data[tag_start..cursor].to_vec());
                 }
             }
         }
@@ -553,6 +558,7 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                 accept_textures,
                 icon,
                 hidden,
+                extra_tags,
             });
         }
     }
@@ -624,6 +630,11 @@ pub fn write_servers_dat(path: &std::path::Path, servers: &[ServerDatEntry]) -> 
         buf.extend_from_slice(b"acceptTextures");
         buf.push(s.accept_textures.unwrap_or(1) as u8);
 
+        // Any custom tags from mods (e.g. preset flags, custom metadata) preserved losslessly
+        for extra in &s.extra_tags {
+            buf.extend_from_slice(extra);
+        }
+
         // TAG_End
         buf.push(0x00);
     }
@@ -636,7 +647,10 @@ pub fn write_servers_dat(path: &std::path::Path, servers: &[ServerDatEntry]) -> 
     }
     let temp_path = path.with_extension("tmp");
     std::fs::write(&temp_path, &buf)?;
-    std::fs::rename(&temp_path, path)?;
+    if let Err(_) = std::fs::rename(&temp_path, path) {
+        let _ = std::fs::remove_file(&temp_path);
+        std::fs::write(path, &buf)?;
+    }
 
     Ok(())
 }
@@ -694,6 +708,7 @@ pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
                 accept_textures: Some(1),
                 icon: qs.favicon.clone(),
                 hidden: None,
+                extra_tags: Vec::new(),
             });
             modified = true;
         }
@@ -737,6 +752,10 @@ mod tests {
                 accept_textures: Some(1),
                 icon: Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==".to_string()),
                 hidden: None,
+                extra_tags: vec![
+                    // Custom mod tag: TAG_Byte "mod_preset" = 1
+                    vec![0x01, 0x00, 0x0a, b'm', b'o', b'd', b'_', b'p', b'r', b'e', b's', b'e', b't', 0x01],
+                ],
             },
             ServerDatEntry {
                 name: "DonutSMP".to_string(),
@@ -744,11 +763,16 @@ mod tests {
                 accept_textures: Some(2),
                 icon: None,
                 hidden: None,
+                extra_tags: Vec::new(),
             },
         ];
 
         let write_res = write_servers_dat(&servers_path, &sample_servers);
         assert!(write_res.is_ok());
+
+        // Repeated write to existing file succeeds
+        let write_res_repeat = write_servers_dat(&servers_path, &sample_servers);
+        assert!(write_res_repeat.is_ok());
 
         let raw_bytes = std::fs::read(&servers_path).expect("Failed to read test servers.dat");
         let parsed = parse_servers_dat(&raw_bytes);
@@ -759,12 +783,15 @@ mod tests {
         assert_eq!(parsed[0].accept_textures, Some(1));
         assert_eq!(parsed[0].icon.as_deref(), Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="));
         assert_eq!(parsed[0].hidden, None);
+        assert_eq!(parsed[0].extra_tags.len(), 1);
+        assert_eq!(parsed[0].extra_tags[0], vec![0x01, 0x00, 0x0a, b'm', b'o', b'd', b'_', b'p', b'r', b'e', b's', b'e', b't', 0x01]);
 
         assert_eq!(parsed[1].name, "DonutSMP");
         assert_eq!(parsed[1].ip, "donutsmp.net");
         assert_eq!(parsed[1].accept_textures, Some(2));
         assert_eq!(parsed[1].icon, None);
         assert_eq!(parsed[1].hidden, None);
+        assert!(parsed[1].extra_tags.is_empty());
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
@@ -787,6 +814,7 @@ mod tests {
         assert_eq!(parsed[0].name, "Minecraft Server");
         assert_eq!(parsed[0].accept_textures, Some(1));
         assert_eq!(parsed[0].hidden, Some(1));
+        assert!(parsed[0].extra_tags.is_empty());
     }
 
     #[test]
@@ -796,5 +824,9 @@ mod tests {
         assert!(parsed.is_empty());
 
         assert!(parse_servers_dat(&[]).is_empty());
+
+        // Empty list tag (type 0x00, count 0)
+        let empty_list: &[u8] = &[0x0a, 0x00, 0x00, 0x09, 0x00, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        assert!(parse_servers_dat(empty_list).is_empty());
     }
 }
