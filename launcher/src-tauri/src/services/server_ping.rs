@@ -437,6 +437,18 @@ fn skip_nbt_tag(tag_type: u8, data: &[u8], cursor: &mut usize) -> bool {
     true
 }
 
+/// Strips any `data:image/png;base64,` or data URI prefix so only pure Base64 characters remain.
+/// Minecraft's `servers.dat` requires raw Base64 without any data URI prefixes; passing a data URI prefix
+/// causes Netty's Base64 decoder in Minecraft 1.8.9 (and older versions) to crash with:
+/// `java.lang.IllegalArgumentException: bad Base64 input character at 4: 58 (decimal)`
+fn clean_base64_icon(icon: &str) -> &str {
+    if let Some(idx) = icon.find(',') {
+        &icon[idx + 1..]
+    } else {
+        icon
+    }
+}
+
 /// Parses an uncompressed NBT `servers.dat` byte buffer into a list of `ServerDatEntry`.
 pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
     let mut servers = Vec::new();
@@ -539,7 +551,8 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                     if cursor + str_len > data.len() {
                         break;
                     }
-                    icon = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
+                    let raw_str = String::from_utf8_lossy(&data[cursor..cursor + str_len]);
+                    icon = Some(clean_base64_icon(&raw_str).to_string());
                     cursor += str_len;
                 }
                 _ => {
@@ -613,12 +626,16 @@ pub fn write_servers_dat(path: &std::path::Path, servers: &[ServerDatEntry]) -> 
         buf.extend_from_slice(ip_bytes);
 
         // "icon": TAG_String (0x08)
+        // Minecraft's servers.dat expects raw base64 data WITHOUT the "data:image/png;base64," URI prefix.
+        // In Minecraft 1.8.9 and older versions, passing a data URI prefix crashes Netty's Base64 decoder with:
+        // java.lang.IllegalArgumentException: bad Base64 input character at 4: 58 (colon in data:)
         if let Some(ref icon) = s.icon {
-            if !icon.is_empty() {
+            let clean = clean_base64_icon(icon);
+            if !clean.is_empty() {
                 buf.push(0x08);
                 buf.extend_from_slice(&(4u16).to_be_bytes());
                 buf.extend_from_slice(b"icon");
-                let icon_bytes = icon.as_bytes();
+                let icon_bytes = clean.as_bytes();
                 buf.extend_from_slice(&(icon_bytes.len() as u16).to_be_bytes());
                 buf.extend_from_slice(icon_bytes);
             }
@@ -676,6 +693,19 @@ pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
 
     let mut modified = false;
 
+    // Sanitize any existing icons that may have been saved with a "data:image/" prefix
+    for s in &mut current_servers {
+        if let Some(ref mut icon) = s.icon {
+            if icon.contains(',') || icon.starts_with("data:image/") {
+                let clean = clean_base64_icon(icon).to_string();
+                if clean != *icon {
+                    *icon = clean;
+                    modified = true;
+                }
+            }
+        }
+    }
+
     for qs in &quick_servers {
         let qs_addr_norm = qs.address.trim().to_lowercase();
         if qs_addr_norm.is_empty() {
@@ -698,15 +728,19 @@ pub fn sync_quick_servers_to_instance(game_dir: &std::path::Path) {
                 modified = true;
             }
             if existing.icon.is_none() && qs.favicon.is_some() {
-                existing.icon = qs.favicon.clone();
-                modified = true;
+                let clean = clean_base64_icon(qs.favicon.as_deref().unwrap_or_default()).to_string();
+                if !clean.is_empty() {
+                    existing.icon = Some(clean);
+                    modified = true;
+                }
             }
         } else {
+            let clean_icon = qs.favicon.as_ref().map(|f| clean_base64_icon(f).to_string());
             current_servers.push(ServerDatEntry {
                 name: if qs.name.trim().is_empty() { qs.address.clone() } else { qs.name.clone() },
                 ip: qs.address.clone(),
                 accept_textures: Some(1),
-                icon: qs.favicon.clone(),
+                icon: clean_icon,
                 hidden: None,
                 extra_tags: Vec::new(),
             });
@@ -781,7 +815,7 @@ mod tests {
         assert_eq!(parsed[0].name, "Hypixel Network");
         assert_eq!(parsed[0].ip, "mc.hypixel.net");
         assert_eq!(parsed[0].accept_textures, Some(1));
-        assert_eq!(parsed[0].icon.as_deref(), Some("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="));
+        assert_eq!(parsed[0].icon.as_deref(), Some("iVBORw0KGgoAAAANSUhEUg=="));
         assert_eq!(parsed[0].hidden, None);
         assert_eq!(parsed[0].extra_tags.len(), 1);
         assert_eq!(parsed[0].extra_tags[0], vec![0x01, 0x00, 0x0a, b'm', b'o', b'd', b'_', b'p', b'r', b'e', b's', b'e', b't', 0x01]);
