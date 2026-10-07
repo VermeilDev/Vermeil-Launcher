@@ -551,8 +551,7 @@ pub fn parse_servers_dat(data: &[u8]) -> Vec<ServerDatEntry> {
                     if cursor + str_len > data.len() {
                         break;
                     }
-                    let raw_str = String::from_utf8_lossy(&data[cursor..cursor + str_len]);
-                    icon = Some(clean_base64_icon(&raw_str).to_string());
+                    icon = Some(String::from_utf8_lossy(&data[cursor..cursor + str_len]).to_string());
                     cursor += str_len;
                 }
                 _ => {
@@ -862,5 +861,17 @@ mod tests {
         // Empty list tag (type 0x00, count 0)
         let empty_list: &[u8] = &[0x0a, 0x00, 0x00, 0x09, 0x00, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         assert!(parse_servers_dat(empty_list).is_empty());
+    }
+
+    #[test]
+    fn test_clean_base64_icon_strips_data_uri_prefix() {
+        assert_eq!(clean_base64_icon("data:image/png;base64,iVBORw0KGgo="), "iVBORw0KGgo=");
+        assert_eq!(clean_base64_icon("iVBORw0KGgo="), "iVBORw0KGgo=");
+        assert_eq!(clean_base64_icon(""), "");
+    }
+
+    #[test]
+    fn test_sync_quick_servers_to_all_instances_executes_safely() {
+        sync_quick_servers_to_all_instances();
     }
 }
