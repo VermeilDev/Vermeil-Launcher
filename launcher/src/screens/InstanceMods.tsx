@@ -1958,7 +1958,6 @@ const InstanceMods: Component = () => {
             class={`inst-header-play-btn ${isGameRunningThis() ? "btn--stop" : "btn--play"} ${isCurrentInstanceInstalling() ? "btn--disabled" : ""}`}
             onClick={handlePlayOrStop}
             aria-label={isLaunchingThis() ? "Cancel launch" : isGameRunningThis() ? "Stop running game" : "Launch instance"}
-            data-tip={isLaunchingThis() ? "Click to cancel launch" : undefined}
           >
             <Show when={isLaunchingThis()}>
               <span class="spin-icon"><IconReload /></span>
