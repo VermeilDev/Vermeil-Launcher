@@ -325,7 +325,9 @@ const Library: Component = () => {
     return downloads().some(
       (d) =>
         d.status === "downloading" &&
-        (d.instanceId ? d.instanceId === inst.id : d.category === "instance" && d.name === inst.name)
+        (d.instanceId
+          ? d.instanceId === inst.id
+          : (d.category === "instance" || d.category === "modpack") && d.name === inst.name)
     );
   };
 

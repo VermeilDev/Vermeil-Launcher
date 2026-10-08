@@ -256,13 +256,26 @@ const InstanceMods: Component = () => {
     }
   });
 
+  let prevInstalling = false;
+  createEffect(() => {
+    const installing = isCurrentInstanceInstalling();
+    if (prevInstalling && !installing) {
+      refetchDetail();
+      refetchInstances();
+    }
+    prevInstalling = installing;
+  });
+
   const isCurrentInstanceInstalling = () => {
     const id = activeInstanceId() || instance()?.id;
     if (!id) return false;
     return downloads().some(
       (d) =>
         d.status === "downloading" &&
-        (d.instanceId ? d.instanceId === id : d.category === "instance" && d.name === instances()?.find((i) => i.id === id)?.name)
+        (d.instanceId
+          ? d.instanceId === id
+          : (d.category === "instance" || d.category === "modpack") &&
+            d.name === instances()?.find((i) => i.id === id)?.name)
     );
   };
 

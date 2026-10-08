@@ -13,6 +13,7 @@ use crate::util::paths;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+use tauri::Emitter;
 
 const CF_API_BASE: &str = "https://api.curseforge.com/v1";
 
@@ -244,6 +245,9 @@ pub async fn import_zip(
     // Save instance.json
     let json = serde_json::to_string_pretty(&instance).map_err(|e| e.to_string())?;
     fs::write(instance_dir.join("instance.json"), json).map_err(|e| e.to_string())?;
+    if let Some(ref w) = window {
+        let _ = w.emit("instance-created", &instance);
+    }
 
     // Build the override-extraction post action
     let zip_path_owned = zip_path_buf.clone();
@@ -268,6 +272,9 @@ pub async fn import_zip(
     if let Err(e) = prepare_with_extras(&instance, mod_tasks, Some(post), window).await {
         tracing::error!("CurseForge import prepare failed, cleaning up instance {}: {}", instance_id, e);
         let _ = fs::remove_dir_all(&instance_dir);
+        if let Some(ref w) = window_for_revalidate {
+            let _ = w.emit("instance-deleted", &instance_id);
+        }
         return Err(e);
     }
 

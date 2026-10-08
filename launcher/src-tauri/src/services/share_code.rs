@@ -29,6 +29,7 @@ use crate::models::instance::{
 use crate::services::download::DownloadTask;
 use crate::services::prepare::prepare_with_extras;
 use crate::util::paths;
+use tauri::Emitter;
 
 const SHARE_CODE_PREFIX: &str = "VML";
 pub const CLOUDFLARE_SHARE_API: &str = "https://share.vermeillauncher.workers.dev";
@@ -1924,6 +1925,9 @@ pub async fn import_share_code(
 
     let json = serde_json::to_string_pretty(&instance).map_err(|e| e.to_string())?;
     fs::write(instance_dir.join("instance.json"), json).map_err(|e| e.to_string())?;
+    if let Some(ref w) = window {
+        let _ = w.emit("instance-created", &instance);
+    }
 
     let window_for_blocked = window.clone();
     let window_for_enrich = window.clone();
@@ -1935,6 +1939,9 @@ pub async fn import_share_code(
             e
         );
         let _ = fs::remove_dir_all(&instance_dir);
+        if let Some(ref w) = window {
+            let _ = w.emit("instance-deleted", &instance_id);
+        }
         return Err(e);
     }
 

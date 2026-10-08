@@ -32,7 +32,7 @@ import PinInstancesModal from "./modals/PinInstancesModal";
 import { pinInstancesModalOpen, closePinInstancesModal } from "./modals/PinInstancesModal";
 import InstancePickerModal, { instancePickerModalOpen, closeInstancePickerModal } from "./modals/InstancePickerModal";
 import ServerRoutingModal, { serverRoutingModalOpen, closeServerRoutingModal } from "./modals/ServerRoutingModal";
-import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape } from "./ipc/commands";
+import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape, type Instance } from "./ipc/commands";
 import { listen } from "@tauri-apps/api/event";
 import { checkForUpdates } from "./services/updater";
 import { matchesKeybind, resolveBinding } from "./lib/keybinds";
@@ -903,6 +903,36 @@ const App: Component = () => {
     // the backend then enriches mod metadata + checks cross-platform
     // availability and emits this event so cards can update.
     listen<string>("instance-enriched", () => {
+      refetchInstances();
+    });
+
+    // When an instance is registered on disk during background modpack install or import,
+    // immediately refetch instances so its in-flight card appears in the Library, and link
+    // the download entry to the new instance ID.
+    listen<Instance>("instance-created", (event) => {
+      refetchInstances();
+      const inst = event.payload;
+      if (inst?.id) {
+        setDownloads((prev) =>
+          prev.map((d) => {
+            if (
+              d.status === "downloading" &&
+              !d.instanceId &&
+              (d.category === "instance" || d.category === "modpack") &&
+              (d.name === inst.name || d.name === inst.source_project_id)
+            ) {
+              return {
+                ...d,
+                instanceId: inst.id,
+              };
+            }
+            return d;
+          })
+        );
+      }
+    });
+
+    listen<string>("instance-deleted", () => {
       refetchInstances();
     });
 

@@ -487,6 +487,9 @@ pub async fn install_from_mrpack_file(
 
     let json = serde_json::to_string_pretty(&instance).map_err(|e| e.to_string())?;
     fs::write(instance_dir.join("instance.json"), json).map_err(|e| e.to_string())?;
+    if let Some(ref w) = window {
+        let _ = w.emit("instance-created", &instance);
+    }
 
     // Build the override-extraction post action. Captures the .mrpack path; runs
     // after all downloads complete so overrides are written on top of mod files.
@@ -508,6 +511,9 @@ pub async fn install_from_mrpack_file(
     if let Err(e) = prepare_with_extras(&instance, mod_tasks, Some(post), window).await {
         tracing::error!("Modpack prepare failed, cleaning up instance {}: {}", id, e);
         let _ = fs::remove_dir_all(&instance_dir);
+        if let Some(ref w) = window_for_revalidate {
+            let _ = w.emit("instance-deleted", &id);
+        }
         return Err(e);
     }
 
