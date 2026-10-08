@@ -34,8 +34,11 @@ pub fn is_google_cloud_connected() -> bool {
 }
 
 #[tauri::command]
-pub async fn backup_to_google_cloud() -> Result<CloudBackupSummary, String> {
-    google_cloud::backup_to_google_cloud().await
+pub async fn backup_to_google_cloud(app: tauri::AppHandle) -> Result<CloudBackupSummary, String> {
+    google_cloud::set_app_handle(app);
+    let summary = google_cloud::backup_to_google_cloud().await?;
+    google_cloud::emit_cloud_synced();
+    Ok(summary)
 }
 
 #[tauri::command]

@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, createSignal, createResource, createEffect, onCleanup, Show, For } from "solid-js";
+import { Component, createSignal, createResource, createEffect, onMount, onCleanup, Show, For } from "solid-js";
+import { listen } from "@tauri-apps/api/event";
 import {
   account,
   activeSkinUrl,
@@ -136,6 +137,20 @@ const Account: Component = () => {
     } catch {}
     setCloudBusy(false);
   };
+
+  onMount(() => {
+    let unlistenSync: (() => void) | undefined;
+    listen("cloud-settings-synced", async () => {
+      await refetchBackupTime();
+      await refetchCloudStatus();
+    }).then((unlisten) => {
+      unlistenSync = unlisten;
+    });
+
+    onCleanup(() => {
+      unlistenSync?.();
+    });
+  });
 
   onCleanup(() => {
     if (cloudBusy()) {

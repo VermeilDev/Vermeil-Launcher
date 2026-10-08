@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, RwLock};
 use std::time::Duration;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL_SAFE};
 use chrono::Utc;
@@ -1085,6 +1085,9 @@ async fn perform_restore_with_id(
 /// Connects user's Google Account once, securely persists refresh token,
 /// and automatically performs an initial restore (if backup exists) or initial backup.
 pub async fn connect_google_account(app: Option<&tauri::AppHandle>) -> Result<CloudConnectSummary, String> {
+    if let Some(handle) = app {
+        set_app_handle(handle.clone());
+    }
     let (access_token, refresh_token_opt) = start_google_oauth().await?;
 
     if let Some(ref ref_tok) = refresh_token_opt {
@@ -1175,6 +1178,26 @@ pub async fn disconnect_google_account(app: Option<&tauri::AppHandle>) -> Result
     Ok(())
 }
 
+static APP_HANDLE: RwLock<Option<tauri::AppHandle>> = RwLock::new(None);
+
+/// Register or update the active Tauri application handle for IPC events.
+pub fn set_app_handle(app: tauri::AppHandle) {
+    if let Ok(mut lock) = APP_HANDLE.write() {
+        *lock = Some(app);
+    }
+}
+
+/// Emits the `cloud-settings-synced` event to all windows across the application
+/// if an active `AppHandle` is registered.
+pub fn emit_cloud_synced() {
+    if let Ok(lock) = APP_HANDLE.read() {
+        if let Some(ref handle) = *lock {
+            use tauri::Emitter;
+            let _ = handle.emit("cloud-settings-synced", ());
+        }
+    }
+}
+
 static SYNC_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 static SYNC_PENDING: AtomicBool = AtomicBool::new(false);
 
@@ -1192,6 +1215,7 @@ pub fn spawn_background_sync() {
 /// with Google Cloud on launcher startup when connected, then notifies the frontend to refresh
 /// live runtime signals (`cloud-settings-synced`).
 pub fn sync_on_startup(app: tauri::AppHandle) {
+    set_app_handle(app.clone());
     if !is_cloud_connected() {
         return;
     }
@@ -1220,6 +1244,7 @@ pub fn sync_on_startup(app: tauri::AppHandle) {
             }
         } else {
             let _ = perform_backup_with_context(&access_token, None, None).await;
+            emit_cloud_synced();
         }
     });
 }
@@ -1258,6 +1283,7 @@ pub async fn sync_settings_background() {
             tracing::warn!("Background Google Cloud sync failed: {}", e);
         } else {
             tracing::info!("Settings automatically synced to Google Cloud in background");
+            emit_cloud_synced();
         }
         if !SYNC_PENDING.swap(false, Ordering::SeqCst) {
             break;

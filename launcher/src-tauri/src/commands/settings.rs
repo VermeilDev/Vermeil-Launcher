@@ -12,7 +12,7 @@ pub async fn get_settings() -> Result<LauncherSettings, String> {
 }
 
 #[tauri::command]
-pub async fn save_settings(settings: LauncherSettings) -> Result<(), String> {
+pub async fn save_settings(app: tauri::AppHandle, settings: LauncherSettings) -> Result<(), String> {
     crate::services::download::set_speed_limit_mb(settings.download_speed_limit_mb);
     crate::services::discord::set_enabled(settings.discord_rpc);
     settings_service::save(&settings)
@@ -20,6 +20,7 @@ pub async fn save_settings(settings: LauncherSettings) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     if crate::services::google_cloud::is_cloud_connected() {
+        crate::services::google_cloud::set_app_handle(app);
         tokio::spawn(async {
             crate::services::google_cloud::sync_settings_background().await;
         });
