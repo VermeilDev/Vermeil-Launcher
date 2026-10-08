@@ -255,9 +255,10 @@
 .inst-card-badges-track {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .inst-card-badges > *,
@@ -265,8 +266,43 @@
   flex-shrink: 0;
 }
 
+.inst-card-badges .badge {
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1;
+  height: 20px;
+  box-sizing: border-box;
+}
+
+.inst-card-badges .badge--installing {
+  padding: 1px 6px;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.inst-card-badges .badge--installing svg {
+  width: 10px;
+  height: 10px;
+}
+
+.inst-card-badges .badge--version {
+  max-width: 75px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inst-card-badges .badge--loader {
+  max-width: 75px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .inst-card-badges .badge--vnum {
-  max-width: 90px;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -368,6 +404,8 @@
 .card--inst:has(.badge-popover:hover) .inst-card-body,
 .card--inst:has(.badge--overflow-pill:hover) .inst-card-badges,
 .card--inst:has(.badge-popover:hover) .inst-card-badges,
+.card--inst:has(.badge--overflow-pill:hover) .inst-card-badges-track,
+.card--inst:has(.badge-popover:hover) .inst-card-badges-track,
 .dl-card:has(.badge--overflow-pill:hover) .card-body,
 .dl-card:has(.badge-popover:hover) .card-body,
 .dl-card:has(.badge--overflow-pill:hover) .dl-card-body,
@@ -855,7 +893,7 @@
 /* Library Shelf Card Grid: Enforce max card width so cards never stretch into massive banners */
 .library-section-shelf .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 340px));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 350px));
   gap: var(--space-3);
 }
 

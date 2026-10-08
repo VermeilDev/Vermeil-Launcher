@@ -470,9 +470,9 @@ const Library: Component = () => {
         <div class="inst-card-badges">
           <div class="inst-card-badges-track">
             <Show when={isInstanceInstalling(inst)}>
-              <span class="badge badge--installing">
+              <span class="badge badge--installing tip-below" data-tip="Installation in progress">
                 <IconDownload />
-                Installing...
+                Installing
               </span>
             </Show>
             <Show when={pinnedSet().has(inst.id)}>
@@ -492,19 +492,29 @@ const Library: Component = () => {
             <span class={`badge badge--loader ${loaderBadgeClass(inst.loader?.type || "vanilla")}`}>
               {loaderLabel(inst.loader?.type || "vanilla")}
             </span>
-            <span class="badge badge--ram">
-              {formatMemoryGb(inst.java?.memory_max_mb)}
-            </span>
+            <Show when={!isInstanceInstalling(inst)}>
+              <span class="badge badge--ram">
+                {formatMemoryGb(inst.java?.memory_max_mb)}
+              </span>
+            </Show>
 
             {(() => {
+              const installing = isInstanceInstalling(inst);
+              // While installing, the badge--installing chip occupies the card's badge budget.
+              // Suppress extra capability chips during in-flight installation to guarantee zero clipping or overflow.
+              if (installing) return null;
+
+              const isPinned = pinnedSet().has(inst.id);
               const hasVnum = Boolean(inst.source_project_id && inst.source_version);
               const hasSource = (inst.source_platforms || []).length > 0;
               const isCurseForge = hasSource && inst.source_platforms[0] === "curseforge";
               const hasCompanion = Boolean(inst.ingame_cape_supported);
 
               const extraCount = (hasVnum ? 1 : 0) + (hasSource ? 1 : 0) + (hasCompanion ? 1 : 0);
+              if (extraCount === 0) return null;
 
-              if (extraCount <= 1) {
+              // Only render inline if not pinned and at most 1 extra badge (pinned badge uses slot budget).
+              if (!isPinned && extraCount <= 1) {
                 return (
                   <>
                     <Show when={hasVnum}>
