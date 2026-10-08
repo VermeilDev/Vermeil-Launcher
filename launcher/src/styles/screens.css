@@ -1241,12 +1241,12 @@
    ============================================================ */
 /* ============================================================
    Home Screen — Bento Architecture with Constrained
-   Container Ceiling (1180px auto-centered canvas matching Library, Settings & Downloads).
+   Container Ceiling (1400px auto-centered canvas matching Library).
    ============================================================ */
 .home-screen {
   display: flex;
   flex-direction: column;
-  max-width: 1180px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
