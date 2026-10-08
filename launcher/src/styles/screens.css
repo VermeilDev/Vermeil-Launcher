@@ -1246,7 +1246,7 @@
 .home-screen {
   display: flex;
   flex-direction: column;
-  max-width: 1400px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -2376,13 +2376,13 @@
 
 /* ============================================================
    Account screen — Bento Studio Architecture with Constrained
-   Container Ceiling (1180px auto-centered canvas).
+   Container Ceiling (auto-centered canvas matching Library & Settings).
    ============================================================ */
 .account-screen {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1180px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -3697,12 +3697,12 @@
 
 /* ============================================================
    Downloads screen — Bento Architecture with Constrained
-   Container Ceiling (1180px auto-centered canvas matching Accounts & Settings).
+   Container Ceiling (auto-centered canvas matching Library & Settings).
    ============================================================ */
 .downloads-screen {
   display: flex;
   flex-direction: column;
-  max-width: 1180px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -5529,13 +5529,13 @@
 
 /* ════════════════════════════════════════════════════════════
    Create instance — Bento Hub Architecture
-   Centered 1180px container ceiling with 3 Hero Pillars & lower feature shelf
+   Auto-centered container ceiling matching Library & Settings
    ════════════════════════════════════════════════════════════ */
 .create-choose-screen {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 1180px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   min-height: 100%;
@@ -5916,13 +5916,13 @@
 
 /* ════════════════════════════════════════════════════════════
    Create Custom Instance Setup Screen (Tactile Bento Style)
-   Container Ceiling (1180px auto-centered canvas)
+   Container Ceiling (auto-centered canvas matching Library & Settings)
    ════════════════════════════════════════════════════════════ */
 .create-custom-screen {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1180px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -7041,7 +7041,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 1720px;
+  max-width: var(--screen-max-width, 1400px);
   margin: 0 auto;
   width: 100%;
 }
@@ -8280,13 +8280,13 @@
 
 /* ════════════════════════════════════════════════════════════
    Import Instance Screen (Tactile Bento Style)
-   Container Ceiling (1180px auto-centered canvas)
+   Container Ceiling (auto-centered canvas matching Library & Settings)
    ════════════════════════════════════════════════════════════ */
 .import-screen {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1180px;
+  max-width: var(--screen-max-width, 1400px);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;

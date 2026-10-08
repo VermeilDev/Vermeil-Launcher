@@ -179,6 +179,7 @@
   --card-track: 240px;          /* fixed card width for shared grid */
   --card-track-compact: 240px;  /* card width for the mod Browse/Installed grids */
   --content-min: 480px;         /* minimum supported content width */
+  --screen-max-width: 1400px;   /* canonical ceiling across desktop screens */
 
   /* --- Brand colors: intentional exceptions to the no-literal rule ---
      Loader-identity and content-source brand hues are fixed brand values,

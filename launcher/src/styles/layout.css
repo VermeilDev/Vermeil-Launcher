@@ -230,7 +230,7 @@ body:not(:has(.modal-overlay)):not(:has(.news-modal-overlay)) *:has(> [data-tip]
 }
 
 /* The Settings screen features an anchored Top Shelf Deck with contained
-   Bento Grid scrolling — scrollbar attaches directly to the 1180px content canvas. */
+   Bento Grid scrolling — scrollbar attaches directly to the content canvas. */
 .content:has(.settings-screen-container) {
   display: flex;
   flex-direction: column;
