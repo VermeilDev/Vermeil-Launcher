@@ -182,18 +182,49 @@ const CrashReportModal: Component = () => {
     }
   };
 
-  const copyFullReport = () => {
-    const text = reportText();
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    showToast({
-      title: "Report Copied",
-      message: `Copied ${allLines().length} lines to clipboard.`,
-      type: "success",
-    });
+  const writeClipboard = async (text: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {}
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return success;
+    } catch {
+      return false;
+    }
   };
 
-  const copySummary = () => {
+  const copyFullReport = async () => {
+    const text = reportText();
+    if (!text) return;
+    const ok = await writeClipboard(text);
+    if (ok) {
+      showToast({
+        title: "Report Copied",
+        message: `Copied ${allLines().length} lines to clipboard.`,
+        type: "success",
+      });
+    } else {
+      showToast({
+        title: "Copy Failed",
+        message: "Could not write to clipboard.",
+        type: "error",
+      });
+    }
+  };
+
+  const copySummary = async () => {
     const diag = diagnostic();
     const inst = instanceName() ? ` (${instanceName()})` : "";
     const summary = [
@@ -207,12 +238,14 @@ const CrashReportModal: Component = () => {
       .filter(Boolean)
       .join("\n");
 
-    navigator.clipboard.writeText(summary);
-    showToast({
-      title: "Diagnostic Copied",
-      message: "Diagnostic summary copied for Discord / GitHub sharing.",
-      type: "success",
-    });
+    const ok = await writeClipboard(summary);
+    if (ok) {
+      showToast({
+        title: "Summary Copied",
+        message: "Diagnostic summary copied for Discord & GitHub sharing.",
+        type: "success",
+      });
+    }
   };
 
   const handleOpenFolder = async () => {
@@ -309,7 +342,7 @@ const CrashReportModal: Component = () => {
                     </Show>
                     <button type="button" class="btn btn--neutral btn--sm" onClick={copySummary}>
                       <IconClipboard />
-                      <span>Copy Summary</span>
+                      <span>Copy Summary for Discord / GitHub</span>
                     </button>
                   </div>
                   <div style="font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 6px;">
@@ -338,9 +371,9 @@ const CrashReportModal: Component = () => {
                     <IconBolt />
                     <span>Jump to Cause</span>
                   </button>
-                  <button type="button" class="btn btn--primary btn--sm" onClick={copyFullReport}>
+                  <button type="button" class="btn btn--primary btn--sm" onClick={copyFullReport} data-tip="Copy entire raw crash report">
                     <IconClipboard />
-                    <span>Copy All</span>
+                    <span>Copy Full Report</span>
                   </button>
                 </div>
               </div>
