@@ -967,18 +967,8 @@ const App: Component = () => {
       const crashPath = event.payload;
       const instId = activeInstanceId();
       const logs = instId ? gameLogsFor(instId) : [];
-      showToast({
-        title: "Game crashed",
-        message: crashPath
-          ? "Open the diagnostic report or check the Logs tab for details."
-          : "The game exited unexpectedly. View the diagnostic report for details.",
-        type: "error",
-        autoCloseMs: 12000,
-        action: {
-          label: "View report",
-          onClick: () => showCrashReport(crashPath, logs, instId),
-        },
-      });
+      showWindow().catch(() => {});
+      showCrashReport(crashPath, logs, instId);
     });
 
     // First-run onboarding and runtime state initialization.
