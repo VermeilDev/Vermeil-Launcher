@@ -27,51 +27,233 @@
   padding: var(--space-8) var(--space-3);
   text-align: center;
 }
-.crash-error-text { color: var(--danger); }
-.crash-meta {
+/* ============================================================
+   Crash report modal & Smart Diagnostics viewer (CrashReportModal.tsx)
+   ============================================================ */
+.crash-report-modal {
+  width: 900px;
+  max-width: min(900px, calc(100vw - 40px));
+  max-height: min(88vh, 850px);
+  display: flex;
+  flex-direction: column;
+}
+
+.crash-diag-card {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+
+.crash-diag-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--danger);
+}
+.crash-diag-card.diag-warn::before { background: var(--warn); }
+.crash-diag-card.diag-info::before { background: var(--info); }
+.crash-diag-card.diag-accent::before { background: var(--accent); }
+
+.crash-diag-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) 0 var(--space-3);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--space-3);
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.crash-meta-path {
+
+.crash-diag-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.crash-diag-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  flex-shrink: 0;
+}
+.crash-diag-card.diag-warn .crash-diag-icon { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+.crash-diag-card.diag-info .crash-diag-icon { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+
+.crash-diag-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.crash-diag-badge {
   font-size: 10px;
-  color: var(--muted);
-  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
-  white-space: nowrap;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.crash-diag-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.crash-diag-desc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.crash-diag-root-box {
+  background: #09080d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 11px;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.crash-diag-card.diag-warn .crash-diag-root-box { color: #fbbf24; }
+.crash-diag-card.diag-info .crash-diag-root-box { color: #93c5fd; }
+
+.crash-diag-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.crash-diag-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crash-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.crash-toolbar-path {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 10px;
+  color: var(--text-faint);
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
+  white-space: nowrap;
+  max-width: 380px;
 }
-.crash-jump {
-  flex-shrink: 0;
+
+.crash-toolbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crash-search-box {
+  display: flex;
+  align-items: center;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  gap: 6px;
+}
+.crash-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-sans);
   font-size: 11px;
-  padding: var(--space-1) var(--space-3);
+  width: 130px;
 }
+.crash-search-box input::placeholder { color: var(--text-faint); }
+
 .crash-viewer {
   flex: 1;
-  min-height: 0;
+  min-height: 260px;
+  max-height: 380px;
   overflow: auto;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   border-radius: 0;
-  padding: var(--space-3) var(--space-3);
-  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--muted);
+  padding: 6px 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #9f99ad;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
 }
+
 .crash-line {
+  display: flex;
+  padding: 0 12px;
   white-space: pre;
-  padding: 0 var(--space-1);
-  border-radius: 0;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
+
+.crash-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.crash-line-num {
+  width: 36px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  text-align: right;
+  padding-right: 12px;
+  font-size: 10.5px;
+}
+
+.crash-line-text {
+  flex: 1;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
 .crash-line.highlight {
   color: var(--danger);
-  background: rgba(239, 68, 68, 0.08);
+  font-weight: 500;
+}
+
+.crash-line.is-root-cause {
+  background: rgba(239, 68, 68, 0.16);
+  border-left: 3px solid var(--danger);
+  padding-left: 9px;
+  color: #fca5a5;
   font-weight: 600;
 }
 
