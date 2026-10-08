@@ -29,8 +29,8 @@ fn show_window(app: tauri::AppHandle) {
 /// user can drag a window edge below the hint. Centralizing the constants
 /// here lets the setup-time migration and the runtime resize-event clamp
 /// share a single source of truth.
-const MIN_WIDTH: f64 = 1100.0;
-const MIN_HEIGHT: f64 = 720.0;
+const MIN_WIDTH: f64 = 1280.0;
+const MIN_HEIGHT: f64 = 800.0;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

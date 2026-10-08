@@ -155,14 +155,14 @@
   /* --- Dock scale ---
      Fluid multiplier applied via `zoom` on `.dock-wrap` so the entire
      bottom dock (pill, FAB, pin carousel, pagination island) sizes up
-     with the window. Stays at 1× on the minimum window (1100w) and ramps
+     with the window. Stays at 1× on the minimum window (1280w) and ramps
      to 1.20× by the time the user is on a 1920w monitor.
 
-     Math: ((100vw - 1100px) / 4100px) gives a unitless 0 at 1100w and
+     Math: ((100vw - 1280px) / 3200px) gives a unitless 0 at 1280w and
      0.20 at 1920w. Adding 1 yields the multiplier; clamp() pins both ends.
-     The 4100px divisor is intentional — it's the length that produces a
-     0.20 delta over the 1100→1920 span. */
-  --dock-scale: clamp(1, calc(1 + (100vw - 1100px) / 4100px), 1.20);
+     The 3200px divisor is intentional — it's the length that produces a
+     0.20 delta over the 1280→1920 span. */
+  --dock-scale: clamp(1, calc(1 + (100vw - 1280px) / 3200px), 1.20);
 
   /* --- Dock clearance ---
      Reserved bottom space on scrolling content (`.content`) so the floating
