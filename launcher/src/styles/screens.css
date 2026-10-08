@@ -1240,6 +1240,19 @@
      primary recent world hero card + secondary quick-launch slots.
    ============================================================ */
 /* ============================================================
+   Home Screen — Bento Architecture with Constrained
+   Container Ceiling (1180px auto-centered canvas matching Library, Settings & Downloads).
+   ============================================================ */
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ============================================================
    Home Page Header (Top context bar, titles & system badges)
    ============================================================ */
 .home-header {

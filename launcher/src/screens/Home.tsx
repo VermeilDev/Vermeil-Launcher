@@ -655,7 +655,7 @@ const Home: Component = () => {
   const displayName = () => account()?.name ?? "Player";
 
   return (
-    <div class="screen-enter">
+    <div class="screen-enter home-screen">
       {/* ═══ TOP CONTEXT BAR: TITLE & LIVE TELEMETRY / AUTH PILLS ═══ */}
       <div class="home-header">
         <div class="home-header-titles">
