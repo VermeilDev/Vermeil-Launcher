@@ -28,6 +28,16 @@ pub async fn save_settings(settings: LauncherSettings) -> Result<(), String> {
     Ok(())
 }
 
+/// Resize and recenter the launcher window to a selected size preset.
+#[tauri::command]
+pub async fn set_window_preset(window: tauri::Window, preset: String) -> Result<(), String> {
+    let (width, height) = LauncherSettings::parse_window_size_preset(&preset);
+    let _ = window.unmaximize();
+    let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
+    let _ = window.center();
+    Ok(())
+}
+
 /// The launcher's root data directory as a display string for the current
 /// platform (Windows `%LOCALAPPDATA%\Vermeil`, Linux `~/.local/share/Vermeil`,
 /// macOS `~/Library/Application Support/Vermeil`). The Resources tab shows this

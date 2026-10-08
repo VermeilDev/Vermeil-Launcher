@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Component, createSignal, createResource, Show, For, onMount, onCleanup, createEffect } from "solid-js";
-import { getSettings, saveSettings, getCacheSize, purgeCache, getSharedGameDataSize, purgeSharedGameData, getAppDirectory, openAppDirectory, LauncherSettings, detectJavaInstallations, validateJavaPath, setJavaPath, installRecommendedJava, deleteJavaInstall, pruneInvalidJavaPaths, getSystemMemory, JavaInstall, testCurseforgeKey, testModrinthToken, ApiKeyTestResult } from "../ipc/commands";
+import { getSettings, saveSettings, setWindowPreset, getCacheSize, purgeCache, getSharedGameDataSize, purgeSharedGameData, getAppDirectory, openAppDirectory, LauncherSettings, detectJavaInstallations, validateJavaPath, setJavaPath, installRecommendedJava, deleteJavaInstall, pruneInvalidJavaPaths, getSystemMemory, JavaInstall, testCurseforgeKey, testModrinthToken, ApiKeyTestResult } from "../ipc/commands";
 import { setActiveScreen, setActiveInstanceId, setInitialInstanceTab, instances, showToast, setDownloadToastsEnabled, setAutoHideDockSetting, setPaginationPosition, applyTheme, trackDownload, completeDownload, failDownload, downloads } from "../App";
 import { THEMES } from "../lib/theme";
 import { checkForUpdates } from "../services/updater";
@@ -137,7 +137,7 @@ const Settings: Component = () => {
     "Theme", "Themes", "Color Themes", "Appearance", "Neon Aurora", "Emerald", "Inferno", "Stealth", "Deep Ocean", "Void", "palette", "aesthetic"
   );
   const matchesDock = () => isGeneralSection() || matches(
-    "dock", "autohide", "auto-hide", "floating dock", "pagination", "page dock", "pagination dock position", "notifications", "download notifications", "toast", "toasts", "splash", "boot", "startup", "boot splash"
+    "dock", "autohide", "auto-hide", "floating dock", "pagination", "page dock", "pagination dock position", "window", "window size", "window size preset", "preset", "notifications", "download notifications", "toast", "toasts", "splash", "boot", "startup", "boot splash"
   );
   const matchesIntegrations = () => isGeneralSection() || matches(
     "companion", "cape", "in-game cape", "vermeil companion", "companion mod", "discord", "rpc", "rich presence", "snapshots", "snapshot", "experimental", "force delete", "delete", "confirmation"
@@ -553,6 +553,9 @@ const Settings: Component = () => {
     if (key === "pagination_position") {
       setPaginationPosition(value as "bottom" | "left" | "right");
     }
+    if (key === "window_size_preset") {
+      setWindowPreset(value as string);
+    }
     try {
       await saveSettings(updated);
       window.dispatchEvent(new CustomEvent("vermeil-settings-changed"));
@@ -583,6 +586,9 @@ const Settings: Component = () => {
       }
       if (key === "pagination_position") {
         setPaginationPosition(current.pagination_position as "bottom" | "left" | "right");
+      }
+      if (key === "window_size_preset") {
+        setWindowPreset(current.window_size_preset ?? "1280x800");
       }
       await refetch();
     }
@@ -994,6 +1000,28 @@ const Settings: Component = () => {
                                 { value: "right", label: "Right Centered" },
                               ]}
                               onChange={(val) => updateSetting("pagination_position", val as "bottom" | "left" | "right")}
+                            />
+                          </div>
+                        </div>
+                      </Show>
+
+                      <Show when={isGeneralSection() || matches("Window size preset", "Launcher window size preset", "window size", "preset", "dimensions", "resolution")}>
+                        <div class="setting-row">
+                          <div class="setting-info">
+                            <span class="setting-name">Window size preset</span>
+                            <span class="setting-desc">Dimensions and initial scale for the launcher window</span>
+                          </div>
+                          <div class="setting-control">
+                            <Dropdown
+                              width="185px"
+                              value={settings()!.window_size_preset || "1280x800"}
+                              options={[
+                                { value: "1100x720", label: "Compact (1100 × 720)" },
+                                { value: "1280x800", label: "Standard (1280 × 800)" },
+                                { value: "1440x900", label: "Large (1440 × 900)" },
+                                { value: "1600x1000", label: "Expanded (1600 × 1000)" },
+                              ]}
+                              onChange={(val) => updateSetting("window_size_preset", val)}
                             />
                           </div>
                         </div>

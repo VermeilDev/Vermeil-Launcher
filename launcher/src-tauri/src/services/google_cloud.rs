@@ -681,6 +681,7 @@ pub fn sanitize_settings_for_cloud(source: &LauncherSettings) -> LauncherSetting
         theme: source.theme.clone(),
         auto_hide_dock: source.auto_hide_dock,
         pagination_position: source.pagination_position.clone(),
+        window_size_preset: source.window_size_preset.clone(),
         force_delete: source.force_delete,
         download_speed_limit_mb: source.download_speed_limit_mb,
         mod_sources: source.mod_sources.clone(),
@@ -792,6 +793,9 @@ pub fn merge_restored_settings(
     }
     merged.auto_hide_dock = cloud_backup.auto_hide_dock;
     merged.pagination_position = cloud_backup.pagination_position.clone();
+    if !cloud_backup.window_size_preset.is_empty() {
+        merged.window_size_preset = cloud_backup.window_size_preset.clone();
+    }
     merged.force_delete = cloud_backup.force_delete;
     merged.download_speed_limit_mb = cloud_backup.download_speed_limit_mb;
     if !cloud_backup.mod_sources.is_empty() {
@@ -1338,6 +1342,7 @@ mod tests {
         let mut keybinds_a = HashMap::new();
         keybinds_a.insert("open_search".to_string(), "Ctrl+K".to_string());
         machine_a.keybinds = keybinds_a;
+        machine_a.window_size_preset = "1440x900".to_string();
         machine_a.lifetime_play_seconds = 7200;
         machine_a.last_active_at = Some("2026-09-23T20:00:00Z".to_string());
 
@@ -1347,6 +1352,7 @@ mod tests {
         // Verify synced: General, Display, Sound, Controls, Accessibility, Keybinds, and Lifetime Playtime
         assert_eq!(cloud.discord_rpc, false);
         assert_eq!(cloud.auto_hide_dock, false);
+        assert_eq!(cloud.window_size_preset, "1440x900");
         assert_eq!(cloud.force_delete, true);
         assert_eq!(cloud.theme, "inferno");
         assert_eq!(cloud.video_settings.max_fps, Some(144));
@@ -1393,6 +1399,7 @@ mod tests {
         // Machine B gets General, Display, Sound, Controls, Accessibility, and Keybinds from cloud
         assert_eq!(restored_on_b.discord_rpc, false);
         assert_eq!(restored_on_b.auto_hide_dock, false);
+        assert_eq!(restored_on_b.window_size_preset, "1440x900");
         assert_eq!(restored_on_b.force_delete, true);
         assert_eq!(restored_on_b.download_speed_limit_mb, 0);
         assert_eq!(restored_on_b.theme, "inferno");

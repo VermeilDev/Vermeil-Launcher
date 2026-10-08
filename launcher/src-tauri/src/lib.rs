@@ -29,8 +29,8 @@ fn show_window(app: tauri::AppHandle) {
 /// user can drag a window edge below the hint. Centralizing the constants
 /// here lets the setup-time migration and the runtime resize-event clamp
 /// share a single source of truth.
-const MIN_WIDTH: f64 = 1280.0;
-const MIN_HEIGHT: f64 = 800.0;
+const MIN_WIDTH: f64 = 1100.0;
+const MIN_HEIGHT: f64 = 720.0;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -124,15 +124,24 @@ pub fn run() {
                     },
                 )));
 
-                // Always open at the design minimum size, centered. We
-                // deliberately do NOT restore a prior session's geometry: the
-                // launcher should land the same way every time, and restoring a
-                // saved `maximized` flag was sometimes opening it full-screen.
-                // Unmaximize first in case the WM came up maximized.
+                // Open window at the user's chosen window size preset (defaulting to 1280x800).
+                let (init_width, init_height) = {
+                    let config_path = crate::util::paths::data_dir().join("config.json");
+                    if let Ok(content) = std::fs::read_to_string(config_path) {
+                        if let Ok(s) = serde_json::from_str::<crate::models::settings::LauncherSettings>(&content) {
+                            crate::models::settings::LauncherSettings::parse_window_size_preset(&s.window_size_preset)
+                        } else {
+                            (1280.0, 800.0)
+                        }
+                    } else {
+                        (1280.0, 800.0)
+                    }
+                };
+
                 let _ = window.unmaximize();
                 let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
-                    width: MIN_WIDTH,
-                    height: MIN_HEIGHT,
+                    width: init_width,
+                    height: init_height,
                 }));
                 let _ = window.center();
 
@@ -332,6 +341,7 @@ pub fn run() {
             settings::load_download_history,
             settings::save_download_history,
             settings::set_theme_icon,
+            settings::set_window_preset,
             // Cloud Sync
             cloud_sync::connect_google_cloud,
             cloud_sync::disconnect_google_cloud,

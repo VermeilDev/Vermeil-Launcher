@@ -185,6 +185,10 @@ export interface LauncherSettings {
    * Position and orientation of the pagination dock indicator.
    */
   pagination_position: "bottom" | "left" | "right";
+  /**
+   * Desktop window size preset ("1100x720", "1280x800", "1440x900", "1600x1000").
+   */
+  window_size_preset?: string;
   concurrent_downloads: number;
   /**
    * Maximum simultaneous disk writes during batch downloads.
@@ -590,6 +594,7 @@ export const getEffectiveMemory = (instanceId: string) =>
 // Settings commands
 export const getSettings = () => invoke<LauncherSettings>("get_settings");
 export const saveSettings = (settings: LauncherSettings) => invoke<void>("save_settings", { settings });
+export const setWindowPreset = (preset: string) => invoke<void>("set_window_preset", { preset });
 export const setThemeIcon = (theme: string) => invoke<void>("set_theme_icon", { theme });
 export const getAppDirectory = () => invoke<string>("get_app_directory");
 export const openAppDirectory = () => invoke<void>("open_app_directory");
