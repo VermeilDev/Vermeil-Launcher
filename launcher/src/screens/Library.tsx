@@ -472,7 +472,6 @@ const Library: Component = () => {
             <Show when={isInstanceInstalling(inst)}>
               <span class="badge badge--installing tip-below" data-tip="Installation in progress">
                 <IconDownload />
-                Installing
               </span>
             </Show>
             <Show when={pinnedSet().has(inst.id)}>
@@ -492,18 +491,11 @@ const Library: Component = () => {
             <span class={`badge badge--loader ${loaderBadgeClass(inst.loader?.type || "vanilla")}`}>
               {loaderLabel(inst.loader?.type || "vanilla")}
             </span>
-            <Show when={!isInstanceInstalling(inst)}>
-              <span class="badge badge--ram">
-                {formatMemoryGb(inst.java?.memory_max_mb)}
-              </span>
-            </Show>
+            <span class="badge badge--ram">
+              {formatMemoryGb(inst.java?.memory_max_mb)}
+            </span>
 
             {(() => {
-              const installing = isInstanceInstalling(inst);
-              // While installing, the badge--installing chip occupies the card's badge budget.
-              // Suppress extra capability chips during in-flight installation to guarantee zero clipping or overflow.
-              if (installing) return null;
-
               const isPinned = pinnedSet().has(inst.id);
               const hasVnum = Boolean(inst.source_project_id && inst.source_version);
               const hasSource = (inst.source_platforms || []).length > 0;
