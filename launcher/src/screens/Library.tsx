@@ -13,7 +13,6 @@ import {
   refreshPinnedInstanceIds,
   pinnedInstanceIds,
   downloads,
-  currentThemeLogo,
   ensureAccountOrPrompt,
   gameRunning,
   setGameRunning,
@@ -566,76 +565,18 @@ const Library: Component = () => {
 
   return (
     <div class="screen-enter library-screen">
-      {/* ═══ EMPTY STATE: Shown when 0 instances exist in the entire launcher ═══ */}
-      <Show when={allList().length === 0}>
-        <div class="library-header" style="margin-bottom: 16px;">
-          <div class="page-title">Library</div>
-          <div class="library-header-meta">
-            <span>0 instances</span>
-            <span>·</span>
-            <span>Workspace ready</span>
-          </div>
-        </div>
-
-        <div class="empty-bento-layout">
-          {/* Main Bento Launchpad Hero Card (Centered Solo) */}
-          <div class="empty-launchpad-card">
-            <div class="bento-card-header">
-              <div class="bento-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
-                <span>Instance Launchpad</span>
-              </div>
-            </div>
-
-            <div class="empty-launchpad-body">
-              {/* Ambient floating theme logo emblem */}
-              <img src={currentThemeLogo()} alt="Vermeil" class="empty-logo-glow" draggable={false} />
-
-              {/* Content with Animated Ellipsis */}
-              <div class="empty-hero-content">
-                <div class="empty-status-line">
-                  <span class="card-section-tag tag-settings-accent">STANDBY</span>
-                  <span>
-                    Ready for first deployment<span class="animated-ellipsis"><span>.</span><span>.</span><span>.</span></span>
-                  </span>
-                </div>
-                <h2 class="empty-launchpad-title">Your Library is Ready to Launch</h2>
-                <p class="empty-launchpad-desc">
-                  Click below to configure a custom Minecraft instance, browse community modpacks, or import an existing archive.
-                </p>
-              </div>
-
-              {/* Single Primary CTA Button */}
-              <div class="empty-action-row">
-                <button
-                  class="btn-create-hero"
-                  onClick={() => setActiveScreen("create-choose")}
-                >
-                  <IconPlus />
-                  <span>Create Instance</span>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </div>
-
-              <div class="empty-tip-footer">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Tip: Drag &amp; drop any <code>.mrpack</code> or <code>.zip</code> file anywhere into Vermeil to import instantly</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Show>
-
-      {/* ═══ MAIN LIBRARY VIEW: Shown when user has 1+ instances ═══ */}
-      <Show when={allList().length > 0}>
-        {/* Header with Title, Telemetry & Toolbar */}
-        <div class="library-header">
-          <div class="library-header-top">
-            <div>
-              <div class="page-title">Library</div>
-              <div class="library-header-meta">
-                <span>{allList().length} {allList().length === 1 ? "instance" : "instances"}</span>
-                <span>·</span>
+      {/* Header with Title, Telemetry & Toolbar */}
+      <div class="library-header">
+        <div class="library-header-top">
+          <div>
+            <div class="page-title">Library</div>
+            <div class="library-header-meta">
+              <span>{allList().length} {allList().length === 1 ? "instance" : "instances"}</span>
+              <span>·</span>
+              <Show
+                when={allList().length > 0}
+                fallback={<span>Workspace ready</span>}
+              >
                 <span
                   class="library-meta-link tip-below"
                   data-tip="Manage pins"
@@ -645,9 +586,11 @@ const Library: Component = () => {
                 </span>
                 <span>·</span>
                 <span>{formatPlaytime(totalPlaySeconds())} played</span>
-              </div>
+              </Show>
             </div>
+          </div>
 
+          <Show when={allList().length > 0}>
             <div class="library-toolbar">
               <div class="library-search">
                 <IconSearch />
@@ -684,9 +627,11 @@ const Library: Component = () => {
                 {selectMode() ? <IconX /> : <IconTrash2 />}
               </button>
             </div>
-          </div>
+          </Show>
+        </div>
 
-          {/* Filter Pills */}
+        {/* Filter Pills */}
+        <Show when={allList().length > 0}>
           <div class="library-filter-pills">
             <button
               class={`library-filter-pill ${loaderFilter() === "all" ? "active" : ""}`}
@@ -726,7 +671,8 @@ const Library: Component = () => {
               )}
             </For>
           </div>
-        </div>
+        </Show>
+      </div>
 
         {/* ═══ SHELF 1: PINNED FAVORITES (Shown when browsing default view & pins exist) ═══ */}
         <Show when={!search() && loaderFilter() === "all" && pinnedList().length > 0}>
@@ -771,7 +717,9 @@ const Library: Component = () => {
               <Show when={pinnedList().length > 0} fallback={
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span class="card-section-tag tag-settings-cloud">ALL INSTANCES ({allList().length})</span>
-                  <span style="color:var(--text-muted);font-size:var(--fs-xs);">Complete library</span>
+                  <span style="color:var(--text-muted);font-size:var(--fs-xs);">
+                    {allList().length === 0 ? "Create or import an instance to begin" : "Complete library"}
+                  </span>
                 </div>
               }>
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -967,7 +915,6 @@ const Library: Component = () => {
             </div>
           </div>
         </div>
-      </Show>
 
       {/* Floating action bar — appears at bottom-center when in select mode. */}
       <Show when={selectMode()}>
