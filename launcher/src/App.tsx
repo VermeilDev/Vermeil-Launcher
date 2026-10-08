@@ -28,11 +28,10 @@ import ManualDownloadModal from "./components/ManualDownloadModal";
 import UpdateBanner from "./components/UpdateBanner";
 import CrashReportModal, { showCrashReport } from "./components/CrashReportModal";
 import OnboardingWizard, { openOnboarding } from "./modals/OnboardingWizard";
-import PinInstancesModal from "./modals/PinInstancesModal";
-import { pinInstancesModalOpen, closePinInstancesModal } from "./modals/PinInstancesModal";
+import PinInstancesModal, { pinInstancesModalOpen, closePinInstancesModal } from "./modals/PinInstancesModal";
 import InstancePickerModal, { instancePickerModalOpen, closeInstancePickerModal } from "./modals/InstancePickerModal";
 import ServerRoutingModal, { serverRoutingModalOpen, closeServerRoutingModal } from "./modals/ServerRoutingModal";
-import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape, type Instance } from "./ipc/commands";
+import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape, type Instance, type LauncherSettings } from "./ipc/commands";
 import { listen } from "@tauri-apps/api/event";
 import { checkForUpdates } from "./services/updater";
 import { matchesKeybind, resolveBinding } from "./lib/keybinds";
@@ -618,41 +617,67 @@ export function applyTheme(name: string) {
   setThemeIcon(t).catch((e) => console.warn("Failed to set theme icon:", e));
 }
 
-/** Re-load pin list and global runtime settings from disk. Called on startup,
- *  after the pin manager modal saves changes, and after Google Cloud restore. */
+let autoUpdateIntervalId: ReturnType<typeof setInterval> | null = null;
+
+/** Single Source of Truth runtime settings applicator: synchronously applies
+ *  active side-effects across theme, navigation dock layout, download notifications,
+ *  keybind cache, and reactive auto-update polling intervals whenever settings are loaded,
+ *  saved locally, or synchronized from Google Cloud. */
+export async function applyRuntimeSettings(s: LauncherSettings) {
+  if (s.theme && s.theme !== currentTheme()) {
+    applyTheme(s.theme);
+  }
+  if (typeof s.download_toasts === "boolean") {
+    setDownloadToastsEnabled(s.download_toasts);
+  }
+  if (typeof s.auto_hide_dock === "boolean") {
+    setAutoHideDockSetting(s.auto_hide_dock);
+  }
+  if (s.pagination_position === "bottom" || s.pagination_position === "left" || s.pagination_position === "right") {
+    setPaginationPosition(s.pagination_position);
+  }
+  if (s.auto_update) {
+    if (!autoUpdateIntervalId && !offline()) {
+      checkForUpdates(true).catch((e) => console.error("Auto-update check failed:", e));
+      autoUpdateIntervalId = setInterval(() => {
+        if (!offline()) {
+          checkForUpdates(true).catch((e) => console.error("Auto-update re-check failed:", e));
+        }
+      }, 5 * 60 * 1000);
+    }
+  } else if (autoUpdateIntervalId) {
+    clearInterval(autoUpdateIntervalId);
+    autoUpdateIntervalId = null;
+  }
+  window.dispatchEvent(new CustomEvent("vermeil-keybinds-changed"));
+  window.dispatchEvent(new CustomEvent("vermeil-settings-changed"));
+}
+
+/** Re-load pin list from disk. Called on startup, after the pin manager modal
+ *  saves changes, and after instance creation/deletion. */
 export async function refreshPinnedInstanceIds() {
   try {
     const s = await getSettings();
     setPinnedInstanceIds(s.sidebar_pinned_instances ?? []);
-    if (typeof s.download_toasts === "boolean") {
-      setDownloadToastsEnabled(s.download_toasts);
-    }
-    if (typeof s.auto_hide_dock === "boolean") {
-      setAutoHideDockSetting(s.auto_hide_dock);
-    }
-    if (s.pagination_position === "bottom" || s.pagination_position === "left" || s.pagination_position === "right") {
-      setPaginationPosition(s.pagination_position);
-    }
-    if (s.theme && s.theme !== currentTheme()) {
-      applyTheme(s.theme);
-    }
-    window.dispatchEvent(new CustomEvent("vermeil-keybinds-changed"));
-    window.dispatchEvent(new CustomEvent("vermeil-settings-changed"));
   } catch (e) {
     console.error("Failed to load sidebar pins:", e);
   }
 }
 
-// Seed pins and reconcile theme on launcher boot so the sidebar and theme reflect disk state.
+// Seed pins and reconcile runtime state on launcher boot so state reflects disk.
 refreshPinnedInstanceIds().catch(() => {});
 getSettings().then((s) => {
-  if (s.theme && s.theme !== currentTheme()) {
-    applyTheme(s.theme);
-  }
+  applyRuntimeSettings(s).catch(() => {});
 }).catch(() => {});
 
 listen("cloud-settings-synced", async () => {
   await refreshPinnedInstanceIds();
+  try {
+    const s = await getSettings();
+    await applyRuntimeSettings(s);
+  } catch (e) {
+    console.error("Failed to apply synced settings:", e);
+  }
 }).catch(() => {});
 
 export { pinnedInstanceIds };
@@ -956,34 +981,10 @@ const App: Component = () => {
       });
     });
 
-    // Auto-update check on startup if enabled (skip when offline). After
-    // the first check, re-poll every 5 minutes so a release published
-    // while the launcher is open still surfaces without a relaunch. The
-    // check is dedup'd against the cached version so an existing banner
-    // won't re-prompt. Manual checks are wired separately via the
-    // "Check for updates" button on the Settings screen.
-    if (!offline()) {
-      getSettings().then(s => {
-        if (s.auto_update) {
-          checkForUpdates(true).catch(e => console.error("Auto-update check failed:", e));
-          setInterval(() => {
-            if (!offline()) {
-              checkForUpdates(true).catch(e =>
-                console.error("Auto-update re-check failed:", e),
-              );
-            }
-          }, 5 * 60 * 1000);
-        }
-      }).catch(() => {});
-    }
-
-    // First-run onboarding. Show the wizard once per user — gated on
-    // `settings.onboarded` AND an empty Library, so existing users with
-    // instances aren't re-prompted on upgrade. Calls `listInstances()`
-    // directly because the `instances` resource may not have settled yet
-    // when `onMount` first runs.
+    // First-run onboarding and runtime state initialization.
     try {
       const [s, list] = await Promise.all([getSettings(), listInstances()]);
+      await applyRuntimeSettings(s);
       if (!s.onboarded && list.length === 0) {
         openOnboarding();
       }
@@ -991,7 +992,7 @@ const App: Component = () => {
       // never flashes. Default-on if the read fails (catch leaves splashOn true).
       if (!s.splash_screen) setSplashOn(false);
     } catch (e) {
-      console.error("Onboarding gate failed:", e);
+      console.error("Initialization gate failed:", e);
     }
 
     // Show window after initialization is complete (window starts hidden)

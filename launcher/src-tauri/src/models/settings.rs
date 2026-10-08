@@ -46,7 +46,7 @@ pub struct LauncherSettings {
     #[serde(default = "default_pagination_position")]
     pub pagination_position: String,
     /// Desktop window size preset ("1100x720", "1280x800", "1440x900", "1600x1000").
-    /// Defaults to "1280x800".
+    /// Defaults to "1100x720".
     #[serde(default = "default_window_size_preset")]
     pub window_size_preset: String,
     #[serde(default = "default_concurrent_downloads")]
@@ -216,7 +216,7 @@ fn default_download_toasts() -> bool { true }
 fn default_theme() -> String { "neon-aurora".to_string() }
 fn default_auto_hide_dock() -> bool { true }
 fn default_pagination_position() -> String { "bottom".to_string() }
-fn default_window_size_preset() -> String { "1280x800".to_string() }
+fn default_window_size_preset() -> String { "1100x720".to_string() }
 fn default_enable_companion_mod() -> bool { true }
 fn default_update_channel() -> String {
     if env!("CARGO_PKG_VERSION").contains('-') {
@@ -243,14 +243,14 @@ pub struct IngameCapeSettings {
 
 impl LauncherSettings {
     /// Resolves logical width and height (w, h) for a named window preset.
-    /// Falls back to 1280.0 x 800.0 if the preset is unrecognized.
+    /// Falls back to 1100.0 x 720.0 if the preset is unrecognized.
     pub fn parse_window_size_preset(preset: &str) -> (f64, f64) {
         match preset {
             "1100x720" => (1100.0, 720.0),
             "1280x800" => (1280.0, 800.0),
             "1440x900" => (1440.0, 900.0),
             "1600x1000" => (1600.0, 1000.0),
-            _ => (1280.0, 800.0),
+            _ => (1100.0, 720.0),
         }
     }
 }

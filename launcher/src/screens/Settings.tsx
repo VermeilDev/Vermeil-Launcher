@@ -3,7 +3,7 @@
 
 import { Component, createSignal, createResource, Show, For, onMount, onCleanup, createEffect } from "solid-js";
 import { getSettings, saveSettings, setWindowPreset, getCacheSize, purgeCache, getSharedGameDataSize, purgeSharedGameData, getAppDirectory, openAppDirectory, LauncherSettings, detectJavaInstallations, validateJavaPath, setJavaPath, installRecommendedJava, deleteJavaInstall, pruneInvalidJavaPaths, getSystemMemory, JavaInstall, testCurseforgeKey, testModrinthToken, ApiKeyTestResult } from "../ipc/commands";
-import { setActiveScreen, setActiveInstanceId, setInitialInstanceTab, instances, showToast, setDownloadToastsEnabled, setAutoHideDockSetting, setPaginationPosition, applyTheme, trackDownload, completeDownload, failDownload, downloads } from "../App";
+import { setActiveScreen, setActiveInstanceId, setInitialInstanceTab, instances, showToast, setDownloadToastsEnabled, setAutoHideDockSetting, setPaginationPosition, applyTheme, applyRuntimeSettings, trackDownload, completeDownload, failDownload, downloads } from "../App";
 import { THEMES } from "../lib/theme";
 import { checkForUpdates } from "../services/updater";
 import { getVersion } from "@tauri-apps/api/app";
@@ -558,12 +558,7 @@ const Settings: Component = () => {
     }
     try {
       await saveSettings(updated);
-      window.dispatchEvent(new CustomEvent("vermeil-settings-changed"));
-      // Notify the global keydown handler that the keybind cache is stale.
-      // App.tsx listens for this event and re-reads settings.keybinds.
-      if (key === "keybinds") {
-        window.dispatchEvent(new CustomEvent("vermeil-keybinds-changed"));
-      }
+      await applyRuntimeSettings(updated);
       // The per-instance Java-args editor pre-fills from the global GC preset.
       // It lives on another screen, so fire after the save lands (not just the
       // optimistic mutate) — it reads settings from disk and would otherwise
@@ -588,7 +583,7 @@ const Settings: Component = () => {
         setPaginationPosition(current.pagination_position as "bottom" | "left" | "right");
       }
       if (key === "window_size_preset") {
-        setWindowPreset(current.window_size_preset ?? "1280x800");
+        setWindowPreset(current.window_size_preset ?? "1100x720");
       }
       await refetch();
     }
@@ -2598,7 +2593,7 @@ const Settings: Component = () => {
                         <div class="setting-control">
                           <Dropdown
                             width="185px"
-                            value={settings()!.window_size_preset || "1280x800"}
+                            value={settings()!.window_size_preset || "1100x720"}
                             options={[
                               { value: "1100x720", label: "Compact (1100 × 720)" },
                               { value: "1280x800", label: "Standard (1280 × 800)" },

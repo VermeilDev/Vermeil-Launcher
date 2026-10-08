@@ -124,17 +124,17 @@ pub fn run() {
                     },
                 )));
 
-                // Open window at the user's chosen window size preset (defaulting to 1280x800).
+                // Open window at the user's chosen window size preset (defaulting to 1100x720).
                 let (init_width, init_height) = {
                     let config_path = crate::util::paths::data_dir().join("config.json");
                     if let Ok(content) = std::fs::read_to_string(config_path) {
                         if let Ok(s) = serde_json::from_str::<crate::models::settings::LauncherSettings>(&content) {
                             crate::models::settings::LauncherSettings::parse_window_size_preset(&s.window_size_preset)
                         } else {
-                            (1280.0, 800.0)
+                            (1100.0, 720.0)
                         }
                     } else {
-                        (1280.0, 800.0)
+                        (1100.0, 720.0)
                     }
                 };
 

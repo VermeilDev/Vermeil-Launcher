@@ -12,8 +12,8 @@
     "windows": [
       {
         "title": "Vermeil",
-        "width": 1280,
-        "height": 800,
+        "width": 1100,
+        "height": 720,
         "minWidth": 1100,
         "minHeight": 720,
         "decorations": false,

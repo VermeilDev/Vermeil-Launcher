@@ -663,6 +663,7 @@ pub async fn backup_to_google_cloud() -> Result<CloudBackupSummary, String> {
 /// Hardware-dependent settings are strictly LOCAL ONLY and never uploaded to cloud:
 /// - RAM allocation & Adaptive RAM (default_memory_mb, adaptive_ram, min/max)
 /// - Window dimensions (window_width, window_height, start_maximized)
+/// - Desktop launcher window size preset (window_size_preset)
 /// - Java runtime, paths, and GC presets (java_runtime, java_paths, gc_preset)
 /// - Concurrency limits (concurrent_downloads, concurrent_writes)
 pub fn sanitize_settings_for_cloud(source: &LauncherSettings) -> LauncherSettings {
@@ -681,7 +682,7 @@ pub fn sanitize_settings_for_cloud(source: &LauncherSettings) -> LauncherSetting
         theme: source.theme.clone(),
         auto_hide_dock: source.auto_hide_dock,
         pagination_position: source.pagination_position.clone(),
-        window_size_preset: source.window_size_preset.clone(),
+        window_size_preset: defaults.window_size_preset,
         force_delete: source.force_delete,
         download_speed_limit_mb: source.download_speed_limit_mb,
         mod_sources: source.mod_sources.clone(),
@@ -750,7 +751,7 @@ pub fn sanitize_settings_for_cloud(source: &LauncherSettings) -> LauncherSetting
 /// - Java runtime, GC preset, and Java paths (local only)
 /// - RAM and adaptive memory (local only)
 /// - Concurrency limits (local only)
-/// - Window dimensions (local only)
+/// - Window dimensions and window size presets (local only)
 /// - Sidebar pinned instances (local only)
 /// Compares two ISO-8601 / RFC3339 timestamps by parsed UTC epoch time (falling back to
 /// lexicographical comparison if unparseable) so fractional-second length differences or
@@ -769,7 +770,7 @@ pub(crate) fn is_timestamp_newer(candidate: &str, existing: &str) -> bool {
 /// - Java runtime, GC preset, and Java paths (local only)
 /// - RAM and adaptive memory (local only)
 /// - Concurrency limits (local only)
-/// - Window dimensions (local only)
+/// - Window dimensions and window size presets (local only)
 /// - Sidebar pinned instances (local only)
 pub fn merge_restored_settings(
     cloud_backup: &LauncherSettings,
@@ -793,9 +794,6 @@ pub fn merge_restored_settings(
     }
     merged.auto_hide_dock = cloud_backup.auto_hide_dock;
     merged.pagination_position = cloud_backup.pagination_position.clone();
-    if !cloud_backup.window_size_preset.is_empty() {
-        merged.window_size_preset = cloud_backup.window_size_preset.clone();
-    }
     merged.force_delete = cloud_backup.force_delete;
     merged.download_speed_limit_mb = cloud_backup.download_speed_limit_mb;
     if !cloud_backup.mod_sources.is_empty() {
@@ -1049,9 +1047,14 @@ async fn perform_restore_with_id(
     let current_settings = settings_service::load().await.unwrap_or_default();
     let restored_settings = merge_restored_settings(&backup.settings, &current_settings, &backup.created_at);
 
-    // Apply live backend settings immediately (Discord RPC, download speed limiter)
+    // Apply live backend settings immediately (Discord RPC, download speed limiter, theme icons)
     crate::services::discord::set_enabled(restored_settings.discord_rpc);
     crate::services::download::set_speed_limit_mb(restored_settings.download_speed_limit_mb);
+    if let Some(handle) = app {
+        if restored_settings.theme != current_settings.theme {
+            let _ = crate::services::window_icon::apply_theme_icon(handle, &restored_settings.theme);
+        }
+    }
 
     settings_service::save(&restored_settings)
         .await
@@ -1352,7 +1355,6 @@ mod tests {
         // Verify synced: General, Display, Sound, Controls, Accessibility, Keybinds, and Lifetime Playtime
         assert_eq!(cloud.discord_rpc, false);
         assert_eq!(cloud.auto_hide_dock, false);
-        assert_eq!(cloud.window_size_preset, "1440x900");
         assert_eq!(cloud.force_delete, true);
         assert_eq!(cloud.theme, "inferno");
         assert_eq!(cloud.video_settings.max_fps, Some(144));
@@ -1369,6 +1371,7 @@ mod tests {
 
         // Verify local-only settings were stripped (Memory, Concurrency & Window are machine-specific)
         assert_eq!(cloud.default_memory_mb, 4096); // default, not Machine A's 8192
+        assert_eq!(cloud.window_size_preset, "1100x720"); // default, not Machine A's 1440x900
         assert_eq!(cloud.video_settings.window_width, None);
         assert_eq!(cloud.video_settings.window_height, None);
         assert_eq!(cloud.video_settings.start_maximized, None);
@@ -1380,6 +1383,7 @@ mod tests {
         // Machine B with its own local memory, window size, and Java
         let mut machine_b = LauncherSettings::default();
         machine_b.default_memory_mb = 2048;
+        machine_b.window_size_preset = "1600x1000".to_string();
         machine_b.video_settings.window_width = Some(1280);
         machine_b.video_settings.window_height = Some(720);
         let mut custom_paths_b = HashMap::new();
@@ -1399,7 +1403,6 @@ mod tests {
         // Machine B gets General, Display, Sound, Controls, Accessibility, and Keybinds from cloud
         assert_eq!(restored_on_b.discord_rpc, false);
         assert_eq!(restored_on_b.auto_hide_dock, false);
-        assert_eq!(restored_on_b.window_size_preset, "1440x900");
         assert_eq!(restored_on_b.force_delete, true);
         assert_eq!(restored_on_b.download_speed_limit_mb, 0);
         assert_eq!(restored_on_b.theme, "inferno");
@@ -1415,6 +1418,7 @@ mod tests {
 
         // Machine B preserves local-only settings (Memory, Window, Java)
         assert_eq!(restored_on_b.default_memory_mb, 2048);
+        assert_eq!(restored_on_b.window_size_preset, "1600x1000");
         assert_eq!(restored_on_b.video_settings.window_width, Some(1280));
         assert_eq!(restored_on_b.video_settings.window_height, Some(720));
         assert_eq!(restored_on_b.java_paths.get(&21).unwrap(), "/usr/lib/jvm/java-21/bin/java");
