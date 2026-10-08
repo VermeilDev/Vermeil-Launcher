@@ -1,18 +1,17 @@
-## 0.1.0 (Alpha Build 8)
+## 0.1.0 (Alpha Build 9)
 
 ### Added
 
-- Support for equipped custom and official Mojang capes on the Home screen 3D player model, including full multi-frame animation playback for animated custom capes
-- Expanded Quick Play server deck capacity to 6 server entries with bidirectional synchronization to instance `servers.dat`
-- Smart badge overflow pill with popover inspector and version tooltips on download history cards
+- Window size presets (Compact `1100 × 720`, Standard `1280 × 800`, Large `1440 × 900`, Expanded `1600 × 1000`) with live dynamic resizing, startup restoration, and Google Cloud settings sync
+- Real-time instance placeholder cards in Library during in-flight modpack and archive installations, allowing navigation and queueing while downloads complete
 
 ### Changed
 
-- Streamlined download history cards by omitting redundant loader tags on loader-agnostic content (resource packs, data packs, shaders, and Java runtimes)
-- Preserved custom mod tags losslessly when writing server entries to instance `servers.dat`
+- Standardized desktop container canvas ceiling to 1400px across all screens, eliminating uneven side gutters and ensuring consistent margins across resolutions
+- Balanced Settings bento cards across General and About sections for symmetrical grid alignment
+- Streamlined Library view by removing redundant launchpad card and unifying the empty state with the Library Hub
 
 ### Fixed
 
-- Sanitized server icon base64 payloads in `servers.dat` to prevent Netty decoding crashes on legacy Minecraft 1.8.9
-- Prevented download history badge rows from overflowing or clipping relative timestamps on narrow views
-- Removed redundant cancel launch tooltip from the instance header play button
+- Replaced bulky installing status badge with a compact animated indicator on Library instance cards
+- Prevented status indicator badges from pushing sibling metadata badges off-card during installation
