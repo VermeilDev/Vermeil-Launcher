@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-alpha.9",
-  "notes": "## 0.1.0 (Alpha Build 9)\n\n### Added\n\n- Window size presets (Compact `1100 × 720`, Standard `1280 × 800`, Large `1440 × 900`, Expanded `1600 × 1000`) with live dynamic resizing, startup restoration, and Google Cloud settings sync\n- Real-time instance placeholder cards in Library during in-flight modpack and archive installations, allowing navigation and queueing while downloads complete\n\n### Changed\n\n- Standardized desktop container canvas ceiling to 1400px across all screens, eliminating uneven side gutters and ensuring consistent margins across resolutions\n- Balanced Settings bento cards across General and About sections for symmetrical grid alignment\n- Streamlined Library view by removing redundant launchpad card and unifying the empty state with the Library Hub\n\n### Fixed\n\n- Replaced bulky installing status badge with a compact animated indicator on Library instance cards\n- Prevented status indicator badges from pushing sibling metadata badges off-card during installation",
-  "pub_date": "2026-10-08T19:54:05.716Z",
+  "version": "0.1.0-alpha.10",
+  "notes": "## 0.1.0 (Alpha Build 10)\n\n### Changed\n\n- Set Compact (`1100 × 720`) as the default window launch size preset across desktop configurations\n- Isolated window size presets to local machine storage, preventing multi-device resolution conflicts during Google Cloud sync\n- Unified runtime settings application into a single reactive pipeline across cold boot, local edits, and cloud restoration\n- Wired background auto-update polling intervals to start and cancel dynamically when the auto-update setting changes\n- Synchronized Windows shell shortcut icons and taskbar indicators automatically upon cloud theme restoration",
+  "pub_date": "2026-10-08T21:12:29.172Z",
   "platforms": {
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTlBwUW9hV0Y3YXM3THFXWDNySS8zeG9XZk5lc1AxTTJtVFQ0WWxuRjhZSVVJS2NBRW8rWE9XZUFZeXIySFVMWmRiNWpKTEMyZ3BXUmo0cHI1aHdOaWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDg5MDU5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS45X2FtZDY0LkFwcEltYWdlCmZCTzM0dEc3ZTdINXFRTFhDRFN0TkdMSVRYZ2VlNzV5RVMwVDFBWnI1R3JiM1RtWDRCLzlRUFNiQlVXeS9wSHBORFh4SkxhNlhDOEd4WjJhUnp0a0RnPT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.9/Vermeil_0.1.0-alpha.9_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5PcVZiLzJMLzVUOSs3NWtBRWt1WjJYVVdLZmN0U1p3N0VsaE4vY1M5UUNSa1Y4aGxjWS9LaFl3R3BZdWpwVzJVN2t3RlE0N1g4MEVGK1NwQXJpdUFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDkzNzkxCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMF9hbWQ2NC5BcHBJbWFnZQpnN0Rqa1hTdkk2M1h2aW1pQ0UrT1ZzUlRwRlljUm9JYzdKUkJTV3dOTWlDV0hEMGdiMFRoUW4vSDUwNEZWVFNwb2RvR05iUjVIQ2ZUS3dxRjFSV25CUT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.10/Vermeil_0.1.0-alpha.10_amd64.AppImage"
     },
     "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTlBwUW9hV0Y3YXM3THFXWDNySS8zeG9XZk5lc1AxTTJtVFQ0WWxuRjhZSVVJS2NBRW8rWE9XZUFZeXIySFVMWmRiNWpKTEMyZ3BXUmo0cHI1aHdOaWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDg5MDU5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS45X2FtZDY0LkFwcEltYWdlCmZCTzM0dEc3ZTdINXFRTFhDRFN0TkdMSVRYZ2VlNzV5RVMwVDFBWnI1R3JiM1RtWDRCLzlRUFNiQlVXeS9wSHBORFh4SkxhNlhDOEd4WjJhUnp0a0RnPT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.9/Vermeil_0.1.0-alpha.9_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5PcVZiLzJMLzVUOSs3NWtBRWt1WjJYVVdLZmN0U1p3N0VsaE4vY1M5UUNSa1Y4aGxjWS9LaFl3R3BZdWpwVzJVN2t3RlE0N1g4MEVGK1NwQXJpdUFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDkzNzkxCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMF9hbWQ2NC5BcHBJbWFnZQpnN0Rqa1hTdkk2M1h2aW1pQ0UrT1ZzUlRwRlljUm9JYzdKUkJTV3dOTWlDV0hEMGdiMFRoUW4vSDUwNEZWVFNwb2RvR05iUjVIQ2ZUS3dxRjFSV25CUT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.10/Vermeil_0.1.0-alpha.10_amd64.AppImage"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5NaXVtNldIcmpKM0dJUUJsbGV0TlBjYVdzUmZsS0tKY1VxS21hdUZRUHJTYVBuNC9DSHNwdjBUZ2RNYVNGc1lyK2xwak95MEpFMG4vLzFMcGtSTXdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDg5MjQzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS45X3g2NC1zZXR1cC5leGUKdWNsMmN6d0tIdnFybmlyODZ1K3EwK2s5VjFWcFVXR0orc2QvK1FLZ09YMldwNG9MRFdZaGJZdTFWTGNYRVpRbm8zV1pnQ20zTFlXckhETTFLaU1sQ3c9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.9/Vermeil_0.1.0-alpha.9_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTko3Z1BkT2RkTXFCVVZKcjNPeUc0em16S290b1dMbzAydWZxTmVzQ1pFSncyMkwzTmYramY5WDNOT0FGS0ZISHpDYW9CSy9jVlIxbkJHdG1VWXU4ZmdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDkzOTQ2CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMF94NjQtc2V0dXAuZXhlClRUQkZEcC9tSit1Y1JGTVN1dmtpK0VYWkd6ZWpKb01xeGFkalZIT1h1cjhpMktuVVhORXRtNlBScHNNL1RiL3ZJTW5kVEZFYkNiWVNhSFhTdmJkcEN3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.10/Vermeil_0.1.0-alpha.10_x64-setup.exe"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk5NaXVtNldIcmpKM0dJUUJsbGV0TlBjYVdzUmZsS0tKY1VxS21hdUZRUHJTYVBuNC9DSHNwdjBUZ2RNYVNGc1lyK2xwak95MEpFMG4vLzFMcGtSTXdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDg5MjQzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS45X3g2NC1zZXR1cC5leGUKdWNsMmN6d0tIdnFybmlyODZ1K3EwK2s5VjFWcFVXR0orc2QvK1FLZ09YMldwNG9MRFdZaGJZdTFWTGNYRVpRbm8zV1pnQ20zTFlXckhETTFLaU1sQ3c9PQo=",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.9/Vermeil_0.1.0-alpha.9_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTko3Z1BkT2RkTXFCVVZKcjNPeUc0em16S290b1dMbzAydWZxTmVzQ1pFSncyMkwzTmYramY5WDNOT0FGS0ZISHpDYW9CSy9jVlIxbkJHdG1VWXU4ZmdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDkzOTQ2CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMF94NjQtc2V0dXAuZXhlClRUQkZEcC9tSit1Y1JGTVN1dmtpK0VYWkd6ZWpKb01xeGFkalZIT1h1cjhpMktuVVhORXRtNlBScHNNL1RiL3ZJTW5kVEZFYkNiWVNhSFhTdmJkcEN3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.10/Vermeil_0.1.0-alpha.10_x64-setup.exe"
     }
   }
 }
