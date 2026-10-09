@@ -19,6 +19,7 @@ import {
   launchingInstanceId,
   setLaunchingInstanceId,
   clearGameLogs,
+  setGameLaunched,
   showToast,
 } from "../App";
 import {
@@ -361,6 +362,9 @@ const Library: Component = () => {
     setActiveInstanceId(inst.id);
     setLaunchingInstanceId(inst.id);
     setGameRunning(true);
+    setInitialInstanceTab("logs");
+    setGameLaunched(true);
+    setActiveScreen("mods");
     clearGameLogs(inst.id);
     try {
       await launchInstance(inst.id);

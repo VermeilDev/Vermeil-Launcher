@@ -57,7 +57,7 @@ const setActiveScreen = (screen: Screen) => {
   setTimeout(() => document.querySelector(".content")?.scrollTo(0, 0), 0);
 };
 const [activeInstanceId, setActiveInstanceId] = createSignal<string | null>(null);
-const [initialInstanceTab, setInitialInstanceTab] = createSignal<string>("content");
+const [initialInstanceTab, setInitialInstanceTab] = createSignal<string>("content", { equals: false });
 const [gameLaunched, setGameLaunched] = createSignal(false);
 const [gameRunning, setGameRunning] = createSignal(false);
 const [launchingInstanceId, setLaunchingInstanceId] = createSignal<string | null>(null);

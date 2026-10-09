@@ -4282,6 +4282,13 @@
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 30%, transparent);
 }
+.filter-tab--empty {
+  opacity: 0.55;
+}
+.filter-tab--empty:hover,
+.filter-tab--empty.active {
+  opacity: 1;
+}
 .dl-page-range-hint {
   font-family: var(--font-mono);
   font-size: 10.5px;

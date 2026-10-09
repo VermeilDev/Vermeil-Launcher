@@ -26,12 +26,23 @@ function getCategoryLabel(category: string): string {
     case "mod": return "Mod";
     case "resourcepack": return "Resource Pack";
     case "shader": return "Shader";
-    case "datapack": return "Datapack";
+    case "datapack": return "Data Pack";
     case "modpack": return "Modpack";
     case "java": return "Java Runtime";
     default: return "Download";
   }
 }
+
+const FILTER_CATEGORIES = [
+  { id: "all", label: "All" },
+  { id: "mod", label: "Mods" },
+  { id: "resourcepack", label: "Resource Packs" },
+  { id: "shader", label: "Shaders" },
+  { id: "datapack", label: "Data Packs" },
+  { id: "modpack", label: "Modpacks" },
+  { id: "instance", label: "Instances" },
+  { id: "java", label: "Java Runtimes" },
+] as const;
 
 const Downloads: Component = () => {
   const activeDownloads = () => downloads().filter(d => d.status === "downloading");
@@ -504,60 +515,28 @@ const Downloads: Component = () => {
         {/* Category Filter Bar */}
         <div class="dl-history-controls-row">
           <div class="category-filters">
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "all" }}
-              onClick={() => { setFilter("all"); setPage(1); }}
-            >
-              <span>All</span>
-              <span class="filter-tab-count">{countForCategory("all")}</span>
-            </button>
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "mod" }}
-              onClick={() => { setFilter("mod"); setPage(1); }}
-            >
-              <span>Mods</span>
-              <span class="filter-tab-count">{countForCategory("mod")}</span>
-            </button>
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "java" }}
-              onClick={() => { setFilter("java"); setPage(1); }}
-            >
-              <span>Java Runtimes</span>
-              <span class="filter-tab-count">{countForCategory("java")}</span>
-            </button>
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "instance" }}
-              onClick={() => { setFilter("instance"); setPage(1); }}
-            >
-              <span>Instances</span>
-              <span class="filter-tab-count">{countForCategory("instance")}</span>
-            </button>
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "modpack" }}
-              onClick={() => { setFilter("modpack"); setPage(1); }}
-            >
-              <span>Modpacks</span>
-              <span class="filter-tab-count">{countForCategory("modpack")}</span>
-            </button>
-            <button
-              type="button"
-              class="filter-tab"
-              classList={{ active: filter() === "shader" }}
-              onClick={() => { setFilter("shader"); setPage(1); }}
-            >
-              <span>Shaders</span>
-              <span class="filter-tab-count">{countForCategory("shader")}</span>
-            </button>
+            <For each={FILTER_CATEGORIES}>
+              {(cat) => {
+                const count = () => countForCategory(cat.id);
+                return (
+                  <button
+                    type="button"
+                    class="filter-tab"
+                    classList={{
+                      active: filter() === cat.id,
+                      "filter-tab--empty": count() === 0,
+                    }}
+                    onClick={() => {
+                      setFilter(cat.id);
+                      setPage(1);
+                    }}
+                  >
+                    <span>{cat.label}</span>
+                    <span class="filter-tab-count">{count()}</span>
+                  </button>
+                );
+              }}
+            </For>
           </div>
 
           <Show when={filteredHistory().length > 0}>

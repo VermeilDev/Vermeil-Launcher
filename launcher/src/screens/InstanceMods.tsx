@@ -3,7 +3,7 @@
 
 import { Component, createSignal, createEffect, createMemo, createResource, untrack, on, For, Show, onMount, onCleanup } from "solid-js";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { setActiveScreen, instances, activeInstanceId, setActiveInstanceId, refetchInstances, refreshPinnedInstanceIds, pinnedInstanceIds, initialInstanceTab, gameRunning, setGameRunning, clearGameLogs, completeDownload, failDownload, startBulkBatch, endBulkBatch, showToast, gameLogsFor, setDockHidden, setDockPagination, logsPoppedOut, currentTheme, ensureAccountOrPrompt, downloads, launchingInstanceId, setLaunchingInstanceId } from "../App";
+import { setActiveScreen, instances, activeInstanceId, setActiveInstanceId, refetchInstances, refreshPinnedInstanceIds, pinnedInstanceIds, initialInstanceTab, setInitialInstanceTab, gameRunning, setGameRunning, clearGameLogs, completeDownload, failDownload, startBulkBatch, endBulkBatch, showToast, gameLogsFor, setDockHidden, setDockPagination, logsPoppedOut, currentTheme, ensureAccountOrPrompt, downloads, launchingInstanceId, setLaunchingInstanceId } from "../App";
 import { reportDependencyIssues, DependencyIssue } from "../components/DependencyIssuesModal";
 import { contentVersion } from "../lib/contentVersion";
 import { loaderLabel, loaderBadgeClass, loaderBannerColor } from "../lib/loader";
@@ -318,6 +318,8 @@ const InstanceMods: Component = () => {
     setActiveInstanceId(inst.id);
     setLaunchingInstanceId(inst.id);
     setGameRunning(true);
+    setMainTab("logs");
+    setInitialInstanceTab("logs");
     clearGameLogs(inst.id);
     try {
       await launchInstance(inst.id);
@@ -1858,10 +1860,10 @@ const InstanceMods: Component = () => {
 
         <div class="ctx-action-group">
           <div class="inst-view-segmented">
-            <button class={`inst-view-tab ${mainTab() === "content" ? "active" : ""}`} onClick={() => setMainTab("content")}>Content</button>
-            <button class={`inst-view-tab ${mainTab() === "files" ? "active" : ""}`} onClick={() => setMainTab("files")}>Files</button>
-            <button class={`inst-view-tab ${mainTab() === "worlds" ? "active" : ""}`} onClick={() => setMainTab("worlds")}>Worlds</button>
-            <button class={`inst-view-tab ${mainTab() === "logs" ? "active" : ""}`} onClick={() => setMainTab("logs")}>Logs</button>
+            <button class={`inst-view-tab ${mainTab() === "content" ? "active" : ""}`} onClick={() => { setMainTab("content"); setInitialInstanceTab("content"); }}>Content</button>
+            <button class={`inst-view-tab ${mainTab() === "files" ? "active" : ""}`} onClick={() => { setMainTab("files"); setInitialInstanceTab("files"); }}>Files</button>
+            <button class={`inst-view-tab ${mainTab() === "worlds" ? "active" : ""}`} onClick={() => { setMainTab("worlds"); setInitialInstanceTab("worlds"); }}>Worlds</button>
+            <button class={`inst-view-tab ${mainTab() === "logs" ? "active" : ""}`} onClick={() => { setMainTab("logs"); setInitialInstanceTab("logs"); }}>Logs</button>
           </div>
           {/* Quick instance switcher dropdown */}
           <div class="inst-switcher-wrap" ref={switcherRef}>
@@ -1962,7 +1964,11 @@ const InstanceMods: Component = () => {
           </button>
           <button
             class={`inst-gear-btn tip-below tip-right ${mainTab() === "settings" ? "active" : ""}`}
-            onClick={() => setMainTab(mainTab() === "settings" ? "content" : "settings")}
+            onClick={() => {
+              const next = mainTab() === "settings" ? "content" : "settings";
+              setMainTab(next);
+              setInitialInstanceTab(next);
+            }}
             data-tip="Instance settings"
           >
             <IconSettings />
@@ -3096,7 +3102,7 @@ const InstanceMods: Component = () => {
                             : "Change this instance's loader to Fabric, NeoForge, or Forge in settings."}
                         </div>
                       </div>
-                      <button class="btn btn--primary btn--sm vanilla-guide-btn" onClick={() => setMainTab("settings")}>
+                      <button class="btn btn--primary btn--sm vanilla-guide-btn" onClick={() => { setMainTab("settings"); setInitialInstanceTab("settings"); }}>
                         Change Loader
                       </button>
                     </div>
