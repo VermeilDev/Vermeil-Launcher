@@ -181,12 +181,25 @@
 .crash-search-box {
   display: flex;
   align-items: center;
+  height: var(--control-height-sm);
+  box-sizing: border-box;
   background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  padding: 0 8px;
   gap: 6px;
+  transition: border-color 0.12s ease;
+}
+.crash-search-box:focus-within {
+  border-color: var(--accent);
+}
+.crash-search-box svg {
+  width: 13.5px;
+  height: 13.5px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 .crash-search-box input {
+  height: 100%;
   background: transparent;
   border: none;
   outline: none;
@@ -194,6 +207,7 @@
   font-family: var(--font-sans);
   font-size: 11px;
   width: 130px;
+  padding: 0;
 }
 .crash-search-box input::placeholder { color: var(--text-faint); }
 
