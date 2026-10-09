@@ -10,8 +10,9 @@ import {
 } from "../ipc/commands";
 import { formatSize } from "../lib/format";
 import { showToast } from "../App";
+import TactileSwitch from "../components/TactileSwitch";
 import {
-  IconCheck,
+  IconBolt,
   IconDownload,
   IconRefresh,
   IconReload,
@@ -31,6 +32,7 @@ interface Props {
 /**
  * Dedicated modal for managing, reinstalling, and switching versions of the
  * Vermeil Companion in-game client mod for a specific instance.
+ * Aligned with the canonical Tactile Bento ModDetailModal design system.
  */
 const CompanionDetailModal: Component<Props> = (props) => {
   const [builds, setBuilds] = createSignal<CompanionBuild[]>([]);
@@ -85,10 +87,10 @@ const CompanionDetailModal: Component<Props> = (props) => {
   const selectedBuild = () => builds().find((b) => b.file === selectedFile());
   const isSelectedActive = () => Boolean(selectedBuild()?.is_active);
 
-  const handleToggle = async () => {
+  const handleToggle = async (nextChecked?: boolean) => {
     if (toggling()) return;
     setToggling(true);
-    const next = !(props.companionEnabled ?? true);
+    const next = typeof nextChecked === "boolean" ? nextChecked : !(props.companionEnabled ?? true);
     try {
       await setInstanceCompanionEnabled(props.instanceId, next);
       await props.onChanged();
@@ -137,183 +139,213 @@ const CompanionDetailModal: Component<Props> = (props) => {
 
   return (
     <Show when={props.isOpen}>
-      <div class="modal-overlay" onClick={props.onClose}>
+      <div class="modal-overlay mod-detail-overlay" onClick={props.onClose}>
         <div
-          class="modal panel panel--bracketed"
-          style="max-width: 540px; width: 100%; display: flex; flex-direction: column; gap: 16px; padding: 22px;"
+          class="modal mod-detail-modal panel panel--bracketed"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 14px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div class="mod-card-icon mod-card-icon--companion" style="width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(230, 57, 70, 0.12); border: 1px solid rgba(230, 57, 70, 0.3);">
-                <img src="/logo.png" alt="" draggable={false} style="width: 24px; height: 24px;" />
+          <div class="modal-header mod-detail-header">
+            <div class="mod-detail-identity">
+              <div class="mod-detail-icon">
+                <img src="/logo.png" alt="" draggable={false} class="mod-detail-icon-img" />
               </div>
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="modal-title" style="font-size: var(--fs-md); font-weight: 600; color: var(--text);">Vermeil Companion Mod</span>
-                  <span class="badge badge--companion" style="font-size: 10px; padding: 2px 6px;">Managed</span>
+              <div class="mod-detail-names">
+                <div class="mod-detail-title-row">
+                  <span class="modal-title mod-detail-title">Vermeil Companion Mod</span>
+                  <span
+                    class="mod-source-badge"
+                    style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.4); color: var(--accent-rim);"
+                  >
+                    <IconBolt /> Managed
+                  </span>
                 </div>
-                <div class="modal-subtitle" style="font-size: var(--fs-xs); color: var(--muted); margin-top: 2px;">
-                  Custom client companion mod by Vermeil
-                </div>
+                <span class="mod-detail-author">
+                  Custom client companion mod by <strong>Vermeil</strong>
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Instance Context & In-Game Features Card */}
-          <div class="card-section-body" style="background: #0f0e13; border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--text);">
-                <span style="color: var(--muted);">Target:</span>
-                <span class={`mod-tag mod-tag-loader loader-${props.loader}`}>{props.loader}</span>
-                <span class="mod-tag mod-tag-version">{props.gameVersion}</span>
-                <Show when={props.companionVersion}>
-                  <span class="mod-tag mod-tag-vnum">v{props.companionVersion}</span>
+          {/* Body */}
+          <div class="modal-body mod-detail-body">
+            {/* Recessed description plate */}
+            <p class="mod-detail-summary">
+              Enables custom in-game capes, dynamic camera FOV tuning, cosmetic synchronization, and native client integrations without third-party dependencies.
+            </p>
+
+            {/* 4-column metric stats */}
+            <div class="mod-detail-stats">
+              <div class="mod-detail-stat">
+                <span class="mod-detail-stat-label">Features Status</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
+                  <span
+                    class="mod-detail-stat-value"
+                    style={{
+                      color: (props.companionEnabled ?? true) ? "var(--success)" : "var(--muted)",
+                      "font-size": "13px",
+                    }}
+                  >
+                    {(props.companionEnabled ?? true) ? "Active" : "Disabled"}
+                  </span>
+                  <TactileSwitch
+                    checked={props.companionEnabled ?? true}
+                    disabled={toggling()}
+                    onChange={handleToggle}
+                    aria-label={(props.companionEnabled ?? true) ? "Disable companion" : "Enable companion"}
+                    tip={(props.companionEnabled ?? true) ? "Disable companion" : "Enable companion"}
+                  />
+                </div>
+              </div>
+
+              <div class="mod-detail-stat">
+                <span class="mod-detail-stat-label">Target Loader</span>
+                <div style="margin-top: 2px;">
+                  <span class={`badge badge--loader badge--${props.loader}`}>
+                    {props.loader.charAt(0).toUpperCase() + props.loader.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              <div class="mod-detail-stat">
+                <span class="mod-detail-stat-label">Game Version</span>
+                <div style="margin-top: 2px;">
+                  <span class="badge badge--version">{props.gameVersion}</span>
+                </div>
+              </div>
+
+              <div class="mod-detail-stat">
+                <span class="mod-detail-stat-label">Installed Version</span>
+                <div style="margin-top: 2px;">
+                  <span class="badge badge--vnum">
+                    {props.companionVersion ? `v${props.companionVersion}` : "Not installed"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Version / Build selector section */}
+            <div class="mod-versions-section">
+              <div class="mod-versions-header">
+                <span class="mod-section-title">Available Companion Builds</span>
+                <Show when={!loading() && builds().length > 0}>
+                  <span style="font-size: 11px; color: var(--muted); font-family: var(--font-mono);">
+                    {builds().length} compatible build{builds().length === 1 ? "" : "s"}
+                  </span>
                 </Show>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: var(--fs-xs); color: var(--muted);">
-                  {(props.companionEnabled ?? true) ? "Active" : "Disabled"}
-                </span>
-                <button
-                  type="button"
-                  class={`btn btn--sm btn--icon btn--toggle ${(props.companionEnabled ?? true) ? "active" : ""}`}
-                  disabled={toggling()}
-                  onClick={handleToggle}
-                  data-tip={(props.companionEnabled ?? true) ? "Disable features" : "Enable features"}
-                >
-                  <IconCheck />
-                </button>
-              </div>
-            </div>
+              <div class="mod-versions-list">
+                <Show when={loading()}>
+                  <div class="mod-versions-loading">
+                    <div class="spinner-sm" />
+                    <span>Fetching companion manifest...</span>
+                  </div>
+                </Show>
 
-            <div style="font-size: var(--fs-xs); color: var(--muted); line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 10px;">
-              Enables custom in-game capes, dynamic camera FOV tuning, cosmetic synchronization, and native client integrations without third-party dependencies.
-            </div>
-          </div>
+                <Show when={error()}>
+                  <div class="mod-versions-error">
+                    <span>{error()}</span>
+                  </div>
+                </Show>
 
-          {/* Available Builds Section */}
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-                Available Companion Builds
-              </span>
-              <Show when={!loading() && builds().length > 0}>
-                <span style="font-size: 11px; color: var(--muted);">
-                  {builds().length} build{builds().length === 1 ? "" : "s"} compatible
-                </span>
-              </Show>
-            </div>
+                <Show when={!loading() && !error() && builds().length === 0}>
+                  <div class="mod-versions-empty">
+                    No compatible companion builds found for Minecraft {props.gameVersion} on {props.loader}.
+                  </div>
+                </Show>
 
-            <Show when={loading()}>
-              <div style="padding: 24px; text-align: center; color: var(--muted); font-size: var(--fs-xs); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span class="spin-icon"><IconReload /></span>
-                <span>Fetching companion manifest...</span>
-              </div>
-            </Show>
-
-            <Show when={error()}>
-              <div style="padding: 16px; background: rgba(230, 57, 70, 0.1); border: 1px solid rgba(230, 57, 70, 0.25); border-radius: 8px; color: #ff8080; font-size: var(--fs-xs);">
-                {error()}
-              </div>
-            </Show>
-
-            <Show when={!loading() && !error() && builds().length === 0}>
-              <div style="padding: 24px; text-align: center; color: var(--muted); font-size: var(--fs-xs);">
-                No published companion builds found for Minecraft {props.gameVersion} on {props.loader}.
-              </div>
-            </Show>
-
-            <Show when={!loading() && builds().length > 0}>
-              <div style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px;">
-                <For each={builds()}>
-                  {(b) => {
-                    const isSelected = () => selectedFile() === b.file;
-                    return (
-                      <div
-                        class="setting-row"
-                        style={{
-                          display: "flex",
-                          "align-items": "center",
-                          "justify-content": "space-between",
-                          padding: "10px 14px",
-                          background: isSelected() ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.02)",
-                          border: isSelected() ? "1px solid var(--accent)" : "1px solid var(--border)",
-                          "border-radius": "6px",
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                        }}
-                        onClick={() => setSelectedFile(b.file)}
-                      >
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                          <div style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; background: ${isSelected() ? 'var(--accent)' : 'transparent'}">
-                            <Show when={isSelected()}>
-                              <div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;" />
-                            </Show>
-                          </div>
-                          <div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                              <span style="font-weight: 600; font-size: var(--fs-sm); color: var(--text);">
-                                v{b.version}
-                              </span>
+                <Show when={!loading() && !error() && builds().length > 0}>
+                  <For each={builds()}>
+                    {(b) => {
+                      const isSelected = () => selectedFile() === b.file;
+                      return (
+                        <div
+                          class={`mod-version-row ${isSelected() ? "selected" : ""}`}
+                          onClick={() => setSelectedFile(b.file)}
+                        >
+                          <div class="mod-vrow-left">
+                            <div class="mod-vrow-title-row">
+                              <span class="mod-vrow-name">v{b.version}</span>
                               <Show when={b.is_active}>
-                                <span class="badge" style="background: rgba(56, 176, 0, 0.18); color: #70e000; font-size: 10px; padding: 1px 5px; border: 1px solid rgba(56, 176, 0, 0.3);">
+                                <span
+                                  class="badge"
+                                  style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4);"
+                                >
                                   Active on disk
                                 </span>
                               </Show>
                             </div>
-                            <div style="font-size: 11px; color: var(--muted); margin-top: 1px;">
-                              {b.loaders.join(", ")} · {formatSize(b.size)}
+                            <div class="mod-vrow-meta">
+                              <span class="mod-vrow-mc">MC {props.gameVersion}</span>
+                              <span class="mod-vrow-sep">·</span>
+                              <span class="mod-vrow-loaders">{b.loaders.join(", ")}</span>
+                              <span class="mod-vrow-sep">·</span>
+                              <span class="mod-vrow-size">{formatSize(b.size)}</span>
                             </div>
                           </div>
+                          <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); flex-shrink: 0;">
+                            {b.file}
+                          </span>
                         </div>
-
-                        <span style="font-size: 11px; font-family: monospace; color: var(--muted);">
-                          {b.file}
-                        </span>
-                      </div>
-                    );
-                  }}
-                </For>
+                      );
+                    }}
+                  </For>
+                </Show>
               </div>
-            </Show>
+            </div>
           </div>
 
-          {/* Modal Footer */}
-          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px;">
-            <button
-              type="button"
-              class="btn"
-              onClick={props.onClose}
-              disabled={reinstalling()}
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              class={`btn ${isSelectedActive() ? "btn--secondary" : "btn--primary"}`}
-              disabled={reinstalling() || !selectedBuild()}
-              onClick={handleReinstallOrSwitch}
-            >
-              <Show when={!reinstalling()} fallback={
-                <>
-                  <span class="spin-icon"><IconReload /></span>
-                  <span>Installing...</span>
-                </>
-              }>
-                <Show when={isSelectedActive()} fallback={
+          {/* Footer */}
+          <div class="modal-footer mod-detail-footer">
+            <div class="mod-footer-left">
+              <Show when={selectedBuild()}>
+                <span class="mod-selected-indicator">
+                  Selected: <strong>v{selectedBuild()!.version}</strong>
+                  <Show when={selectedBuild()!.is_active}>
+                    <span
+                      class="badge"
+                      style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 10px; padding: 1px 5px;"
+                    >
+                      Active
+                    </span>
+                  </Show>
+                </span>
+              </Show>
+            </div>
+            <div class="mod-footer-actions">
+              <button
+                type="button"
+                class="btn mod-footer-close-btn"
+                onClick={props.onClose}
+                disabled={reinstalling()}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                class={`btn ${isSelectedActive() ? "btn--secondary" : "btn--primary"}`}
+                disabled={reinstalling() || !selectedBuild()}
+                onClick={handleReinstallOrSwitch}
+              >
+                <Show when={!reinstalling()} fallback={
                   <>
-                    <IconDownload />
-                    <span>Switch to v{selectedBuild()?.version}</span>
+                    <span class="spin-icon"><IconReload /></span>
+                    <span>Installing...</span>
                   </>
                 }>
-                  <IconRefresh />
-                  <span>Reinstall & Verify</span>
+                  <Show when={isSelectedActive()} fallback={
+                    <>
+                      <IconDownload />
+                      <span>Switch to v{selectedBuild()?.version}</span>
+                    </>
+                  }>
+                    <IconRefresh />
+                    <span>Reinstall & Verify</span>
+                  </Show>
                 </Show>
-              </Show>
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </div>
