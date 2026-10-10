@@ -354,7 +354,7 @@ const CrashReportModal: Component = () => {
 
               {/* Toolbar */}
               <div class="crash-toolbar">
-                <div class="crash-toolbar-path" data-tip={reportPath() || "Console Logs Stream"}>
+                <div class="crash-toolbar-path">
                   {reportPath() || "Console Output (latest.log)"}
                 </div>
                 <div class="crash-toolbar-tools">

@@ -399,7 +399,7 @@ const Downloads: Component = () => {
                     <span class="badge badge--version">{activeContentItem()!.gameVersion}</span>
                   </Show>
                   <Show when={activeContentItem()?.versionNumber}>
-                    <span class="badge badge--vnum tip-below" data-tip={activeContentItem()!.versionNumber}>
+                    <span class="badge badge--vnum">
                       {activeContentItem()!.versionNumber}
                     </span>
                   </Show>
@@ -673,7 +673,7 @@ const ActiveDownloadCard: Component<{ entry: DownloadEntry; position?: number }>
               <span class="badge badge--version">{cardGameVersion()}</span>
             </Show>
             <Show when={cardVersionNumber()}>
-              <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>{cardVersionNumber()}</span>
+              <span class="badge badge--vnum">{cardVersionNumber()}</span>
             </Show>
           </div>
         </div>
@@ -819,7 +819,7 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
                     <span class="badge badge--version">{cardGameVersion()}</span>
                   </Show>
                   <Show when={hasVnum && !shouldOverflow}>
-                    <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>
+                    <span class="badge badge--vnum">
                       {cardVersionNumber()}
                     </span>
                   </Show>
@@ -828,7 +828,7 @@ const DownloadCard: Component<{ entry: DownloadEntry; timeAgo: (ts: number) => s
                       +{extraCount}
                       <div class="badge-popover" onClick={(e) => e.stopPropagation()}>
                         <Show when={hasVnum}>
-                          <span class="badge badge--vnum tip-below" data-tip={cardVersionNumber()}>
+                          <span class="badge badge--vnum">
                             {cardVersionNumber()}
                           </span>
                         </Show>

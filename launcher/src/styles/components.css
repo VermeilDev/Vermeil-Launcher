@@ -393,27 +393,35 @@
   gap: 4px;
 }
 
-/* Elevate card & unclip on overflow pill hover so popover floats cleanly above sibling cards without clipping */
+/* Elevate card & unclip on overflow pill or badge tooltip hover so popovers and tooltips float cleanly above sibling cards without clipping */
 .card--inst:has(.badge--overflow-pill:hover),
 .card--inst:has(.badge-popover:hover),
+.card--inst:has([data-tip]:hover),
 .dl-card:has(.badge--overflow-pill:hover),
-.dl-card:has(.badge-popover:hover) {
+.dl-card:has(.badge-popover:hover),
+.dl-card:has([data-tip]:hover) {
   z-index: 120 !important;
   overflow: visible !important;
 }
 
 .card--inst:has(.badge--overflow-pill:hover) .inst-card-body,
 .card--inst:has(.badge-popover:hover) .inst-card-body,
+.card--inst:has([data-tip]:hover) .inst-card-body,
 .card--inst:has(.badge--overflow-pill:hover) .inst-card-badges,
 .card--inst:has(.badge-popover:hover) .inst-card-badges,
+.card--inst:has([data-tip]:hover) .inst-card-badges,
 .card--inst:has(.badge--overflow-pill:hover) .inst-card-badges-track,
 .card--inst:has(.badge-popover:hover) .inst-card-badges-track,
+.card--inst:has([data-tip]:hover) .inst-card-badges-track,
 .dl-card:has(.badge--overflow-pill:hover) .card-body,
 .dl-card:has(.badge-popover:hover) .card-body,
+.dl-card:has([data-tip]:hover) .card-body,
 .dl-card:has(.badge--overflow-pill:hover) .dl-card-body,
 .dl-card:has(.badge-popover:hover) .dl-card-body,
+.dl-card:has([data-tip]:hover) .dl-card-body,
 .dl-card:has(.badge--overflow-pill:hover) .dl-card-meta,
-.dl-card:has(.badge-popover:hover) .dl-card-meta {
+.dl-card:has(.badge-popover:hover) .dl-card-meta,
+.dl-card:has([data-tip]:hover) .dl-card-meta {
   overflow: visible !important;
 }
 

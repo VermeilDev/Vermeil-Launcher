@@ -113,7 +113,7 @@ const ManualDownloadModal: Component = () => {
                     <div class="manual-dl-item-text">
                       <div class="manual-dl-item-title">{entry.title}</div>
                       <Show when={entry.file_name}>
-                        <div class="manual-dl-item-file" data-tip={entry.file_name!}>
+                        <div class="manual-dl-item-file">
                           {entry.file_name}
                         </div>
                       </Show>

@@ -3620,9 +3620,11 @@ const InstanceMods: Component = () => {
                   <Show when={prompt().supportedVersions.length > 0}>
                     <div style="display: flex; justify-content: space-between; gap: 12px;">
                       <span style="color: var(--text-muted);">Known versions:</span>
-                      <span style="color: var(--text); text-align: right; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" data-tip={prompt().supportedVersions.join(", ")}>
-                        {prompt().supportedVersions.slice(0, 5).join(", ")}
-                        {prompt().supportedVersions.length > 5 ? ` +${prompt().supportedVersions.length - 5} more` : ""}
+                      <span style="color: var(--text); text-align: right; max-width: 240px; display: inline-flex;" data-tip={prompt().supportedVersions.join(", ")}>
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                          {prompt().supportedVersions.slice(0, 5).join(", ")}
+                          {prompt().supportedVersions.length > 5 ? ` +${prompt().supportedVersions.length - 5} more` : ""}
+                        </span>
                       </span>
                     </div>
                   </Show>

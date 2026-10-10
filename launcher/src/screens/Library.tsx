@@ -430,7 +430,6 @@ const Library: Component = () => {
           <div
             class={`inst-card-play-overlay ${isGameRunningThis(inst.id) || isLaunchingThis(inst.id) ? "is-running" : ""}`}
             onClick={(e) => handleQuickPlay(e, inst)}
-            data-tip={isLaunchingThis(inst.id) ? "Launching..." : isGameRunningThis(inst.id) ? "Stop game" : isInstanceInstalling(inst) ? "Installing..." : `Play ${inst.name}`}
           >
             <div class={`inst-card-play-btn ${isGameRunningThis(inst.id) ? "btn--running" : ""} ${isLaunchingThis(inst.id) ? "btn--disabled" : ""}`}>
               <Show when={isLaunchingThis(inst.id)}>
@@ -461,7 +460,7 @@ const Library: Component = () => {
 
       {/* Right Content Area: Title, Subtitle, Badges */}
       <div class="inst-card-body">
-        <div class="inst-card-title" data-tip={inst.name}>
+        <div class="inst-card-title">
           {inst.name}
         </div>
         <div class="inst-card-sub">
@@ -515,7 +514,7 @@ const Library: Component = () => {
                 return (
                   <>
                     <Show when={hasVnum}>
-                      <span class="badge badge--vnum tip-below" data-tip={`Pack version ${inst.source_version}`}>
+                      <span class="badge badge--vnum">
                         {inst.source_version}
                       </span>
                     </Show>
@@ -541,7 +540,7 @@ const Library: Component = () => {
                   +{extraCount}
                   <div class="badge-popover" onClick={(e) => e.stopPropagation()}>
                     <Show when={hasVnum}>
-                      <span class="badge badge--vnum" data-tip={`Pack version ${inst.source_version}`}>
+                      <span class="badge badge--vnum">
                         {inst.source_version}
                       </span>
                     </Show>
