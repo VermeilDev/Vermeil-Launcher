@@ -1038,7 +1038,7 @@
   border-left: 3px solid transparent;
   border-radius: 0;
   cursor: pointer;
-  transition: border-color .15s, background .15s, transform .1s;
+  transition: border-color .15s, background .15s;
 }
 .java-chooser-row:hover {
   border-color: var(--border-hover);
@@ -1048,11 +1048,6 @@
   border-color: var(--accent);
   border-left: 3px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface-panel));
-}
-.java-chooser-row input[type="radio"] {
-  flex-shrink: 0;
-  margin: 0;
-  accent-color: var(--accent);
 }
 .java-chooser-info {
   flex: 1;
@@ -1066,14 +1061,14 @@
 .java-chooser-arch,
 .java-chooser-source {
   font-weight: 400;
-  color: var(--muted);
+  color: var(--text-muted);
   text-transform: lowercase;
 }
 .java-chooser-path {
   margin-top: var(--space-1);
   font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--muted);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1107,6 +1102,7 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border-hover);
   background: var(--surface-sunken);
 }
 .manual-dl-item-text { display: flex; flex-direction: column; gap: var(--space-0); min-width: 0; }
@@ -1132,7 +1128,7 @@
   gap: var(--space-2);
   flex-shrink: 0;
 }
-.manual-dl-item-nolink { font-size: var(--fs-2xs); color: var(--text-faint); }
+.manual-dl-item-nolink { font-size: 10px; color: var(--text-faint); font-family: var(--font-mono); }
 /* Footer holds two actions here, so it can't rely on the shell's flex-end
    single-button assumption. */
 .manual-dl-modal .modal-footer { justify-content: space-between; }

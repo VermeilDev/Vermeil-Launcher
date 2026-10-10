@@ -4244,6 +4244,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.modal-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
 .modal-close {
   width: 28px;
   height: 28px;

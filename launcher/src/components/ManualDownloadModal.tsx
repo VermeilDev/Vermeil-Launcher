@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, For, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { Component, For, Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { openInstanceFolder } from "../ipc/commands";
@@ -58,6 +58,18 @@ const ManualDownloadModal: Component = () => {
     setEntries([]);
   };
 
+  createEffect(() => {
+    if (!open() || entries().length === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        close();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    onCleanup(() => window.removeEventListener("keydown", onKey, true));
+  });
+
   const isPack = () => entries().some((e) => e.kind === "modpack");
   /** First instance id in the queue — every blocked file of one pack shares it. */
   const instanceId = () => entries().find((e) => e.instance_id)?.instance_id ?? null;
@@ -65,7 +77,7 @@ const ManualDownloadModal: Component = () => {
   return (
     <Show when={open() && entries().length > 0}>
       <div class="modal-overlay" onClick={close}>
-        <div class="modal manual-dl-modal" onClick={(e) => e.stopPropagation()}>
+        <div class="modal manual-dl-modal panel panel--bracketed" onClick={(e) => e.stopPropagation()}>
           <div class="modal-header">
             <div class="modal-header-left">
               <span class="card-section-tag tag-settings-storage">MANUAL DOWNLOAD</span>
@@ -111,7 +123,7 @@ const ManualDownloadModal: Component = () => {
                         {/* The file name is the thing you search for on the page,
                             and it's long enough to be annoying to retype. */}
                         <button
-                          class="btn btn--sm"
+                          class="btn btn--neutral btn--sm"
                           onClick={() => {
                             navigator.clipboard.writeText(entry.file_name!).catch(() => {});
                             setCopiedFile(entry.file_name!);
@@ -142,13 +154,13 @@ const ManualDownloadModal: Component = () => {
           <div class="modal-footer">
             <Show when={instanceId()}>
               <button
-                class="btn"
+                class="btn btn--neutral"
                 onClick={() => { openInstanceFolder(instanceId()!, "mods").catch(() => {}); }}
               >
                 <IconFolderOpen /> Open mods folder
               </button>
             </Show>
-            <button class="btn btn--subtle" onClick={close}>Got it</button>
+            <button class="btn btn--primary" style="margin-left: auto;" onClick={close}>Got it</button>
           </div>
         </div>
       </div>

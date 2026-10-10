@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, For, Show, createSignal } from "solid-js";
+import { Component, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { JavaInstall } from "../ipc/commands";
 import { IconCheck } from "../components/Icons";
 
@@ -38,6 +38,18 @@ const labelForSource = (s: JavaInstall["source"]): string => {
 const JavaChooserModal: Component<Props> = (props) => {
   const [selected, setSelected] = createSignal<string>(props.options[0]?.path ?? "");
 
+  createEffect(() => {
+    if (props.options.length === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        props.onCancel();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    onCleanup(() => window.removeEventListener("keydown", onKey, true));
+  });
+
   const confirm = () => {
     const pick = props.options.find((i) => i.path === selected());
     if (pick) props.onPick(pick);
@@ -65,15 +77,10 @@ const JavaChooserModal: Component<Props> = (props) => {
             <div class="java-chooser-list">
               <For each={props.options}>
                 {(install) => (
-                  <label
+                  <div
                     class={`java-chooser-row ${selected() === install.path ? "selected" : ""}`}
+                    onClick={() => setSelected(install.path)}
                   >
-                    <input
-                      type="radio"
-                      name={`java-chooser-${props.major}`}
-                      checked={selected() === install.path}
-                      onChange={() => setSelected(install.path)}
-                    />
                     <div class="java-chooser-info">
                       <div class="java-chooser-version">
                         {install.full_version}
@@ -82,7 +89,7 @@ const JavaChooserModal: Component<Props> = (props) => {
                       </div>
                       <div class="java-chooser-path">{install.path}</div>
                     </div>
-                  </label>
+                  </div>
                 )}
               </For>
             </div>

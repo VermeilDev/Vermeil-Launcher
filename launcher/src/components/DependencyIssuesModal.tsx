@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, For, Show, createSignal } from "solid-js";
+import { Component, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 export interface DependencyIssue {
   parent_title: string;
@@ -87,17 +87,26 @@ const DependencyIssuesModal: Component = () => {
     setInstalledModTitle("");
   };
 
+  createEffect(() => {
+    if (!open()) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        close();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    onCleanup(() => window.removeEventListener("keydown", onKey, true));
+  });
+
   return (
     <Show when={open()}>
       <div class="modal-overlay" onClick={close}>
-        <div
-          class="modal dep-issues-modal panel panel--bracketed"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div class="modal dep-issues-modal panel panel--bracketed" onClick={(e) => e.stopPropagation()}>
           <div class="modal-header">
             <div class="modal-header-left">
               <span class="card-section-tag tag-settings-storage">DEPENDENCY CHECK</span>
-              <span class="modal-title">Dependency Resolution Notice</span>
+              <span class="modal-title">Dependency Notice</span>
             </div>
           </div>
           <div class="modal-body">
@@ -150,7 +159,7 @@ const DependencyIssuesModal: Component = () => {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn--subtle" onClick={close}>Got it</button>
+            <button class="btn btn--primary" onClick={close}>Got it</button>
           </div>
         </div>
       </div>

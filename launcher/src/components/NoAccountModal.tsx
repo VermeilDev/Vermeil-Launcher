@@ -1,11 +1,23 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Component, Show } from "solid-js";
+import { Component, Show, createEffect, onCleanup } from "solid-js";
 import { setActiveScreen } from "../App";
 import { IconUser } from "./Icons";
 
 const NoAccountModal: Component<{ open: boolean; onClose: () => void }> = (props) => {
+  createEffect(() => {
+    if (!props.open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        props.onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    onCleanup(() => window.removeEventListener("keydown", onKey, true));
+  });
+
   return (
     <Show when={props.open}>
       <div class="modal-overlay" onClick={props.onClose}>
