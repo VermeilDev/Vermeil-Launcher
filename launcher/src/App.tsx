@@ -7,17 +7,16 @@ import Titlebar from "./components/Titlebar";
 import ResizeHandles from "./components/ResizeHandles";
 import Home from "./screens/Home";
 import Library from "./screens/Library";
-import InstanceMods from "./screens/InstanceMods";
-import Settings from "./screens/Settings";
-import Account from "./screens/Account";
-import Downloads from "./screens/Downloads";
-// Lazy-load the Skins screen because skinview3d pulls in ~500 KB of three.js
-// that we don't want to pay for unless the user actually opens Skins.
-const Skins = lazy(() => import("./screens/Skins"));
 import CreateChoose from "./modals/CreateChoose";
-import CreateCustom from "./modals/CreateCustom";
-import BrowseModpacks from "./modals/BrowseModpacks";
-import ImportInstance from "./modals/ImportInstance";
+// Lazy-load secondary screens so startup only parses and compiles the Home / Library shell.
+const InstanceMods = lazy(() => import("./screens/InstanceMods"));
+const Settings = lazy(() => import("./screens/Settings"));
+const Account = lazy(() => import("./screens/Account"));
+const Downloads = lazy(() => import("./screens/Downloads"));
+const Skins = lazy(() => import("./screens/Skins"));
+const CreateCustom = lazy(() => import("./modals/CreateCustom"));
+const BrowseModpacks = lazy(() => import("./modals/BrowseModpacks"));
+const ImportInstance = lazy(() => import("./modals/ImportInstance"));
 import NoAccountModal from "./components/NoAccountModal";
 import Toasts, { showToast, updateToast, dismissToast, isToastActive } from "./components/Toasts";
 import { initInstallProgress } from "./services/installProgress";
