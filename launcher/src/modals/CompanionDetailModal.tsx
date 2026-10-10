@@ -55,18 +55,24 @@ const CompanionDetailModal: Component<Props> = (props) => {
     onCleanup(() => document.removeEventListener("keydown", onKey, true));
   });
 
-  // Fetch available builds when modal opens
+  let fetchedForInstanceId: string | null = null;
+
+  // Fetch available builds once when modal opens for an instance
   createEffect(() => {
-    if (!props.isOpen || !props.instanceId) {
+    const id = props.instanceId;
+    if (!props.isOpen || !id) {
+      fetchedForInstanceId = null;
       setBuilds([]);
       setSelectedFile(null);
       setError(null);
       return;
     }
+    if (fetchedForInstanceId === id) return;
+    fetchedForInstanceId = id;
 
     setLoading(true);
     setError(null);
-    getInstanceCompanionBuilds(props.instanceId)
+    getInstanceCompanionBuilds(id)
       .then((res) => {
         setBuilds(res);
         const active = res.find((b) => b.is_active);
@@ -193,7 +199,6 @@ const CompanionDetailModal: Component<Props> = (props) => {
                     disabled={toggling()}
                     onChange={handleToggle}
                     aria-label={(props.companionEnabled ?? true) ? "Disable companion" : "Enable companion"}
-                    tip={(props.companionEnabled ?? true) ? "Disable companion" : "Enable companion"}
                   />
                 </div>
               </div>

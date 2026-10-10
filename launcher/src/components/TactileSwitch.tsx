@@ -7,8 +7,6 @@ export interface TactileSwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
-  tip?: string;
-  tipClass?: string;
   "aria-label"?: string;
   class?: string;
 }
@@ -20,8 +18,7 @@ export const TactileSwitch: Component<TactileSwitchProps> = (props) => (
     aria-checked={props.checked}
     aria-label={props["aria-label"]}
     disabled={props.disabled}
-    class={`tactile-switch ${props.checked ? "active" : ""} ${props.tipClass ?? ""} ${props.class ?? ""}`}
-    data-tip={props.tip}
+    class={`tactile-switch ${props.checked ? "active" : ""} ${props.class ?? ""}`}
     onClick={(e) => {
       e.stopPropagation();
       if (!props.disabled) props.onChange(!props.checked);
