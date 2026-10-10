@@ -28,7 +28,7 @@ Follow this step-by-step checklist:
 
 1. System & Toolchain Audit:
    - Check Node.js (`node -v`). Must be Node 24 LTS.
-   - Check pnpm (`pnpm -v`). Must be pnpm 11.
+   - Check pnpm (`pnpm -v`). Must be pnpm 12.
    - Check Rust toolchain (`rustc --version`, `cargo --version`). Must be stable channel.
    - Operating System specific toolchains:
      - Windows: Check for Visual Studio C++ Build Tools (MSVC compiler / WebView2).
@@ -52,7 +52,7 @@ Follow this step-by-step checklist:
    - If I choose Manual:
      - Provide official download links and copy-paste commands for each missing prerequisite:
        - Node.js 24 LTS: https://nodejs.org/
-       - pnpm 11: https://pnpm.io/ (`npm install -g pnpm`)
+       - pnpm 12: https://pnpm.io/ (`npm install -g pnpm`)
        - Rust: https://rustup.rs/
        - Visual Studio C++ Build Tools: https://visualstudio.microsoft.com/visual-cpp-build-tools/
        - Linux packages: Provide the distro-specific install command
@@ -442,7 +442,7 @@ The lists below are for building the **launcher**. The companion mod
 ### Windows
 
 - [Node.js 24 LTS](https://nodejs.org/) (includes npm)
-- [pnpm 11](https://pnpm.io/) — `npm install -g pnpm`
+- [pnpm 12](https://pnpm.io/) — `npm install -g pnpm`
 - [Rust](https://rustup.rs/) — `rustup default stable`
 - [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload)
 
