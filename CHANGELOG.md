@@ -1,12 +1,16 @@
-## 0.1.0 (Alpha Build 12)
+## 0.1.0 (Alpha Build 13)
+
+### Added
+
+- Redesigned Instance Worlds view with a responsive 3-column Bento grid, rich save metadata, and one-click quick-play
 
 ### Changed
 
-- Reworked Companion Mod detail modal to match the standard mod detail layout with live build selection and one-click reinstall
-- Unified dependency notice, manual download, account prompt, and Java runtime chooser dialogs with Escape key dismissal
-- Lazy-loaded secondary screens to reduce initial startup bundle size and speed up window launch
+- Enhanced live game log streaming to reliably pin and follow new output during rapid log emission
+- Upgraded package manager toolchain to pnpm 12.11.2
 
 ### Fixed
 
-- Fixed toggle switch thumb disappearing when paired with tooltip attributes inside modals
-- Fixed Companion Mod detail modal re-fetching the build manifest and jumping when toggling companion features on or off
+- Fixed tooltip clipping and overflow collisions on world card action buttons
+- Removed redundant hover play overlay on world thumbnails to keep save icons clearly visible
+- Fixed clipped tooltips across overflow-hidden containers and compact instance cards
