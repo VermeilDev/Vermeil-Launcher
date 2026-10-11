@@ -1044,3 +1044,30 @@ export const saveQuickServer = (entry: QuickServerEntry) =>
 export const removeQuickServer = (address: string) =>
   invoke<QuickServerEntry[]>("remove_quick_server", { address });
 
+// Favorites
+export interface FavoriteItem {
+  id: string;
+  platform: "modrinth" | "curseforge";
+  project_id: string;
+  slug: string;
+  title: string;
+  description: string;
+  author?: string | null;
+  icon_url?: string | null;
+  local_icon_path?: string | null;
+  category: "mod" | "modpack" | "resourcepack" | "shader" | "datapack";
+  loaders: string[];
+  versions: string[];
+  version_name?: string | null;
+  date_added: string;
+}
+
+export const getFavorites = () =>
+  invoke<FavoriteItem[]>("get_favorites");
+
+export const toggleFavorite = (item: FavoriteItem) =>
+  invoke<boolean>("toggle_favorite", { item });
+
+export const removeFavorite = (id: string) =>
+  invoke<boolean>("remove_favorite", { id });
+

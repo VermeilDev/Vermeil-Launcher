@@ -15,6 +15,7 @@ import {
   IconSearch,
   IconRefresh,
 } from "../components/Icons";
+import { isFavorite, toggleFavoriteItem } from "../services/favorites";
 
 interface Props {
   /** The mod to describe. `null` closes the modal. */
@@ -271,6 +272,32 @@ const ModDetailModal: Component<Props> = (props) => {
                         <><IconModrinth /> Modrinth</>
                       </Show>
                     </span>
+                    <button
+                      type="button"
+                      class={`btn btn--sm btn--icon card-fav-btn ${isFavorite(effectiveSource(), mod().project_id) ? "active" : ""} tip-below`}
+                      data-tip={isFavorite(effectiveSource(), mod().project_id) ? "Remove from favorites" : "Favorite"}
+                      aria-label="Toggle favorite"
+                      onClick={() => {
+                        const m = mod();
+                        toggleFavoriteItem({
+                          id: `${effectiveSource()}:${m.project_id}`,
+                          platform: effectiveSource(),
+                          project_id: m.project_id,
+                          slug: m.slug,
+                          title: m.title,
+                          description: m.description,
+                          author: m.author || undefined,
+                          icon_url: m.icon_url || undefined,
+                          category: (props.category || m.project_type || "mod") as any,
+                          loaders: props.loaders || m.categories || [],
+                          versions: m.versions || [],
+                          version_name: m.version_name || undefined,
+                          date_added: new Date().toISOString(),
+                        });
+                      }}
+                    >
+                      <IconHeart filled={isFavorite(effectiveSource(), mod().project_id)} />
+                    </button>
                   </div>
                   <Show when={mod().author}>
                     <span class="mod-detail-author">

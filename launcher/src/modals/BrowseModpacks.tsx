@@ -35,6 +35,8 @@ import {
   IconList,
 } from "../components/Icons";
 import { formatDownloads, formatVersionRange, formatDate } from "../lib/format";
+import { resolveAssetUrl } from "../lib/assets";
+import { favoriteList, isFavorite, toggleFavoriteItem } from "../services/favorites";
 import ModpackDetailModal from "./ModpackDetailModal";
 
 const PAGE_SIZE = 12;
@@ -73,7 +75,7 @@ const BrowseModpacks: Component = () => {
   const [sortBy, setSortBy] = createSignal("relevance");
   const [loaderFilter, setLoaderFilter] = createSignal("");
   const [versionFilter, setVersionFilter] = createSignal("");
-  const [modSource, setModSource] = createSignal<"modrinth" | "curseforge">("modrinth");
+  const [modSource, setModSource] = createSignal<"modrinth" | "curseforge" | "favorites">("modrinth");
 
   const [gameVersionsList] = createResource(async () => {
     try {
@@ -98,7 +100,7 @@ const BrowseModpacks: Component = () => {
 
   const totalPages = () => Math.max(1, Math.ceil(totalHits() / PAGE_SIZE));
 
-  const handleSourceSelect = (source: "modrinth" | "curseforge") => {
+  const handleSourceSelect = (source: "modrinth" | "curseforge" | "favorites") => {
     if (modSource() === source) return;
     setModSource(source);
     setResults([]);
@@ -110,8 +112,65 @@ const BrowseModpacks: Component = () => {
     const token = ++searchToken;
     setSearching(true);
     try {
-      const offset = (p - 1) * PAGE_SIZE;
       const source = modSource();
+
+      if (source === "favorites") {
+        const qLower = q.toLowerCase().trim();
+        const lFilter = loaderFilter().toLowerCase();
+        const vFilter = versionFilter();
+
+        const allFavPacks = favoriteList().filter((f) => f.category === "modpack");
+        const filtered = allFavPacks.filter((f) => {
+          if (qLower) {
+            const matchTitle = f.title.toLowerCase().includes(qLower);
+            const matchAuthor = f.author ? f.author.toLowerCase().includes(qLower) : false;
+            const matchDesc = f.description.toLowerCase().includes(qLower);
+            if (!matchTitle && !matchAuthor && !matchDesc) return false;
+          }
+          if (lFilter && f.loaders.length > 0) {
+            if (!f.loaders.some((l) => l.toLowerCase() === lFilter)) return false;
+          }
+          if (vFilter && f.versions.length > 0) {
+            const stripPre = (s: string) => s.split(/-pre|-rc|-experimental|-snapshot|-beta|-alpha/)[0];
+            const targetBase = stripPre(vFilter);
+            if (!f.versions.some((v) => v === vFilter || stripPre(v) === targetBase)) return false;
+          }
+          return true;
+        });
+
+        filtered.sort((a, b) => {
+          if (sortBy() === "newest") {
+            return new Date(b.date_added).getTime() - new Date(a.date_added).getTime();
+          }
+          return a.title.localeCompare(b.title);
+        });
+
+        const offset = (p - 1) * PAGE_SIZE;
+        const pageItems = filtered.slice(offset, offset + PAGE_SIZE);
+        const hits: ModHit[] = pageItems.map((fav) => ({
+          project_id: fav.project_id,
+          slug: fav.slug,
+          title: fav.title,
+          description: fav.description,
+          author: fav.author || "",
+          icon_url: fav.local_icon_path ? (resolveAssetUrl(fav.local_icon_path) || fav.icon_url) : fav.icon_url,
+          categories: fav.loaders,
+          versions: fav.versions,
+          downloads: 0,
+          follows: 0,
+          date_modified: fav.date_added,
+          project_type: "modpack",
+          version_name: fav.version_name,
+          platform: fav.platform,
+        } as any));
+
+        if (token !== searchToken) return;
+        setResults(hits);
+        setTotalHits(filtered.length);
+        return;
+      }
+
+      const offset = (p - 1) * PAGE_SIZE;
       const result =
         source === "curseforge"
           ? await searchCurseforge(q, loaderFilter(), versionFilter(), offset, PAGE_SIZE, sortBy(), "modpack")
@@ -200,6 +259,8 @@ const BrowseModpacks: Component = () => {
   const doInstall = (pack: ModHit, versionId?: string) => {
     setConfirmPack(null);
 
+    const targetSource = (pack as any).platform || modSource();
+
     enqueueModpack({
       projectId: pack.project_id,
       title: pack.title,
@@ -212,7 +273,7 @@ const BrowseModpacks: Component = () => {
         author: pack.author,
       },
       execute: () =>
-        modSource() === "curseforge"
+        targetSource === "curseforge"
           ? installCfModpack(pack.project_id, versionId ?? pack.latest_version ?? undefined)
           : installModpack(pack.project_id, versionId),
     });
@@ -260,6 +321,15 @@ const BrowseModpacks: Component = () => {
               <IconCurseForge />
               <span>CurseForge</span>
             </button>
+            <button
+              type="button"
+              class={`modpack-source-tab tab-fav tip-below ${modSource() === "favorites" ? "active" : ""}`}
+              onClick={() => handleSourceSelect("favorites")}
+              data-tip="Favorites"
+              aria-label="Favorites"
+            >
+              <IconHeart filled={modSource() === "favorites"} />
+            </button>
           </div>
 
           <div class="inst-search-input-wrap">
@@ -270,7 +340,9 @@ const BrowseModpacks: Component = () => {
               type="text"
               class="field-control inst-search-input"
               placeholder={
-                modSource() === "modrinth"
+                modSource() === "favorites"
+                  ? "Search favorite modpacks..."
+                  : modSource() === "modrinth"
                   ? "Search Modrinth modpacks..."
                   : "Search CurseForge modpacks..."
               }
@@ -445,13 +517,21 @@ const BrowseModpacks: Component = () => {
         <Show when={!searching() && results().length === 0}>
           <div class="modpack-empty-panel panel panel--bracketed">
             <div class="modpack-empty-icon">
-              <IconLayers />
+              <Show when={modSource() === "favorites"} fallback={<IconLayers />}>
+                <IconHeart />
+              </Show>
             </div>
-            <h3 class="modpack-empty-title">No Modpacks Found</h3>
+            <h3 class="modpack-empty-title">
+              {modSource() === "favorites" ? "No Favorite Modpacks" : "No Modpacks Found"}
+            </h3>
             <p class="modpack-empty-desc">
               <Show
                 when={query()}
-                fallback={<>No results found for the selected loader and version filters.</>}
+                fallback={
+                  modSource() === "favorites"
+                    ? <>You haven't added any favorite modpacks yet. Click the heart icon on any pack to bookmark it here.</>
+                    : <>No results found for the selected loader and version filters.</>
+                }
               >
                 No modpacks match "<strong>{query()}</strong>". Try checking for spelling errors or
                 removing filters.
@@ -530,6 +610,33 @@ const BrowseModpacks: Component = () => {
                           <div class="modpack-cassette-stats tip-left" data-tip="Downloads">
                             <IconDownload /> {formatDownloads(pack.downloads)}
                           </div>
+                          <button
+                            type="button"
+                            class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
+                            data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
+                            aria-label="Toggle favorite"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const src = (pack as any).platform || (modSource() === "favorites" ? "modrinth" : modSource());
+                              toggleFavoriteItem({
+                                id: `${src}:${pack.project_id}`,
+                                platform: src,
+                                project_id: pack.project_id,
+                                slug: pack.slug,
+                                title: pack.title,
+                                description: pack.description,
+                                author: pack.author,
+                                icon_url: pack.icon_url,
+                                category: "modpack",
+                                loaders: extractLoaders(pack),
+                                versions: pack.versions || [],
+                                version_name: pack.version_name,
+                                date_added: new Date().toISOString(),
+                              });
+                            }}
+                          >
+                            <IconHeart filled={isFavorite((pack as any).platform || modSource(), pack.project_id)} />
+                          </button>
                           <button
                             type="button"
                             class="btn btn--primary btn--sm modpack-card-install-btn"
@@ -622,6 +729,33 @@ const BrowseModpacks: Component = () => {
                           </Show>
                         </div>
                         <div class="modpack-card-actions">
+                          <button
+                            type="button"
+                            class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
+                            data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
+                            aria-label="Toggle favorite"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const src = (pack as any).platform || (modSource() === "favorites" ? "modrinth" : modSource());
+                              toggleFavoriteItem({
+                                id: `${src}:${pack.project_id}`,
+                                platform: src,
+                                project_id: pack.project_id,
+                                slug: pack.slug,
+                                title: pack.title,
+                                description: pack.description,
+                                author: pack.author,
+                                icon_url: pack.icon_url,
+                                category: "modpack",
+                                loaders: extractLoaders(pack),
+                                versions: pack.versions || [],
+                                version_name: pack.version_name,
+                                date_added: new Date().toISOString(),
+                              });
+                            }}
+                          >
+                            <IconHeart filled={isFavorite((pack as any).platform || modSource(), pack.project_id)} />
+                          </button>
                           <button
                             type="button"
                             class="btn btn--primary btn--sm modpack-card-install-btn"

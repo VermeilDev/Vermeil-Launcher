@@ -5276,6 +5276,19 @@ select.field-input[size] { appearance: none; }
   border-color: var(--accent) !important;
   box-shadow: 0 0 10px var(--accent-glow) !important;
 }
+.inst-unified-toolbar .inst-mode-tab.inst-mode-tab-fav {
+  padding: 0 9px !important;
+}
+.inst-unified-toolbar .inst-mode-tab.inst-mode-tab-fav svg {
+  width: 14px;
+  height: 14px;
+}
+.inst-unified-toolbar .inst-mode-tab.inst-mode-tab-fav.active {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
+}
 
 /* ── Sticky Content Controls Deck (Mode Toggle + Unified Toolbar) ── */
 .inst-content-sticky-deck {

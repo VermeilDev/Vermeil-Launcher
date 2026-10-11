@@ -9,7 +9,7 @@ mod util;
 
 pub use error::AppError;
 
-use commands::{app_updater, auth, cf_import, cloud_sync, files, instances, java, launch, meta, mods, settings, skins};
+use commands::{app_updater, auth, cf_import, cloud_sync, favorites, files, instances, java, launch, meta, mods, settings, skins};
 use services::app_updater::PendingUpdate;
 use tauri::Manager;
 
@@ -381,6 +381,10 @@ pub fn run() {
             files::get_recent_screenshots,
             files::get_instances_storage_footprint,
             files::open_file_path,
+            // Favorites
+            favorites::get_favorites,
+            favorites::toggle_favorite,
+            favorites::remove_favorite,
             // Auto-updater
             app_updater::check_for_updates,
             app_updater::start_update_download,

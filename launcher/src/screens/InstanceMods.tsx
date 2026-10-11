@@ -18,6 +18,7 @@ import { IconArrowLeft, IconBolt, IconClock, IconMonitor, IconGlobe, IconTrash, 
 import SelectionDock from "../components/SelectionDock";
 import TactileSwitch from "../components/TactileSwitch";
 import { enqueueInstallTask, isTaskQueuedOrActive, isTaskActive, isTaskQueued } from "../services/modpackQueue";
+import { favoriteList, isFavorite, toggleFavoriteItem, FavoriteItem } from "../services/favorites";
 
 import { resolveAssetUrl } from "../lib/assets";
 
@@ -557,13 +558,101 @@ const InstanceMods: Component = () => {
     setLocalInstalled(ids);
   });
 
-  const [contentTab, setContentTab] = createSignal<"installed" | "browse">("installed");
+  const [contentTab, setContentTab] = createSignal<"installed" | "browse" | "favorites">("installed");
   const [installedFilter, setInstalledFilter] = createSignal<"all" | "mod" | "resourcepack" | "shader" | "datapack">("all");
   // Installed tab: search + sort. Sort defaults to newest-first because users
   // most often want to find what they just installed. The Vec<ModEntry> from
   // backend is in install order (push at end), so newest = reversed list.
   const [installedSearch, setInstalledSearch] = createSignal("");
   const [installedSort, setInstalledSort] = createSignal<"newest" | "oldest">("newest");
+
+  // Favorites tab state
+  const [favoritesFilter, setFavoritesFilter] = createSignal<"all" | "mod" | "resourcepack" | "shader" | "datapack">("all");
+  const [favoritesSearch, setFavoritesSearch] = createSignal("");
+  const [favoritesSort, setFavoritesSort] = createSignal<"newest" | "name">("newest");
+
+  const instanceFavorites = createMemo(() => {
+    const q = favoritesSearch().toLowerCase().trim();
+    const filter = favoritesFilter();
+    return favoriteList().filter((fav) => {
+      if (fav.category === "modpack") return false;
+      if (filter !== "all" && fav.category !== filter) return false;
+      if (q) {
+        const matchTitle = fav.title.toLowerCase().includes(q);
+        const matchAuthor = fav.author ? fav.author.toLowerCase().includes(q) : false;
+        const matchDesc = fav.description.toLowerCase().includes(q);
+        if (!matchTitle && !matchAuthor && !matchDesc) return false;
+      }
+      return true;
+    }).sort((a, b) => {
+      if (favoritesSort() === "name") {
+        return a.title.localeCompare(b.title);
+      }
+      return new Date(b.date_added).getTime() - new Date(a.date_added).getTime();
+    });
+  });
+
+  const checkFavCompatibility = (fav: FavoriteItem): { compatible: boolean; reason?: string } => {
+    const inst = instance();
+    if (!inst) return { compatible: true };
+    const loader = (inst.loader?.type || "vanilla").toLowerCase();
+    const gameVer = inst.game_version || "";
+
+    if (fav.category === "mod") {
+      if (loader === "vanilla") {
+        return { compatible: false, reason: "Vanilla cannot run mods" };
+      }
+      if (fav.loaders && fav.loaders.length > 0) {
+        const hasLoader = fav.loaders.some((l) => {
+          const lower = l.toLowerCase();
+          if (loader === "quilt") return lower === "quilt" || lower === "fabric";
+          return lower === loader;
+        });
+        if (!hasLoader) {
+          return { compatible: false, reason: `Requires ${fav.loaders.join(", ")}` };
+        }
+      }
+    } else if (fav.category === "shader" && loader === "vanilla") {
+      return { compatible: false, reason: "Requires Iris or OptiFine" };
+    }
+
+    if (gameVer && fav.versions && fav.versions.length > 0) {
+      const stripPre = (s: string) => s.split(/-pre|-rc|-experimental|-snapshot|-beta|-alpha/)[0];
+      const targetBase = stripPre(gameVer);
+      const matchesVer = fav.versions.some(v => v === gameVer || stripPre(v) === targetBase);
+      if (!matchesVer) {
+        return { compatible: false, reason: `Version mismatch (${gameVer})` };
+      }
+    }
+
+    return { compatible: true };
+  };
+
+  const favToModHit = (fav: FavoriteItem): ModHit => ({
+    project_id: fav.project_id,
+    slug: fav.slug,
+    title: fav.title,
+    description: fav.description,
+    author: fav.author || "",
+    icon_url: fav.icon_url || null,
+    categories: fav.loaders,
+    versions: fav.versions,
+    downloads: 0,
+    follows: 0,
+    date_modified: fav.date_added,
+    project_type: fav.category,
+    client_side: "optional",
+    server_side: "optional",
+  });
+
+  const handleInstallFavorite = (fav: FavoriteItem) => {
+    handleCardInstall(favToModHit(fav));
+  };
+
+  const handleFavoriteCardClick = (fav: FavoriteItem) => {
+    setDetailMod(favToModHit(fav));
+    setDetailModSource(fav.platform as "modrinth" | "curseforge");
+  };
   // Installed content renders its full filtered list (client-side, scrollable) —
   // no pagination or page-size control. The canonical `.card-grid` handles reflow.
 
@@ -2646,13 +2735,38 @@ const InstanceMods: Component = () => {
               </div>
             </Show>
 
+            <Show when={contentTab() === "favorites"}>
+              <div class="inst-category-nav inst-category-nav--favorites">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${favoritesFilter() === "all" ? "active" : ""}`} onClick={() => setFavoritesFilter("all")}>All</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "mod" ? "active" : ""}`} onClick={() => setFavoritesFilter("mod")}>Mods</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setFavoritesFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "shader" ? "active" : ""}`} onClick={() => setFavoritesFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "datapack" ? "active" : ""}`} onClick={() => setFavoritesFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <span class="inst-count-text">
+                    <strong class="inst-count-bold">{instanceFavorites().length}</strong> {favoritesSearch().trim() ? "found" : "favorited"}
+                  </span>
+                </div>
+              </div>
+            </Show>
+
             {/* Filter & Search Toolbar (1-Row Solid Panel Box) */}
             <div class="inst-unified-toolbar">
               <div class="inst-toolbar-left">
-                {/* Mode Segmented Toggle: Installed vs Browse */}
+                {/* Mode Segmented Toggle: Installed vs Browse vs Favorites */}
                 <div class="inst-mode-segmented">
                   <button class={`inst-mode-tab ${contentTab() === "installed" ? "active" : ""}`} onClick={() => { setContentTab("installed"); refetchInstances(); refetchDetail(); }}>Installed</button>
                   <button class={`inst-mode-tab ${contentTab() === "browse" ? "active" : ""}`} onClick={() => setContentTab("browse")}>Browse</button>
+                  <button
+                    class={`inst-mode-tab inst-mode-tab-fav tip-below ${contentTab() === "favorites" ? "active" : ""}`}
+                    data-tip="Favorites"
+                    aria-label="Favorites"
+                    onClick={() => setContentTab("favorites")}
+                  >
+                    <IconHeart filled={contentTab() === "favorites"} />
+                  </button>
                 </div>
 
                 <Show when={contentTab() === "installed"}>
@@ -2692,6 +2806,23 @@ const InstanceMods: Component = () => {
                     />
                     <Show when={searchQuery().length > 0}>
                       <button class="inst-search-clear tip-below" onClick={() => handleSearch("")} data-tip="Clear search" aria-label="Clear search">
+                        <IconX />
+                      </button>
+                    </Show>
+                  </div>
+                </Show>
+
+                <Show when={contentTab() === "favorites"}>
+                  <div class="inst-search-input-wrap">
+                    <span class="inst-search-icon"><IconSearch /></span>
+                    <input
+                      class="field-control inst-search-input"
+                      placeholder="Search favorites..."
+                      value={favoritesSearch()}
+                      onInput={(e) => setFavoritesSearch(e.currentTarget.value)}
+                    />
+                    <Show when={favoritesSearch().length > 0}>
+                      <button class="inst-search-clear tip-below" onClick={() => setFavoritesSearch("")} data-tip="Clear search" aria-label="Clear search">
                         <IconX />
                       </button>
                     </Show>
@@ -2789,6 +2920,40 @@ const InstanceMods: Component = () => {
                   >
                     {selectMode() ? `Cancel (${selectedItems().size})` : "Select"}
                   </button>
+                  {/* View Mode Toggle: Grid vs Compact pinned to far right */}
+                  <div class="view-mode-tabs view-mode-toggle">
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "grid" ? "active" : ""}`}
+                      onClick={() => setViewMode("grid")}
+                      data-tip="Grid view"
+                      aria-label="Grid view"
+                    >
+                      <IconGrid />
+                    </button>
+                    <button
+                      type="button"
+                      class={`view-mode-btn tip-below ${viewMode() === "compact" ? "active" : ""}`}
+                      onClick={() => setViewMode("compact")}
+                      data-tip="Compact view"
+                      aria-label="Compact view"
+                    >
+                      <IconList />
+                    </button>
+                  </div>
+                </Show>
+
+                <Show when={contentTab() === "favorites"}>
+                  <Dropdown
+                    prefix="Sort: "
+                    value={favoritesSort()}
+                    options={[
+                      { value: "newest", label: "Recently added" },
+                      { value: "name", label: "Alphabetical" },
+                    ]}
+                    onChange={(val) => setFavoritesSort(val as "newest" | "name")}
+                    width="165px"
+                  />
                   {/* View Mode Toggle: Grid vs Compact pinned to far right */}
                   <div class="view-mode-tabs view-mode-toggle">
                     <button
@@ -2943,6 +3108,38 @@ const InstanceMods: Component = () => {
                         <div class="mod-card-author">by {(mod as any).author}</div>
                       </Show>
                     </div>
+                    <Show when={(mod as any).project_id}>
+                      <button
+                        type="button"
+                        class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""} tip-below`}
+                        data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Remove from favorites" : "Favorite"}
+                        aria-label="Toggle favorite"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const m = mod as any;
+                          const p = m.platform || "modrinth";
+                          const cat = resolveItemCategory(m, instance()?.loader?.type);
+                          toggleFavoriteItem({
+                            id: `${p}:${m.project_id}`,
+                            platform: p,
+                            project_id: m.project_id,
+                            slug: m.slug || m.filename,
+                            title: m.title || m.filename,
+                            description: m.description || "",
+                            author: m.author,
+                            icon_url: m.icon_url,
+                            local_icon_path: m.local_icon_path,
+                            category: cat as any,
+                            loaders: m.loaders || [],
+                            versions: m.versions || [],
+                            version_name: m.version_name,
+                            date_added: new Date().toISOString(),
+                          });
+                        }}
+                      >
+                        <IconHeart filled={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id)} />
+                      </button>
+                    </Show>
                   </div>
                   <div class="mod-card-desc">{mod.description || ""}</div>
                   {/* Installed cards show the instance's loader + MC version
@@ -3282,6 +3479,33 @@ const InstanceMods: Component = () => {
                           <div class="mod-card-author">by {mod.author}</div>
                         </Show>
                       </div>
+                      <button
+                        type="button"
+                        class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(modSource(), mod.project_id) ? "active" : ""} tip-below`}
+                        data-tip={isFavorite(modSource(), mod.project_id) ? "Remove from favorites" : "Favorite"}
+                        aria-label="Toggle favorite"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const cat = resolveItemCategory(mod, instance()?.loader?.type, browseFilter());
+                          toggleFavoriteItem({
+                            id: `${modSource()}:${mod.project_id}`,
+                            platform: modSource(),
+                            project_id: mod.project_id,
+                            slug: mod.slug,
+                            title: mod.title,
+                            description: mod.description,
+                            author: mod.author,
+                            icon_url: mod.icon_url,
+                            category: cat as any,
+                            loaders: mod.categories || [],
+                            versions: mod.versions || [],
+                            version_name: mod.version_name,
+                            date_added: new Date().toISOString(),
+                          });
+                        }}
+                      >
+                        <IconHeart filled={isFavorite(modSource(), mod.project_id)} />
+                      </button>
                     </div>
                     <div class="mod-card-desc">{mod.description}</div>
                     <div class="mod-card-tags">
@@ -3373,6 +3597,143 @@ const InstanceMods: Component = () => {
                 onClear={() => setSelectedItems(new Map())}
                 icon={<IconDownload />}
               />
+            </Show>
+          </div>
+        </Show>
+
+        {/* ═══ FAVORITES CONTENT TAB ═══ */}
+        <Show when={contentTab() === "favorites"}>
+          <div class="inst-browse-pane">
+            <Show when={favoriteList().filter(f => f.category !== "modpack").length === 0}>
+              <div class="browse-status-pane">
+                <div class="browse-status-icon"><IconHeart /></div>
+                <div class="browse-status-title">No favorites saved yet</div>
+                <div class="browse-status-text">
+                  Click the heart icon on any mod, resource pack, shader, or datapack to bookmark it here for fast 1-click access across all instances.
+                </div>
+              </div>
+            </Show>
+
+            <Show when={favoriteList().filter(f => f.category !== "modpack").length > 0 && instanceFavorites().length === 0}>
+              <div class="browse-status-pane">
+                <div class="browse-status-icon"><IconSearch /></div>
+                <div class="browse-status-title">No matching favorites</div>
+                <div class="browse-status-text">
+                  {favoritesSearch()
+                    ? `No favorites matching "${favoritesSearch()}" were found.`
+                    : "No favorite items match this category filter."}
+                </div>
+              </div>
+            </Show>
+
+            <Show when={instanceFavorites().length > 0}>
+              <div class={`inst-card-grid ${viewMode() === "compact" ? "compact" : ""}`}>
+                <For each={instanceFavorites()}>
+                  {(fav) => {
+                    const compat = checkFavCompatibility(fav);
+                    const installed = isModInstalled(fav.project_id);
+                    const isQueuedOrActive = isTaskQueuedOrActive(fav.project_id, instance()?.id);
+
+                    return (
+                      <div
+                        class="card card--mod"
+                        style={{
+                          opacity: compat.compatible ? "1" : "0.6",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => handleFavoriteCardClick(fav)}
+                      >
+                        <div class="mod-card-header">
+                          <div class="mod-card-icon">
+                            <Show
+                              when={fav.local_icon_path ? (resolveAssetUrl(fav.local_icon_path) || fav.icon_url) : fav.icon_url}
+                              fallback={
+                                <span class="side-icon" style="width:20px;height:20px">
+                                  {fav.category === "resourcepack" ? <IconShirt /> : fav.category === "shader" ? <IconWand /> : <IconCube />}
+                                </span>
+                              }
+                            >
+                              <img
+                                src={(fav.local_icon_path ? (resolveAssetUrl(fav.local_icon_path) || fav.icon_url) : fav.icon_url)!}
+                                alt=""
+                                draggable={false}
+                                onError={(e) => {
+                                  if (fav.icon_url && e.currentTarget.src !== fav.icon_url) {
+                                    e.currentTarget.src = fav.icon_url;
+                                  } else {
+                                    e.currentTarget.style.display = "none";
+                                  }
+                                }}
+                              />
+                            </Show>
+                          </div>
+                          <div class="mod-card-name-wrap">
+                            <div class="mod-card-name">{fav.title}</div>
+                            <Show when={fav.author}>
+                              <div class="mod-card-author">by {fav.author}</div>
+                            </Show>
+                          </div>
+                          <button
+                            type="button"
+                            class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(fav.platform, fav.project_id) ? "active" : ""} tip-below`}
+                            data-tip={isFavorite(fav.platform, fav.project_id) ? "Remove from favorites" : "Favorite"}
+                            aria-label="Toggle favorite"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavoriteItem(fav);
+                            }}
+                          >
+                            <IconHeart filled={isFavorite(fav.platform, fav.project_id)} />
+                          </button>
+                        </div>
+                        <div class="mod-card-desc">{fav.description}</div>
+                        <div class="mod-card-tags">
+                          <span class={`mod-tag mod-tag-type mod-tag-type--${fav.category}`}>
+                            {categoryLabel(fav.category)}
+                          </span>
+                          <span class={`mod-source-badge ${fav.platform === "modrinth" ? "source-mr" : "source-cf"}`} style="font-size:10px;padding:1px 5px">
+                            {fav.platform === "modrinth" ? "MR" : "CF"}
+                          </span>
+                          <Show when={fav.loaders && fav.loaders.length > 0 && fav.category === "mod"}>
+                            <span class="mod-tag mod-tag-loader">
+                              {fav.loaders.join(", ")}
+                            </span>
+                          </Show>
+                          <Show when={!compat.compatible && compat.reason}>
+                            <span class="mod-tag mod-tag--incompatible" style="color:var(--danger);border-color:rgba(239,68,68,0.4)">
+                              {compat.reason}
+                            </span>
+                          </Show>
+                        </div>
+                        <div class="mod-card-footer">
+                          <div class="mod-card-meta">
+                            <span class="mod-meta-stat">Saved {formatDate(fav.date_added)}</span>
+                          </div>
+                          <Show when={installed}>
+                            <span class="btn btn--installed"><IconCheck /> Installed</span>
+                          </Show>
+                          <Show when={!installed}>
+                            <button
+                              class="btn btn--sm btn--primary"
+                              disabled={isQueuedOrActive || !compat.compatible}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInstallFavorite(fav);
+                              }}
+                            >
+                              {isTaskActive(fav.project_id, instance()?.id)
+                                ? "..."
+                                : isTaskQueued(fav.project_id, instance()?.id)
+                                ? "Queued"
+                                : "+ Install"}
+                            </button>
+                          </Show>
+                        </div>
+                      </div>
+                    );
+                  }}
+                </For>
+              </div>
             </Show>
           </div>
         </Show>

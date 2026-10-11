@@ -14,10 +14,11 @@ import {
   IconCurseForge,
   IconSearch,
 } from "../components/Icons";
+import { isFavorite, toggleFavoriteItem } from "../services/favorites";
 
 export interface ModpackDetailModalProps {
   pack: ModHit | null;
-  source: "modrinth" | "curseforge";
+  source: "modrinth" | "curseforge" | "favorites";
   installedCount: number;
   installedInstances: Array<{ id: string; name: string }>;
   installing: boolean;
@@ -77,6 +78,9 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
     onCleanup(() => document.removeEventListener("keydown", onKey, true));
   });
 
+  const effectiveSource = () =>
+    (props.pack as any)?.platform || (props.source === "favorites" ? "modrinth" : props.source);
+
   // Fetch versions whenever the selected pack or source changes
   createEffect(() => {
     const p = props.pack;
@@ -86,7 +90,8 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
       return;
     }
 
-    const cacheKey = `${props.source}:${p.project_id}`;
+    const src = effectiveSource();
+    const cacheKey = `${src}:${p.project_id}`;
     const cached = versionCache.get(cacheKey);
     if (cached) {
       setVersions(cached);
@@ -101,7 +106,7 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
     setError(null);
 
     const fetchPromise =
-      props.source === "curseforge"
+      src === "curseforge"
         ? getCfModFiles(p.project_id, "", "")
         : getModVersions(p.project_id, "", "", "modpack");
 
@@ -171,16 +176,42 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
                       <span class="modal-title modpack-detail-title">{pack().title}</span>
                       <span
                         class={`modpack-source-badge ${
-                          props.source === "modrinth" ? "source-mr" : "source-cf"
+                          effectiveSource() === "modrinth" ? "source-mr" : "source-cf"
                         }`}
                       >
                         <Show
-                          when={props.source === "modrinth"}
+                          when={effectiveSource() === "modrinth"}
                           fallback={<><IconCurseForge /> CurseForge</>}
                         >
                           <><IconModrinth /> Modrinth</>
                         </Show>
                       </span>
+                      <button
+                        type="button"
+                        class={`btn btn--sm btn--icon card-fav-btn ${isFavorite(effectiveSource(), pack().project_id) ? "active" : ""} tip-below`}
+                        data-tip={isFavorite(effectiveSource(), pack().project_id) ? "Remove from favorites" : "Favorite"}
+                        aria-label="Toggle favorite"
+                        onClick={() => {
+                          const p = pack();
+                          toggleFavoriteItem({
+                            id: `${effectiveSource()}:${p.project_id}`,
+                            platform: effectiveSource() as any,
+                            project_id: p.project_id,
+                            slug: p.slug,
+                            title: p.title,
+                            description: p.description,
+                            author: p.author || undefined,
+                            icon_url: p.icon_url || undefined,
+                            category: "modpack",
+                            loaders: extractLoaders(p),
+                            versions: p.versions || [],
+                            version_name: p.version_name || undefined,
+                            date_added: new Date().toISOString(),
+                          });
+                        }}
+                      >
+                        <IconHeart filled={isFavorite(effectiveSource(), pack().project_id)} />
+                      </button>
                     </div>
                     <Show when={pack().author}>
                       <span class="modpack-detail-author">

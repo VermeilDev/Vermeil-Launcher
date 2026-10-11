@@ -71,6 +71,8 @@ pub struct VermeilCloudBackup {
     pub settings: LauncherSettings,
     #[serde(default)]
     pub pinned_instances: Vec<CloudPinnedInstance>,
+    #[serde(default)]
+    pub favorites: Vec<crate::services::favorites::FavoriteItem>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -937,6 +939,7 @@ async fn perform_backup_with_context(
     settings.last_cloud_backup = Some(now_iso.clone());
 
     let cloud_settings = sanitize_settings_for_cloud(&settings);
+    let favorites = crate::services::favorites::load_favorites().await.unwrap_or_default();
 
     let backup = VermeilCloudBackup {
         format_version: 1,
@@ -944,6 +947,7 @@ async fn perform_backup_with_context(
         app_version: env!("CARGO_PKG_VERSION").to_string(),
         settings: cloud_settings,
         pinned_instances: Vec::new(),
+        favorites,
     };
 
     let json_bytes = serde_json::to_string_pretty(&backup)
@@ -1059,6 +1063,18 @@ async fn perform_restore_with_id(
     settings_service::save(&restored_settings)
         .await
         .map_err(|e| format!("Failed to save restored settings to disk: {}", e))?;
+
+    // Restore and merge favorites from cloud backup
+    if !backup.favorites.is_empty() {
+        let local_favs = crate::services::favorites::load_favorites().await.unwrap_or_default();
+        let mut merged_favs = local_favs;
+        for cloud_fav in backup.favorites.iter() {
+            if !merged_favs.iter().any(|f| f.id == cloud_fav.id) {
+                merged_favs.push(cloud_fav.clone());
+            }
+        }
+        let _ = crate::services::favorites::save_favorites(&merged_favs).await;
+    }
 
     // 4. Bidirectional sync: if local settings had higher lifetime_play_seconds or a newer
     // last_active_at than what was in the cloud backup, push the merged counters back up to
@@ -1320,6 +1336,7 @@ mod tests {
                 game_version: "1.20.1".to_string(),
                 loader: "fabric".to_string(),
             }],
+            favorites: Vec::new(),
         };
 
         let json = serde_json::to_string(&backup).expect("serialize backup");

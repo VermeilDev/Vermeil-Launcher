@@ -7636,7 +7636,61 @@
   border-color: #f16436;
   color: #f97316;
 }
+.modpack-source-tab.tab-fav {
+  padding: 0 9px;
+}
+.modpack-source-tab.tab-fav.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
 .modpack-source-tab svg { width: 13px; height: 13px; }
+.modpack-source-tab.tab-fav svg { width: 14px; height: 14px; }
+
+/* Tactile Favorite Button for cards & modals */
+.card-fav-btn,
+.modpack-fav-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0;
+  box-shadow: var(--btn-depth-neutral);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.08s cubic-bezier(0.2, 0, 0, 1),
+              color 0.12s, border-color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.card-fav-btn:hover,
+.modpack-fav-btn:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: var(--btn-depth-neutral-pressed);
+  transform: translateY(1px);
+}
+.card-fav-btn:active,
+.modpack-fav-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
+}
+.card-fav-btn.active,
+.modpack-fav-btn.active {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+.card-fav-btn svg,
+.modpack-fav-btn svg {
+  width: 14px;
+  height: 14px;
+}
 
 /* Confirmation banner */
 .modpack-confirm-banner {
