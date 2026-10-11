@@ -75,6 +75,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-anchor: none;
+  scroll-behavior: auto !important;
   padding: var(--space-2) 0;
   font-family: var(--font-mono);
   font-size: 11px;

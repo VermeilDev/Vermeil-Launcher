@@ -141,9 +141,10 @@ const LogsPopout: Component = () => {
     requestAnimationFrame(() => {
       if (!viewerEl) return;
       if (autoScroll()) {
-        viewerEl.scrollTop = viewerEl.scrollHeight;
+        snapToBottom();
       } else {
         viewerEl.scrollTop = 0;
+        lastScrollTop = 0;
       }
     });
   };
@@ -195,44 +196,69 @@ const LogsPopout: Component = () => {
 
   let isProgrammaticScroll = false;
   let programmaticScrollTimeout: number | undefined;
+  let lastScrollTop = 0;
 
-  const scrollTo = (top: number, autoFollow: boolean) => {
+  const snapToBottom = () => {
     if (!viewerEl) return;
-    setAutoScroll(autoFollow);
+    isProgrammaticScroll = true;
     if (programmaticScrollTimeout !== undefined) {
       clearTimeout(programmaticScrollTimeout);
     }
-    isProgrammaticScroll = true;
-    viewerEl.scrollTo({ top, behavior: "smooth" });
+    viewerEl.scrollTop = viewerEl.scrollHeight;
+    lastScrollTop = viewerEl.scrollTop;
     programmaticScrollTimeout = window.setTimeout(() => {
       isProgrammaticScroll = false;
-      if (autoFollow && viewerEl) {
-        viewerEl.scrollTop = viewerEl.scrollHeight;
-      }
-    }, 320);
+      if (viewerEl) lastScrollTop = viewerEl.scrollTop;
+    }, 60);
   };
 
-  const jumpToTop = () => scrollTo(0, false);
+  const jumpToTop = () => {
+    if (!viewerEl) return;
+    setAutoScroll(false);
+    isProgrammaticScroll = true;
+    if (programmaticScrollTimeout !== undefined) {
+      clearTimeout(programmaticScrollTimeout);
+    }
+    viewerEl.scrollTo({ top: 0, behavior: "smooth" });
+    programmaticScrollTimeout = window.setTimeout(() => {
+      isProgrammaticScroll = false;
+      if (viewerEl) lastScrollTop = viewerEl.scrollTop;
+    }, 350);
+  };
+
   const jumpToBottom = () => {
     if (!viewerEl) return;
-    scrollTo(viewerEl.scrollHeight, true);
+    snapToBottom();
+    setAutoScroll(true);
   };
 
   const onViewerScroll = () => {
     if (!viewerEl || isProgrammaticScroll) return;
-    const distance = viewerEl.scrollHeight - viewerEl.scrollTop - viewerEl.clientHeight;
-    setAutoScroll(distance < 40);
+    const currentScrollTop = viewerEl.scrollTop;
+    const distance = viewerEl.scrollHeight - currentScrollTop - viewerEl.clientHeight;
+
+    if (distance <= 40) {
+      // Reached or near the bottom -> lock auto-scroll
+      setAutoScroll(true);
+    } else if (currentScrollTop < lastScrollTop - 2 && distance > 50) {
+      // User explicitly scrolled UP away from bottom -> pause auto-scroll
+      setAutoScroll(false);
+    }
+    lastScrollTop = currentScrollTop;
+  };
+
+  const onViewerWheel = (e: WheelEvent) => {
+    // Immediate response: rolling wheel UP pauses auto-scroll instantly so incoming lines don't fight user's intent
+    if (e.deltaY < 0 && autoScroll()) {
+      setAutoScroll(false);
+    }
   };
 
   // Follow latest output on new incoming lines
   createEffect(() => {
     const count = filteredLines().length;
-    if (count > 0 && autoScroll() && viewerEl && !isProgrammaticScroll) {
-      requestAnimationFrame(() => {
-        if (viewerEl && autoScroll() && !isProgrammaticScroll) {
-          viewerEl.scrollTop = viewerEl.scrollHeight;
-        }
-      });
+    if (count > 0 && autoScroll() && viewerEl) {
+      snapToBottom();
     }
   });
 
@@ -329,7 +355,7 @@ const LogsPopout: Component = () => {
             type="button"
             class={`log-toolbar-jump tip-below ${autoScroll() ? "active" : ""}`}
             onClick={jumpToBottom}
-            data-tip={autoScroll() ? "Lock scroll" : "Jump to bottom"}
+            data-tip={autoScroll() ? "Lock scroll active (following)" : "Jump to bottom & lock scroll"}
             aria-label="Jump to latest"
           >
             <IconArrowDown />
@@ -364,13 +390,15 @@ const LogsPopout: Component = () => {
             ref={(el) => {
               viewerEl = el;
               el.addEventListener("scroll", onViewerScroll, { passive: true });
+              el.addEventListener("wheel", onViewerWheel, { passive: true });
               onCleanup(() => {
                 el.removeEventListener("scroll", onViewerScroll);
+                el.removeEventListener("wheel", onViewerWheel);
                 if (viewerEl === el) viewerEl = undefined;
               });
               requestAnimationFrame(() => {
                 if (viewerEl && autoScroll()) {
-                  viewerEl.scrollTop = viewerEl.scrollHeight;
+                  snapToBottom();
                 }
               });
             }}
