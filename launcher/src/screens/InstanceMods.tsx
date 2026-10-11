@@ -185,6 +185,23 @@ function formatPlaytime(seconds: number): string {
   return `${minutes}m`;
 }
 
+function formatLastPlayed(iso: string | null | undefined): string {
+  if (!iso) return "Never played";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "Recently";
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 0) return "Just now";
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 1) return "Just now";
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return formatDate(iso) || d.toLocaleDateString();
+}
+
+
 function isInstalledModCompatible(mod: any, instanceLoaderType?: string): boolean {
   if (!instanceLoaderType) return true;
   const cat = resolveItemCategory(mod, instanceLoaderType);
@@ -333,6 +350,76 @@ const InstanceMods: Component = () => {
       setLaunchingInstanceId(null);
     }
   };
+
+  const handlePlayWorld = async (world: WorldEntry) => {
+    const inst = instance();
+    if (!inst) return;
+    if (isLaunchingThis()) {
+      try {
+        await stopInstance();
+      } catch (err) {
+        showToast({ title: "Stop failed", message: String(err), type: "error" });
+      }
+      return;
+    }
+    if (launchingInstanceId()) {
+      showToast({ title: "Launching in progress", message: "Another instance is currently launching. Please wait a moment.", type: "info" });
+      return;
+    }
+    if (isGameRunningThis()) {
+      showToast({ title: "Game already running", message: "This game instance is already active.", type: "info" });
+      return;
+    }
+    if (gameRunning()) {
+      showToast({ title: "Game already running", message: "Another game instance is currently active. Please close it first.", type: "info" });
+      return;
+    }
+    if (!ensureAccountOrPrompt()) return;
+    if (isCurrentInstanceInstalling()) {
+      showToast({ title: "Installing", message: "Please wait for installation to finish", type: "info" });
+      return;
+    }
+    const isModern = (() => {
+      const gv = inst.game_version;
+      if (!gv) return true;
+      const match = gv.match(/^(\d+)\.(\d+)/);
+      if (!match) return true;
+      const major = parseInt(match[1], 10);
+      const minor = parseInt(match[2], 10);
+      return major > 1 || (major === 1 && minor >= 20);
+    })();
+    if (!isModern) {
+      showToast({
+        title: "Direct Join: MC 1.20+ Required",
+        message: `MC ${inst.game_version} doesn't support direct quick-play. Opening to title screen.`,
+        type: "info",
+      });
+    } else {
+      showToast({
+        title: "Resuming World",
+        message: `Launching into ${world.name}...`,
+        type: "info",
+      });
+    }
+    setActiveInstanceId(inst.id);
+    setLaunchingInstanceId(inst.id);
+    setGameRunning(true);
+    setMainTab("logs");
+    setInitialInstanceTab("logs");
+    clearGameLogs(inst.id);
+    try {
+      await launchInstance(inst.id, world.folder_name);
+    } catch (err) {
+      setGameRunning(false);
+      const msg = String(err);
+      if (!msg.toLowerCase().includes("cancelled")) {
+        showToast({ title: "Launch failed", message: msg, type: "error" });
+      }
+    } finally {
+      setLaunchingInstanceId(null);
+    }
+  };
+
 
   // Per-instance memory. Adaptive by default (services/memory.rs); an instance
   // can opt out via `java.adaptive_override` and set RAM manually. `effectiveMemory`
@@ -3336,33 +3423,166 @@ const InstanceMods: Component = () => {
 
       {/* ═══ WORLDS TAB ═══ */}
       <Show when={mainTab() === "worlds"}>
-        <div style="padding-top:var(--space-4)">
-          <Show when={worlds().length === 0}>
-            <div style="text-align:center;color:var(--muted);padding:30px;font-size:var(--fs-xs)">No worlds yet. Play the game to create one.</div>
-          </Show>
-          <div class="mod-list">
-            <For each={worlds()}>
-              {(world) => (
-                <div class="mod-item">
-                  <div class="mod-icon" style="background:var(--accent-soft);overflow:hidden;">
-                    <Show when={world.icon} fallback={<IconGlobe />}>
-                      <img src={world.icon!} alt="" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;" />
-                    </Show>
-                  </div>
-                  <div class="mod-details">
-                    <div class="mod-name">{world.name}</div>
-                    <div class="mod-stats">
-                      {world.game_mode} · {world.size_mb} MB
-                      {world.play_time_seconds > 0 ? ` · ${formatPlaytime(world.play_time_seconds)}` : ""}
-                    </div>
-                  </div>
-                  <button class="btn btn--sm" onClick={() => openInstanceFolder(instance()!.id, `saves/${world.folder_name}`)}>
-                    Open
-                  </button>
-                </div>
-              )}
-            </For>
+        <div class="inst-worlds-view">
+          {/* Worlds Toolbar */}
+          <div class="inst-worlds-toolbar">
+            <div class="inst-worlds-toolbar-left">
+              <span class="inst-worlds-toolbar-title">Worlds</span>
+              <span class="inst-worlds-toolbar-count">
+                {worlds().length} {worlds().length === 1 ? "world" : "worlds"}
+              </span>
+            </div>
+            <div class="inst-worlds-toolbar-right">
+              <button
+                class="btn btn--sm"
+                onClick={() => loadWorlds()}
+                data-tip="Refresh worlds list"
+                class:tip-below={true}
+              >
+                <IconReload /> Refresh
+              </button>
+              <button
+                class="btn btn--sm"
+                onClick={() => openInstanceFolder(instance()!.id, "saves")}
+                data-tip="Open saves folder in file explorer"
+                class:tip-below={true}
+              >
+                <IconFolderOpen /> Open Saves Folder
+              </button>
+            </div>
           </div>
+
+          {/* Empty State */}
+          <Show when={worlds().length === 0}>
+            <div class="inst-worlds-empty">
+              <div class="inst-worlds-empty-icon">
+                <IconGlobe />
+              </div>
+              <h3 class="inst-worlds-empty-title">No Worlds Found</h3>
+              <p class="inst-worlds-empty-desc">
+                This instance doesn't have any singleplayer worlds yet. Launch the game and create a world, or drop existing saves into your saves folder.
+              </p>
+              <div class="inst-worlds-empty-actions">
+                <button
+                  class="btn btn--primary"
+                  onClick={handlePlayOrStop}
+                  disabled={isCurrentInstanceInstalling() || Boolean(launchingInstanceId())}
+                >
+                  <IconPlay /> Launch Game
+                </button>
+                <button
+                  class="btn"
+                  onClick={() => openInstanceFolder(instance()!.id, "saves")}
+                >
+                  <IconFolderOpen /> Open Saves Folder
+                </button>
+              </div>
+            </div>
+          </Show>
+
+          {/* 3-Column Bento Grid */}
+          <Show when={worlds().length > 0}>
+            <div class="inst-worlds-grid">
+              <For each={worlds()}>
+                {(world) => {
+                  const modeClass = () => {
+                    const m = (world.game_mode || "survival").toLowerCase();
+                    if (m.includes("hardcore")) return "badge--hardcore";
+                    if (m.includes("creative")) return "badge--creative";
+                    if (m.includes("adventure")) return "badge--adventure";
+                    return "badge--survival";
+                  };
+
+                  return (
+                    <div
+                      class="inst-world-card"
+                      onClick={() => handlePlayWorld(world)}
+                      data-tip={`Click to play ${world.name}`}
+                      class:tip-below={true}
+                    >
+                      {/* Flush Square 96px Thumbnail */}
+                      <div class="inst-world-thumb">
+                        <Show
+                          when={world.icon}
+                          fallback={
+                            <div
+                              class="inst-world-globe-glyph"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                background: loaderBannerColor(instance()?.loader?.type || "vanilla"),
+                              }}
+                            >
+                              <IconGlobe />
+                            </div>
+                          }
+                        >
+                          <img src={world.icon!} alt={world.name} />
+                        </Show>
+                        <div class="inst-world-thumb-overlay">
+                          <div class="inst-world-thumb-play-btn">
+                            <IconPlay />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div class="inst-world-body">
+                        <div class="inst-world-top">
+                          <div class="inst-world-title" data-tip={world.name}>
+                            {world.name}
+                          </div>
+                          <div class="inst-world-badges-row">
+                            <span class={`badge badge--mode ${modeClass()}`}>
+                              {world.game_mode || "Survival"}
+                            </span>
+                            <span class="badge badge--size">
+                              {world.size_mb} MB
+                            </span>
+                          </div>
+                        </div>
+
+                        <div class="inst-world-meta-row">
+                          <Show when={world.play_time_seconds > 0}>
+                            <span class="inst-world-meta-stat">
+                              <IconClock /> {formatPlaytime(world.play_time_seconds)}
+                            </span>
+                            <span class="inst-world-meta-dot">·</span>
+                          </Show>
+                          <span class="inst-world-meta-date">
+                            {formatLastPlayed(world.last_played)}
+                          </span>
+                        </div>
+
+                        <div class="inst-world-actions">
+                          <button
+                            class="btn btn--sm btn--primary inst-world-play-action"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayWorld(world);
+                            }}
+                            data-tip={`Launch ${world.name}`}
+                          >
+                            <IconPlay /> Play
+                          </button>
+                          <button
+                            class="btn btn--sm inst-world-folder-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openInstanceFolder(instance()!.id, `saves/${world.folder_name}`);
+                            }}
+                            data-tip="Open world save folder"
+                          >
+                            <IconFolderOpen />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
         </div>
       </Show>
 

@@ -4676,6 +4676,395 @@
   white-space: nowrap;
 }
 
+/* ============================================================
+   Instance Screen — Redesigned Tactile Worlds Tab (3-Column Grid)
+   ============================================================ */
+.inst-worlds-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--space-4) 24px var(--space-8);
+  max-width: var(--screen-max-width, 1400px);
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Worlds Toolbar */
+.inst-worlds-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.inst-worlds-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.inst-worlds-toolbar-title {
+  font-size: var(--fs-md, 14px);
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: -0.01em;
+}
+
+.inst-worlds-toolbar-count {
+  font-size: var(--fs-xs, 11px);
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.inst-worlds-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Worlds 3-Column Responsive Bento Grid */
+.inst-worlds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+  .inst-worlds-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .inst-worlds-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Redesigned World Card */
+.inst-world-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: var(--btn-depth);
+  overflow: hidden;
+  height: 96px;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  transition: border-color 0.16s ease,
+              background 0.16s ease,
+              transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.16s ease;
+}
+
+.inst-world-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  background: var(--surface-raised);
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 16px var(--accent-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.inst-world-card:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Flush Left Square Thumbnail */
+.inst-world-thumb {
+  width: 96px;
+  min-width: 96px;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inst-world-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+  transition: transform 0.2s ease;
+}
+
+.inst-world-card:hover .inst-world-thumb img {
+  transform: scale(1.06);
+}
+
+.inst-world-globe-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inst-world-globe-glyph svg {
+  width: 34px;
+  height: 34px;
+}
+
+.inst-world-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 2;
+}
+
+.inst-world-card:hover .inst-world-thumb-overlay {
+  opacity: 1;
+}
+
+.inst-world-thumb-play-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px var(--accent-glow);
+  transform: scale(0.9);
+  transition: transform 0.12s ease;
+}
+
+.inst-world-card:hover .inst-world-thumb-play-btn {
+  transform: scale(1);
+}
+
+.inst-world-thumb-play-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Card Body & Info */
+.inst-world-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 9px 12px;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.inst-world-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inst-world-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.inst-world-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.badge--mode {
+  text-transform: capitalize;
+  font-size: 10px;
+  padding: 1px 6px;
+  height: 19px;
+  font-weight: 600;
+}
+.badge--mode.badge--survival {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+.badge--mode.badge--creative {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+.badge--mode.badge--hardcore {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+.badge--mode.badge--adventure {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.badge--size {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  height: 19px;
+  color: var(--muted);
+}
+
+.inst-world-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inst-world-meta-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.inst-world-meta-stat svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+.inst-world-meta-dot {
+  opacity: 0.4;
+  user-select: none;
+}
+
+.inst-world-meta-date {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* World Bottom Actions */
+.inst-world-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.inst-world-play-action {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+.inst-world-play-action svg {
+  width: 12px;
+  height: 12px;
+}
+
+.inst-world-folder-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inst-world-folder-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Empty State */
+.inst-worlds-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--surface-panel);
+  border: 1px dashed var(--border-strong);
+  gap: 12px;
+}
+
+.inst-worlds-empty-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+
+.inst-worlds-empty-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.inst-worlds-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 0;
+}
+
+.inst-worlds-empty-desc {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 440px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.inst-worlds-empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 /* Image 3: Onion skin placeholder for empty Continue slots */
 .continue-placeholder {
   display: flex;
