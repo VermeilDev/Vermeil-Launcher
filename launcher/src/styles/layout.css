@@ -118,6 +118,7 @@ body:has(.news-modal-overlay) [data-tip]:hover {
   .mod-card,
   .server-card,
   .world-card,
+  .inst-world-card,
   .skins-cape-tile,
   .skins-lib-card,
   .library-meta-card,

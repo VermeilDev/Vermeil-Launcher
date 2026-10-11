@@ -4786,6 +4786,17 @@
   box-shadow: none;
 }
 
+/* Elevate & unclip card on child tooltip hover so tooltips float cleanly without boundary clipping */
+.inst-world-card:has([data-tip]:hover) {
+  z-index: 120 !important;
+  overflow: visible !important;
+}
+
+.inst-world-card:has([data-tip]:hover) .inst-world-body {
+  overflow: visible !important;
+}
+
+
 /* Flush Left Square Thumbnail */
 .inst-world-thumb {
   width: 96px;

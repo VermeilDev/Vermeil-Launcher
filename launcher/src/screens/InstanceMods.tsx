@@ -3446,6 +3446,7 @@ const InstanceMods: Component = () => {
                 onClick={() => openInstanceFolder(instance()!.id, "saves")}
                 data-tip="Open saves folder in file explorer"
                 class:tip-below={true}
+                class:tip-right={true}
               >
                 <IconFolderOpen /> Open Saves Folder
               </button>
@@ -3497,8 +3498,6 @@ const InstanceMods: Component = () => {
                     <div
                       class="inst-world-card"
                       onClick={() => handlePlayWorld(world)}
-                      data-tip={`Click to play ${world.name}`}
-                      class:tip-below={true}
                     >
                       {/* Flush Square 96px Thumbnail */}
                       <div class="inst-world-thumb">
@@ -3561,17 +3560,16 @@ const InstanceMods: Component = () => {
                               e.stopPropagation();
                               handlePlayWorld(world);
                             }}
-                            data-tip={`Launch ${world.name}`}
                           >
                             <IconPlay /> Play
                           </button>
                           <button
-                            class="btn btn--sm inst-world-folder-btn"
+                            class="btn btn--sm inst-world-folder-btn tip-right"
                             onClick={(e) => {
                               e.stopPropagation();
                               openInstanceFolder(instance()!.id, `saves/${world.folder_name}`);
                             }}
-                            data-tip="Open world save folder"
+                            data-tip="Open save folder"
                           >
                             <IconFolderOpen />
                           </button>
