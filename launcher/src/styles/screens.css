@@ -4838,45 +4838,6 @@
   height: 34px;
 }
 
-.inst-world-thumb-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 2;
-}
-
-.inst-world-card:hover .inst-world-thumb-overlay {
-  opacity: 1;
-}
-
-.inst-world-thumb-play-btn {
-  width: 32px;
-  height: 32px;
-  background: var(--accent);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 10px var(--accent-glow);
-  transform: scale(0.9);
-  transition: transform 0.12s ease;
-}
-
-.inst-world-card:hover .inst-world-thumb-play-btn {
-  transform: scale(1);
-}
-
-.inst-world-thumb-play-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
 /* Card Body & Info */
 .inst-world-body {
   flex: 1;

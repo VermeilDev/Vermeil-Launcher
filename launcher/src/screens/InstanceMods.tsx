@@ -3518,11 +3518,6 @@ const InstanceMods: Component = () => {
                         >
                           <img src={world.icon!} alt={world.name} />
                         </Show>
-                        <div class="inst-world-thumb-overlay">
-                          <div class="inst-world-thumb-play-btn">
-                            <IconPlay />
-                          </div>
-                        </div>
                       </div>
 
                       {/* Card Body */}
