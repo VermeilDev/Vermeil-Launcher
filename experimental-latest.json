@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-alpha.12",
-  "notes": "## 0.1.0 (Alpha Build 12)\n\n### Changed\n\n- Reworked Companion Mod detail modal to match the standard mod detail layout with live build selection and one-click reinstall\n- Unified dependency notice, manual download, account prompt, and Java runtime chooser dialogs with Escape key dismissal\n- Lazy-loaded secondary screens to reduce initial startup bundle size and speed up window launch\n\n### Fixed\n\n- Fixed toggle switch thumb disappearing when paired with tooltip attributes inside modals\n- Fixed Companion Mod detail modal re-fetching the build manifest and jumping when toggling companion features on or off",
-  "pub_date": "2026-10-10T21:16:44.391Z",
+  "version": "0.1.0-alpha.13",
+  "notes": "## 0.1.0 (Alpha Build 13)\n\n### Added\n\n- Redesigned Instance Worlds view with a responsive 3-column Bento grid, rich save metadata, and one-click quick-play\n\n### Changed\n\n- Enhanced live game log streaming to reliably pin and follow new output during rapid log emission\n- Upgraded package manager toolchain to pnpm 12.11.2\n\n### Fixed\n\n- Fixed tooltip clipping and overflow collisions on world card action buttons\n- Removed redundant hover play overlay on world thumbnails to keep save icons clearly visible\n- Fixed clipped tooltips across overflow-hidden containers and compact instance cards",
+  "pub_date": "2026-10-11T12:18:31.514Z",
   "platforms": {
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkhwREFpaHJkRHVGWi8xeVlha0lxUFJ6YmU1RkRVVG93NEh3UncyMkFZU1RCQXIwZFBlSGR5Y25EVGR3YTB6aCtSRTFWbnloZU8zY25Fd2YwMG1ZVWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNjY2OTYzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMl9hbWQ2NC5BcHBJbWFnZQpxVzduazYvZjVvRTZOVE92OWdlRzlZMmt0N2ROdFBTc2lOS3FuYVRNZ2tkNEFJSWxzb25WNXJ5QjUvYnlPVFVXaFdHaDZDdjdrY1cyNkQyRVV2Y0VCdz09Cg==",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.12/Vermeil_0.1.0-alpha.12_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkRRRlJ0L2dlbUZGSVhXL1ZTbkFHcGZaYkUwSFY2NWhVZ3o3M0VWRFlKU1FHZWVUaFkrZTUweG1SdU9OYWd4R0MvUnJ4RkFVajNZcG1CZnRxcFVsWUE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzIxMDU1CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xM19hbWQ2NC5BcHBJbWFnZQo2c2dGd1E0QVVraDBQTlFPblNYU0RHYUxXYlo4WGlIbXhmOURseGNjZ1NzTTVkNkJhUkRycDdzUGFuQkpoNzdmMjdxeDBSNFVjNmVQajZGZlRFbmlDQT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.13/Vermeil_0.1.0-alpha.13_amd64.AppImage"
     },
     "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkhwREFpaHJkRHVGWi8xeVlha0lxUFJ6YmU1RkRVVG93NEh3UncyMkFZU1RCQXIwZFBlSGR5Y25EVGR3YTB6aCtSRTFWbnloZU8zY25Fd2YwMG1ZVWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNjY2OTYzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMl9hbWQ2NC5BcHBJbWFnZQpxVzduazYvZjVvRTZOVE92OWdlRzlZMmt0N2ROdFBTc2lOS3FuYVRNZ2tkNEFJSWxzb25WNXJ5QjUvYnlPVFVXaFdHaDZDdjdrY1cyNkQyRVV2Y0VCdz09Cg==",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.12/Vermeil_0.1.0-alpha.12_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkRRRlJ0L2dlbUZGSVhXL1ZTbkFHcGZaYkUwSFY2NWhVZ3o3M0VWRFlKU1FHZWVUaFkrZTUweG1SdU9OYWd4R0MvUnJ4RkFVajNZcG1CZnRxcFVsWUE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzIxMDU1CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xM19hbWQ2NC5BcHBJbWFnZQo2c2dGd1E0QVVraDBQTlFPblNYU0RHYUxXYlo4WGlIbXhmOURseGNjZ1NzTTVkNkJhUkRycDdzUGFuQkpoNzdmMjdxeDBSNFVjNmVQajZGZlRFbmlDQT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.13/Vermeil_0.1.0-alpha.13_amd64.AppImage"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkJwdkI4NURhSkJmMnB2N09SRDNwUlNoY0QrNGlYR3NTbS9Ta3pwNzhuWFh6cmJiSzc0NjgxTXNsK2dITFRVTm50ZmtxczRRM2hjcnNyR2NyUm9EMGdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNjY3MDAxCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMl94NjQtc2V0dXAuZXhlCnRhVktUUlM5VGtLVXRhUlNXSTAwdUUvRGd4S2ZzY1I2cmhWREsxVmFCMnZrRmZrRTBXMWQwaHFmNjZPMHVSdERKbklRVVh1aXArdktqUnRRNVFoV0F3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.12/Vermeil_0.1.0-alpha.12_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkNES3BuaGtIRW0rSXZkWEViVU9aT2FDdWNzTU5yWC9EY3pTcExMT285OHNBOWVDLzBGaENuYTVjK0w1RTlwTXU5QW9Gc284WkZRcFpyMHJ6c2sxSWdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzIxMTA4CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xM194NjQtc2V0dXAuZXhlCkdYVjBuT0g1bnJid2tkdEFiT3JFeWhaQ25kVkpsUFNWRjJpeVBxN0xaWmVGM2hTWnc4ekR6ZEd5QXJyMVlxVGNnTTZEbUthendkdVg3aVJZQUlxdUF3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.13/Vermeil_0.1.0-alpha.13_x64-setup.exe"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkJwdkI4NURhSkJmMnB2N09SRDNwUlNoY0QrNGlYR3NTbS9Ta3pwNzhuWFh6cmJiSzc0NjgxTXNsK2dITFRVTm50ZmtxczRRM2hjcnNyR2NyUm9EMGdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNjY3MDAxCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xMl94NjQtc2V0dXAuZXhlCnRhVktUUlM5VGtLVXRhUlNXSTAwdUUvRGd4S2ZzY1I2cmhWREsxVmFCMnZrRmZrRTBXMWQwaHFmNjZPMHVSdERKbklRVVh1aXArdktqUnRRNVFoV0F3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.12/Vermeil_0.1.0-alpha.12_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkNES3BuaGtIRW0rSXZkWEViVU9aT2FDdWNzTU5yWC9EY3pTcExMT285OHNBOWVDLzBGaENuYTVjK0w1RTlwTXU5QW9Gc284WkZRcFpyMHJ6c2sxSWdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzIxMTA4CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xM194NjQtc2V0dXAuZXhlCkdYVjBuT0g1bnJid2tkdEFiT3JFeWhaQ25kVkpsUFNWRjJpeVBxN0xaWmVGM2hTWnc4ekR6ZEd5QXJyMVlxVGNnTTZEbUthendkdVg3aVJZQUlxdUF3PT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.13/Vermeil_0.1.0-alpha.13_x64-setup.exe"
     }
   }
 }
