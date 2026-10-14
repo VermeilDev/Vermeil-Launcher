@@ -5352,14 +5352,15 @@ select.field-input[size] { appearance: none; }
   flex-shrink: 0;
 }
 
-/* ── Category Navigation: Pure Text Links with Active Underline at Top ── */
+/* ── Category Navigation: Pure Text Links with Active Underline Below Toolbar ── */
 .inst-category-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   border-bottom: 1px solid var(--border);
-  padding: 0 2px 6px;
+  padding: 2px 2px 6px;
+  margin-top: 2px;
   margin-bottom: 2px;
   width: 100%;
 }

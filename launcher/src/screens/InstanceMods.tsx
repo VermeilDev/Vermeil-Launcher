@@ -2683,75 +2683,6 @@ const InstanceMods: Component = () => {
         <div class="inst-content-deck">
           {/* Sticky Controls Deck: Mode Toggle + Category Navigation + Filter Toolbar Box */}
           <div class="inst-content-sticky-deck">
-            {/* Category Navigation: pure text links with active underline at the top */}
-            <Show when={contentTab() === "installed"}>
-              <div class="inst-category-nav inst-category-nav--installed">
-                <div class="inst-category-links">
-                  <button class={`inst-category-item ${installedFilter() === "all" ? "active" : ""}`} onClick={() => setInstalledFilter("all")}>All</button>
-                  <button class={`inst-category-item ${installedFilter() === "mod" ? "active" : ""}`} onClick={() => setInstalledFilter("mod")}>Mods</button>
-                  <button class={`inst-category-item ${installedFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setInstalledFilter("resourcepack")}>Resources</button>
-                  <button class={`inst-category-item ${installedFilter() === "shader" ? "active" : ""}`} onClick={() => setInstalledFilter("shader")}>Shaders</button>
-                  <button class={`inst-category-item ${installedFilter() === "datapack" ? "active" : ""}`} onClick={() => setInstalledFilter("datapack")}>Datapacks</button>
-                </div>
-                <div class="inst-category-count-wrap">
-                  <span class="inst-count-text">
-                    <strong class="inst-count-bold">{installedSearch().trim() ? totalInstalledCount() : installedActiveCount()}</strong> {installedSearch().trim() ? "found" : "installed"}
-                  </span>
-                </div>
-              </div>
-            </Show>
-
-            <Show when={contentTab() === "browse"}>
-              <div class="inst-category-nav inst-category-nav--browse">
-                <div class="inst-category-links">
-                  <button class={`inst-category-item ${browseFilter() === "all" ? "active" : ""}`} onClick={() => setBrowseFilter("all")}>All</button>
-                  <button class={`inst-category-item ${browseFilter() === "mod" ? "active" : ""}`} onClick={() => setBrowseFilter("mod")}>
-                    Mods
-                    <Show when={instance()?.loader?.type === "vanilla"}>
-                      <span class="category-unsupported-tag">unsupported</span>
-                    </Show>
-                  </button>
-                  <button class={`inst-category-item ${browseFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setBrowseFilter("resourcepack")}>Resources</button>
-                  <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>
-                    Shaders
-                    <Show when={instance()?.loader?.type === "vanilla"}>
-                      <span class="category-unsupported-tag">unsupported</span>
-                    </Show>
-                  </button>
-                  <button class={`inst-category-item ${browseFilter() === "datapack" ? "active" : ""}`} onClick={() => setBrowseFilter("datapack")}>Datapacks</button>
-                </div>
-                <div class="inst-category-count-wrap">
-                  <Show when={searching()}>
-                    <span class="inst-count-text">Searching...</span>
-                  </Show>
-                  <Show when={!searching() && totalHits() > 0 && !(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader"))}>
-                    <span class="inst-count-text">
-                      <strong class="inst-count-bold">
-                        {modSource() === "curseforge" && totalHits() >= 10000 ? "10,000+" : totalHits().toLocaleString()}
-                      </strong> results
-                    </span>
-                  </Show>
-                </div>
-              </div>
-            </Show>
-
-            <Show when={contentTab() === "favorites"}>
-              <div class="inst-category-nav inst-category-nav--favorites">
-                <div class="inst-category-links">
-                  <button class={`inst-category-item ${favoritesFilter() === "all" ? "active" : ""}`} onClick={() => setFavoritesFilter("all")}>All</button>
-                  <button class={`inst-category-item ${favoritesFilter() === "mod" ? "active" : ""}`} onClick={() => setFavoritesFilter("mod")}>Mods</button>
-                  <button class={`inst-category-item ${favoritesFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setFavoritesFilter("resourcepack")}>Resources</button>
-                  <button class={`inst-category-item ${favoritesFilter() === "shader" ? "active" : ""}`} onClick={() => setFavoritesFilter("shader")}>Shaders</button>
-                  <button class={`inst-category-item ${favoritesFilter() === "datapack" ? "active" : ""}`} onClick={() => setFavoritesFilter("datapack")}>Datapacks</button>
-                </div>
-                <div class="inst-category-count-wrap">
-                  <span class="inst-count-text">
-                    <strong class="inst-count-bold">{instanceFavorites().length}</strong> {favoritesSearch().trim() ? "found" : "favorited"}
-                  </span>
-                </div>
-              </div>
-            </Show>
-
             {/* Filter & Search Toolbar (1-Row Solid Panel Box) */}
             <div class="inst-unified-toolbar">
               <div class="inst-toolbar-left">
@@ -2978,6 +2909,75 @@ const InstanceMods: Component = () => {
                 </Show>
               </div>
             </div>
+
+            {/* Category Navigation: pure text links with active underline directly above content cards */}
+            <Show when={contentTab() === "installed"}>
+              <div class="inst-category-nav inst-category-nav--installed">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${installedFilter() === "all" ? "active" : ""}`} onClick={() => setInstalledFilter("all")}>All</button>
+                  <button class={`inst-category-item ${installedFilter() === "mod" ? "active" : ""}`} onClick={() => setInstalledFilter("mod")}>Mods</button>
+                  <button class={`inst-category-item ${installedFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setInstalledFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${installedFilter() === "shader" ? "active" : ""}`} onClick={() => setInstalledFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${installedFilter() === "datapack" ? "active" : ""}`} onClick={() => setInstalledFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <span class="inst-count-text">
+                    <strong class="inst-count-bold">{installedSearch().trim() ? totalInstalledCount() : installedActiveCount()}</strong> {installedSearch().trim() ? "found" : "installed"}
+                  </span>
+                </div>
+              </div>
+            </Show>
+
+            <Show when={contentTab() === "browse"}>
+              <div class="inst-category-nav inst-category-nav--browse">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${browseFilter() === "all" ? "active" : ""}`} onClick={() => setBrowseFilter("all")}>All</button>
+                  <button class={`inst-category-item ${browseFilter() === "mod" ? "active" : ""}`} onClick={() => setBrowseFilter("mod")}>
+                    Mods
+                    <Show when={instance()?.loader?.type === "vanilla"}>
+                      <span class="category-unsupported-tag">unsupported</span>
+                    </Show>
+                  </button>
+                  <button class={`inst-category-item ${browseFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setBrowseFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${browseFilter() === "shader" ? "active" : ""}`} onClick={() => setBrowseFilter("shader")}>
+                    Shaders
+                    <Show when={instance()?.loader?.type === "vanilla"}>
+                      <span class="category-unsupported-tag">unsupported</span>
+                    </Show>
+                  </button>
+                  <button class={`inst-category-item ${browseFilter() === "datapack" ? "active" : ""}`} onClick={() => setBrowseFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <Show when={searching()}>
+                    <span class="inst-count-text">Searching...</span>
+                  </Show>
+                  <Show when={!searching() && totalHits() > 0 && !(instance()?.loader?.type === "vanilla" && (browseFilter() === "mod" || browseFilter() === "shader"))}>
+                    <span class="inst-count-text">
+                      <strong class="inst-count-bold">
+                        {modSource() === "curseforge" && totalHits() >= 10000 ? "10,000+" : totalHits().toLocaleString()}
+                      </strong> results
+                    </span>
+                  </Show>
+                </div>
+              </div>
+            </Show>
+
+            <Show when={contentTab() === "favorites"}>
+              <div class="inst-category-nav inst-category-nav--favorites">
+                <div class="inst-category-links">
+                  <button class={`inst-category-item ${favoritesFilter() === "all" ? "active" : ""}`} onClick={() => setFavoritesFilter("all")}>All</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "mod" ? "active" : ""}`} onClick={() => setFavoritesFilter("mod")}>Mods</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setFavoritesFilter("resourcepack")}>Resources</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "shader" ? "active" : ""}`} onClick={() => setFavoritesFilter("shader")}>Shaders</button>
+                  <button class={`inst-category-item ${favoritesFilter() === "datapack" ? "active" : ""}`} onClick={() => setFavoritesFilter("datapack")}>Datapacks</button>
+                </div>
+                <div class="inst-category-count-wrap">
+                  <span class="inst-count-text">
+                    <strong class="inst-count-bold">{instanceFavorites().length}</strong> {favoritesSearch().trim() ? "found" : "favorited"}
+                  </span>
+                </div>
+              </div>
+            </Show>
           </div>
 
           {/* ═══ INSTALLED CONTENT TAB ═══ */}
