@@ -116,6 +116,8 @@ body:has(.news-modal-overlay) [data-tip]:hover {
   .java-slot-actions,
   .mod-item,
   .mod-card,
+  .modpack-card,
+  .modpack-cassette-card,
   .server-card,
   .world-card,
   .inst-world-card,

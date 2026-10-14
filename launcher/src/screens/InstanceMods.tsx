@@ -2757,8 +2757,6 @@ const InstanceMods: Component = () => {
               <div class="inst-toolbar-left">
                 {/* Mode Segmented Toggle: Installed vs Browse vs Favorites */}
                 <div class="inst-mode-segmented">
-                  <button class={`inst-mode-tab ${contentTab() === "installed" ? "active" : ""}`} onClick={() => { setContentTab("installed"); refetchInstances(); refetchDetail(); }}>Installed</button>
-                  <button class={`inst-mode-tab ${contentTab() === "browse" ? "active" : ""}`} onClick={() => setContentTab("browse")}>Browse</button>
                   <button
                     class={`inst-mode-tab inst-mode-tab-fav tip-below ${contentTab() === "favorites" ? "active" : ""}`}
                     data-tip="Favorites"
@@ -2767,6 +2765,8 @@ const InstanceMods: Component = () => {
                   >
                     <IconHeart filled={contentTab() === "favorites"} />
                   </button>
+                  <button class={`inst-mode-tab ${contentTab() === "installed" ? "active" : ""}`} onClick={() => { setContentTab("installed"); refetchInstances(); refetchDetail(); }}>Installed</button>
+                  <button class={`inst-mode-tab ${contentTab() === "browse" ? "active" : ""}`} onClick={() => setContentTab("browse")}>Browse</button>
                 </div>
 
                 <Show when={contentTab() === "installed"}>
@@ -3165,8 +3165,8 @@ const InstanceMods: Component = () => {
                       <Show when={(mod as any).project_id}>
                         <button
                           type="button"
-                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""} tip-below`}
-                          data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Remove from favorites" : "Favorite"}
+                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""}`}
+                          data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Unfavorite" : "Favorite"}
                           aria-label="Toggle favorite"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -3537,8 +3537,8 @@ const InstanceMods: Component = () => {
                       <div class="mod-card-actions">
                         <button
                           type="button"
-                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(modSource(), mod.project_id) ? "active" : ""} tip-below`}
-                          data-tip={isFavorite(modSource(), mod.project_id) ? "Remove from favorites" : "Favorite"}
+                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(modSource(), mod.project_id) ? "active" : ""}`}
+                          data-tip={isFavorite(modSource(), mod.project_id) ? "Unfavorite" : "Favorite"}
                           aria-label="Toggle favorite"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -3702,8 +3702,8 @@ const InstanceMods: Component = () => {
                           <div class="mod-card-actions">
                             <button
                               type="button"
-                              class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(fav.platform, fav.project_id) ? "active" : ""} tip-below`}
-                              data-tip={isFavorite(fav.platform, fav.project_id) ? "Remove from favorites" : "Favorite"}
+                              class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(fav.platform, fav.project_id) ? "active" : ""}`}
+                              data-tip={isFavorite(fav.platform, fav.project_id) ? "Unfavorite" : "Favorite"}
                               aria-label="Toggle favorite"
                               onClick={(e) => {
                                 e.stopPropagation();

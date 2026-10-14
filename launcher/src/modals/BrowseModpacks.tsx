@@ -613,8 +613,8 @@ const BrowseModpacks: Component = () => {
                           <div class="modpack-card-actions">
                             <button
                               type="button"
-                              class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
-                              data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
+                              class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""}`}
+                              data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Unfavorite" : "Favorite"}
                               aria-label="Toggle favorite"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -733,8 +733,8 @@ const BrowseModpacks: Component = () => {
                         <div class="modpack-card-actions">
                           <button
                             type="button"
-                            class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
-                            data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
+                            class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""}`}
+                            data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Unfavorite" : "Favorite"}
                             aria-label="Toggle favorite"
                             onClick={(e) => {
                               e.stopPropagation();

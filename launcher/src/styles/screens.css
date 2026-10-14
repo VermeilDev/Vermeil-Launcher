@@ -7803,6 +7803,10 @@
   transform: translateY(-2px);
   z-index: 2;
 }
+.modpack-card:has([data-tip]:hover) {
+  overflow: visible !important;
+  z-index: 200 !important;
+}
 .modpack-card:hover::before {
   background: var(--accent);
 }
@@ -8009,6 +8013,10 @@
   border-color: var(--accent);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   transform: translateY(-1px);
+}
+.modpack-cassette-card:has([data-tip]:hover) {
+  overflow: visible !important;
+  z-index: 200 !important;
 }
 .modpack-cassette-card:hover::before {
   background: var(--accent);

@@ -275,7 +275,7 @@ const ModDetailModal: Component<Props> = (props) => {
                     <button
                       type="button"
                       class={`btn btn--sm btn--icon card-fav-btn ${isFavorite(effectiveSource(), mod().project_id) ? "active" : ""} tip-below`}
-                      data-tip={isFavorite(effectiveSource(), mod().project_id) ? "Remove from favorites" : "Favorite"}
+                      data-tip={isFavorite(effectiveSource(), mod().project_id) ? "Unfavorite" : "Favorite"}
                       aria-label="Toggle favorite"
                       onClick={() => {
                         const m = mod();

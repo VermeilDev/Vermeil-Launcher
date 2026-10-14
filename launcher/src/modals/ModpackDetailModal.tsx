@@ -189,7 +189,7 @@ export const ModpackDetailModal: Component<ModpackDetailModalProps> = (props) =>
                       <button
                         type="button"
                         class={`btn btn--sm btn--icon card-fav-btn ${isFavorite(effectiveSource(), pack().project_id) ? "active" : ""} tip-below`}
-                        data-tip={isFavorite(effectiveSource(), pack().project_id) ? "Remove from favorites" : "Favorite"}
+                        data-tip={isFavorite(effectiveSource(), pack().project_id) ? "Unfavorite" : "Favorite"}
                         aria-label="Toggle favorite"
                         onClick={() => {
                           const p = pack();

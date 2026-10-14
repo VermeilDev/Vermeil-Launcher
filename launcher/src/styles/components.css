@@ -6044,6 +6044,10 @@ select.field-input[size] { appearance: none; }
   transform: translateY(-2px) !important;
   z-index: 2 !important;
 }
+.inst-card-grid.compact .card--mod:has([data-tip]:hover) {
+  overflow: visible !important;
+  z-index: 200 !important;
+}
 .inst-card-grid.compact .card--mod:hover::before {
   background: var(--accent);
 }
