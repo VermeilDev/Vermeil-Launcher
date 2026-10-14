@@ -3108,38 +3108,6 @@ const InstanceMods: Component = () => {
                         <div class="mod-card-author">by {(mod as any).author}</div>
                       </Show>
                     </div>
-                    <Show when={(mod as any).project_id}>
-                      <button
-                        type="button"
-                        class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""} tip-below`}
-                        data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Remove from favorites" : "Favorite"}
-                        aria-label="Toggle favorite"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const m = mod as any;
-                          const p = m.platform || "modrinth";
-                          const cat = resolveItemCategory(m, instance()?.loader?.type);
-                          toggleFavoriteItem({
-                            id: `${p}:${m.project_id}`,
-                            platform: p,
-                            project_id: m.project_id,
-                            slug: m.slug || m.filename,
-                            title: m.title || m.filename,
-                            description: m.description || "",
-                            author: m.author,
-                            icon_url: m.icon_url,
-                            local_icon_path: m.local_icon_path,
-                            category: cat as any,
-                            loaders: m.loaders || [],
-                            versions: m.versions || [],
-                            version_name: m.version_name,
-                            date_added: new Date().toISOString(),
-                          });
-                        }}
-                      >
-                        <IconHeart filled={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id)} />
-                      </button>
-                    </Show>
                   </div>
                   <div class="mod-card-desc">{mod.description || ""}</div>
                   {/* Installed cards show the instance's loader + MC version
@@ -3194,6 +3162,38 @@ const InstanceMods: Component = () => {
                   <div class="mod-card-footer">
                     <div class="mod-card-meta">{categoryLabel(resolveItemCategory(mod, instance()?.loader?.type))} · {mod.enabled ? "Enabled" : "Disabled"}</div>
                     <div class="mod-card-actions">
+                      <Show when={(mod as any).project_id}>
+                        <button
+                          type="button"
+                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""} tip-below`}
+                          data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Remove from favorites" : "Favorite"}
+                          aria-label="Toggle favorite"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const m = mod as any;
+                            const p = m.platform || "modrinth";
+                            const cat = resolveItemCategory(m, instance()?.loader?.type);
+                            toggleFavoriteItem({
+                              id: `${p}:${m.project_id}`,
+                              platform: p,
+                              project_id: m.project_id,
+                              slug: m.slug || m.filename,
+                              title: m.title || m.filename,
+                              description: m.description || "",
+                              author: m.author,
+                              icon_url: m.icon_url,
+                              local_icon_path: m.local_icon_path,
+                              category: cat as any,
+                              loaders: m.loaders || [],
+                              versions: m.versions || [],
+                              version_name: m.version_name,
+                              date_added: new Date().toISOString(),
+                            });
+                          }}
+                        >
+                          <IconHeart filled={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id)} />
+                        </button>
+                      </Show>
                       <Show when={modUpdates().has(mod.project_id) && isInstalledModCompatible(mod, instance()?.loader?.type)}>
                         <button
                           class="btn btn--sm btn--success btn--mod-update tip-right"
@@ -3479,33 +3479,6 @@ const InstanceMods: Component = () => {
                           <div class="mod-card-author">by {mod.author}</div>
                         </Show>
                       </div>
-                      <button
-                        type="button"
-                        class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(modSource(), mod.project_id) ? "active" : ""} tip-below`}
-                        data-tip={isFavorite(modSource(), mod.project_id) ? "Remove from favorites" : "Favorite"}
-                        aria-label="Toggle favorite"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const cat = resolveItemCategory(mod, instance()?.loader?.type, browseFilter());
-                          toggleFavoriteItem({
-                            id: `${modSource()}:${mod.project_id}`,
-                            platform: modSource(),
-                            project_id: mod.project_id,
-                            slug: mod.slug,
-                            title: mod.title,
-                            description: mod.description,
-                            author: mod.author,
-                            icon_url: mod.icon_url,
-                            category: cat as any,
-                            loaders: mod.categories || [],
-                            versions: mod.versions || [],
-                            version_name: mod.version_name,
-                            date_added: new Date().toISOString(),
-                          });
-                        }}
-                      >
-                        <IconHeart filled={isFavorite(modSource(), mod.project_id)} />
-                      </button>
                     </div>
                     <div class="mod-card-desc">{mod.description}</div>
                     <div class="mod-card-tags">
@@ -3561,23 +3534,52 @@ const InstanceMods: Component = () => {
                           </Show>
                         </Show>
                       </div>
-                      <Show when={isModInstalled(mod.project_id)}>
-                        <span class="btn btn--installed"><IconCheck /> Installed</span>
-                      </Show>
-                      <Show when={!isModInstalled(mod.project_id)}>
-                        <Show when={selectMode()} fallback={
-                          /* stopPropagation so installing doesn't also toggle
-                             the card's detail view. */
-                          <button class="btn btn--sm btn--primary" disabled={isTaskQueuedOrActive(mod.project_id, instance()?.id)}
-                            onClick={(e) => { e.stopPropagation(); handleCardInstall(mod); }}>
-                            {isTaskActive(mod.project_id, instance()?.id) ? "..." : isTaskQueued(mod.project_id, instance()?.id) ? "Queued" : "+ Install"}
-                          </button>
-                        }>
-                          <div class={`select-check ${selectedItems().has(mod.project_id) ? "checked" : ""}`}>
-                            <Show when={selectedItems().has(mod.project_id)}><span class="side-icon"><IconCheck /></span></Show>
-                          </div>
+                      <div class="mod-card-actions">
+                        <button
+                          type="button"
+                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(modSource(), mod.project_id) ? "active" : ""} tip-below`}
+                          data-tip={isFavorite(modSource(), mod.project_id) ? "Remove from favorites" : "Favorite"}
+                          aria-label="Toggle favorite"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const cat = resolveItemCategory(mod, instance()?.loader?.type, browseFilter());
+                            toggleFavoriteItem({
+                              id: `${modSource()}:${mod.project_id}`,
+                              platform: modSource(),
+                              project_id: mod.project_id,
+                              slug: mod.slug,
+                              title: mod.title,
+                              description: mod.description,
+                              author: mod.author,
+                              icon_url: mod.icon_url,
+                              category: cat as any,
+                              loaders: mod.categories || [],
+                              versions: mod.versions || [],
+                              version_name: mod.version_name,
+                              date_added: new Date().toISOString(),
+                            });
+                          }}
+                        >
+                          <IconHeart filled={isFavorite(modSource(), mod.project_id)} />
+                        </button>
+                        <Show when={isModInstalled(mod.project_id)}>
+                          <span class="btn btn--installed"><IconCheck /> Installed</span>
                         </Show>
-                      </Show>
+                        <Show when={!isModInstalled(mod.project_id)}>
+                          <Show when={selectMode()} fallback={
+                            /* stopPropagation so installing doesn't also toggle
+                               the card's detail view. */
+                            <button class="btn btn--sm btn--primary" disabled={isTaskQueuedOrActive(mod.project_id, instance()?.id)}
+                              onClick={(e) => { e.stopPropagation(); handleCardInstall(mod); }}>
+                              {isTaskActive(mod.project_id, instance()?.id) ? "..." : isTaskQueued(mod.project_id, instance()?.id) ? "Queued" : "+ Install"}
+                            </button>
+                          }>
+                            <div class={`select-check ${selectedItems().has(mod.project_id) ? "checked" : ""}`}>
+                              <Show when={selectedItems().has(mod.project_id)}><span class="side-icon"><IconCheck /></span></Show>
+                            </div>
+                          </Show>
+                        </Show>
+                      </div>
                     </div>
 
                   </div>
@@ -3673,18 +3675,6 @@ const InstanceMods: Component = () => {
                               <div class="mod-card-author">by {fav.author}</div>
                             </Show>
                           </div>
-                          <button
-                            type="button"
-                            class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(fav.platform, fav.project_id) ? "active" : ""} tip-below`}
-                            data-tip={isFavorite(fav.platform, fav.project_id) ? "Remove from favorites" : "Favorite"}
-                            aria-label="Toggle favorite"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavoriteItem(fav);
-                            }}
-                          >
-                            <IconHeart filled={isFavorite(fav.platform, fav.project_id)} />
-                          </button>
                         </div>
                         <div class="mod-card-desc">{fav.description}</div>
                         <div class="mod-card-tags">
@@ -3709,25 +3699,39 @@ const InstanceMods: Component = () => {
                           <div class="mod-card-meta">
                             <span class="mod-meta-stat">Saved {formatDate(fav.date_added)}</span>
                           </div>
-                          <Show when={installed}>
-                            <span class="btn btn--installed"><IconCheck /> Installed</span>
-                          </Show>
-                          <Show when={!installed}>
+                          <div class="mod-card-actions">
                             <button
-                              class="btn btn--sm btn--primary"
-                              disabled={isQueuedOrActive || !compat.compatible}
+                              type="button"
+                              class={`btn btn--icon btn--sm card-fav-btn ${isFavorite(fav.platform, fav.project_id) ? "active" : ""} tip-below`}
+                              data-tip={isFavorite(fav.platform, fav.project_id) ? "Remove from favorites" : "Favorite"}
+                              aria-label="Toggle favorite"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleInstallFavorite(fav);
+                                toggleFavoriteItem(fav);
                               }}
                             >
-                              {isTaskActive(fav.project_id, instance()?.id)
-                                ? "..."
-                                : isTaskQueued(fav.project_id, instance()?.id)
-                                ? "Queued"
-                                : "+ Install"}
+                              <IconHeart filled={isFavorite(fav.platform, fav.project_id)} />
                             </button>
-                          </Show>
+                            <Show when={installed}>
+                              <span class="btn btn--installed"><IconCheck /> Installed</span>
+                            </Show>
+                            <Show when={!installed}>
+                              <button
+                                class="btn btn--sm btn--primary"
+                                disabled={isQueuedOrActive || !compat.compatible}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleInstallFavorite(fav);
+                                }}
+                              >
+                                {isTaskActive(fav.project_id, instance()?.id)
+                                  ? "..."
+                                  : isTaskQueued(fav.project_id, instance()?.id)
+                                  ? "Queued"
+                                  : "+ Install"}
+                              </button>
+                            </Show>
+                          </div>
                         </div>
                       </div>
                     );
