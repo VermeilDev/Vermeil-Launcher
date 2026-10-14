@@ -3563,7 +3563,7 @@ const InstanceMods: Component = () => {
                           <IconHeart filled={isFavorite(modSource(), mod.project_id)} />
                         </button>
                         <Show when={isModInstalled(mod.project_id)}>
-                          <span class="btn btn--installed"><IconCheck /> Installed</span>
+                          <span class="btn btn--sm btn--installed"><IconCheck /> Installed</span>
                         </Show>
                         <Show when={!isModInstalled(mod.project_id)}>
                           <Show when={selectMode()} fallback={
@@ -3713,7 +3713,7 @@ const InstanceMods: Component = () => {
                               <IconHeart filled={isFavorite(fav.platform, fav.project_id)} />
                             </button>
                             <Show when={installed}>
-                              <span class="btn btn--installed"><IconCheck /> Installed</span>
+                              <span class="btn btn--sm btn--installed"><IconCheck /> Installed</span>
                             </Show>
                             <Show when={!installed}>
                               <button

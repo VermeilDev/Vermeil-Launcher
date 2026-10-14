@@ -6294,25 +6294,26 @@ select.field-input[size] { appearance: none; }
 }
 
 .inst-card-grid.compact .btn--icon {
-  width: 26px !important;
-  min-width: 26px !important;
-  height: 26px !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
   padding: 0 !important;
   border-radius: 0 !important;
+  box-sizing: border-box !important;
 }
 .inst-card-grid.compact .btn--icon svg {
-  width: 13px !important;
-  height: 13px !important;
+  width: 12px !important;
+  height: 12px !important;
 }
 @media (min-width: 1200px) {
   .inst-card-grid.compact .btn--icon {
-    width: 28px !important;
-    min-width: 28px !important;
-    height: 28px !important;
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
   }
   .inst-card-grid.compact .btn--icon svg {
-    width: 14px !important;
-    height: 14px !important;
+    width: 13px !important;
+    height: 13px !important;
   }
 }
 
@@ -6390,10 +6391,13 @@ select.field-input[size] { appearance: none; }
   pointer-events: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center !important;
   gap: 4px;
   font-size: 11px !important;
   font-weight: 600 !important;
-  padding: 3px 8px !important;
+  padding: 0 8px !important;
+  height: var(--control-height-sm) !important;
+  box-sizing: border-box !important;
 }
 .btn--installed svg {
   width: 12px;

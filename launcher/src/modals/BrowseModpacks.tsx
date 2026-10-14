@@ -610,44 +610,46 @@ const BrowseModpacks: Component = () => {
                           <div class="modpack-cassette-stats tip-left" data-tip="Downloads">
                             <IconDownload /> {formatDownloads(pack.downloads)}
                           </div>
-                          <button
-                            type="button"
-                            class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
-                            data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
-                            aria-label="Toggle favorite"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const src = (pack as any).platform || (modSource() === "favorites" ? "modrinth" : modSource());
-                              toggleFavoriteItem({
-                                id: `${src}:${pack.project_id}`,
-                                platform: src,
-                                project_id: pack.project_id,
-                                slug: pack.slug,
-                                title: pack.title,
-                                description: pack.description,
-                                author: pack.author,
-                                icon_url: pack.icon_url,
-                                category: "modpack",
-                                loaders: extractLoaders(pack),
-                                versions: pack.versions || [],
-                                version_name: pack.version_name,
-                                date_added: new Date().toISOString(),
-                              });
-                            }}
-                          >
-                            <IconHeart filled={isFavorite((pack as any).platform || modSource(), pack.project_id)} />
-                          </button>
-                          <button
-                            type="button"
-                            class="btn btn--primary btn--sm modpack-card-install-btn"
-                            disabled={isModpackQueuedOrActive(pack.project_id)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInstallClick(pack);
-                            }}
-                          >
-                            {isModpackQueuedOrActive(pack.project_id) ? "Queued" : "Install"}
-                          </button>
+                          <div class="modpack-card-actions">
+                            <button
+                              type="button"
+                              class={`btn btn--icon btn--sm modpack-fav-btn ${isFavorite((pack as any).platform || modSource(), pack.project_id) ? "active" : ""} tip-below`}
+                              data-tip={isFavorite((pack as any).platform || modSource(), pack.project_id) ? "Remove from favorites" : "Favorite"}
+                              aria-label="Toggle favorite"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const src = (pack as any).platform || (modSource() === "favorites" ? "modrinth" : modSource());
+                                toggleFavoriteItem({
+                                  id: `${src}:${pack.project_id}`,
+                                  platform: src,
+                                  project_id: pack.project_id,
+                                  slug: pack.slug,
+                                  title: pack.title,
+                                  description: pack.description,
+                                  author: pack.author,
+                                  icon_url: pack.icon_url,
+                                  category: "modpack",
+                                  loaders: extractLoaders(pack),
+                                  versions: pack.versions || [],
+                                  version_name: pack.version_name,
+                                  date_added: new Date().toISOString(),
+                                });
+                              }}
+                            >
+                              <IconHeart filled={isFavorite((pack as any).platform || modSource(), pack.project_id)} />
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn--primary btn--sm modpack-card-install-btn"
+                              disabled={isModpackQueuedOrActive(pack.project_id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInstallClick(pack);
+                              }}
+                            >
+                              {isModpackQueuedOrActive(pack.project_id) ? "Queued" : "Install"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     }

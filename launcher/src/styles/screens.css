@@ -7650,8 +7650,12 @@
 /* Tactile Favorite Button for cards & modals */
 .card-fav-btn,
 .modpack-fav-btn {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  box-sizing: border-box;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -7688,8 +7692,8 @@
 }
 .card-fav-btn svg,
 .modpack-fav-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 /* Confirmation banner */
@@ -7940,10 +7944,24 @@
 }
 .modpack-stat-item svg { width: 12px; height: 12px; color: #635d75; }
 
+.modpack-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .modpack-card-install-btn {
   font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 12px;
+  padding: 0 12px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   border-radius: 0;
   box-shadow: var(--btn-depth-neutral);
   transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1),
@@ -8066,17 +8084,37 @@
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
-  width: 96px;
-  min-width: 96px;
+  width: 120px;
+  min-width: 120px;
   gap: 4px;
 }
+.modpack-cassette-actions .modpack-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+}
 .modpack-cassette-actions .modpack-card-install-btn {
-  padding: 3px 10px;
+  padding: 0 10px;
   font-size: 11px;
-  width: 86px;
-  min-width: 86px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  width: 82px;
+  min-width: 82px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   align-self: flex-end;
+  box-sizing: border-box;
+}
+.modpack-cassette-actions .modpack-fav-btn {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
   box-sizing: border-box;
 }
 .modpack-cassette-stats {
@@ -8204,7 +8242,10 @@
   }
   .modpack-card-install-btn {
     font-size: 12px;
-    padding: 5px 14px;
+    padding: 0 14px;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
   }
 
   .modpack-cassette-card {
@@ -8242,11 +8283,18 @@
     padding: 2px 7px;
   }
   .modpack-cassette-actions {
-    gap: 8px;
+    width: 136px;
+    min-width: 136px;
+    gap: 6px;
   }
   .modpack-cassette-actions .modpack-card-install-btn {
-    padding: 4px 14px;
+    padding: 0 14px;
     font-size: 12px;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    width: 96px;
+    min-width: 96px;
   }
   .modpack-cassette-stats {
     font-size: 11px;
