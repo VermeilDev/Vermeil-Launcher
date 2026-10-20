@@ -641,9 +641,10 @@ const InstanceMods: Component = () => {
     follows: 0,
     date_modified: fav.date_added,
     project_type: fav.category,
+    category: fav.category as any,
     client_side: "optional",
     server_side: "optional",
-  });
+  } as any);
 
   const handleInstallFavorite = (fav: FavoriteItem) => {
     handleCardInstall(favToModHit(fav));
@@ -1536,7 +1537,9 @@ const InstanceMods: Component = () => {
   const handleInstallMod = (mod: ModHit, versionId?: string) => {
     const inst = instance();
     if (!inst) return;
-    const cat = resolveItemCategory(mod, inst.loader.type, browseFilter());
+    const cat = (contentTab() === "favorites" && (mod as any).category)
+      ? (mod as any).category
+      : resolveItemCategory(mod, inst.loader.type, browseFilter());
     enqueueInstallTask({
       title: mod.title,
       projectId: mod.project_id,
@@ -1616,7 +1619,9 @@ const InstanceMods: Component = () => {
   const handleCardInstall = async (mod: ModHit, forcePrompt: boolean = false) => {
     const inst = instance();
     if (!inst) return;
-    const cat = resolveItemCategory(mod, inst.loader.type, browseFilter());
+    const cat = (contentTab() === "favorites" && (mod as any).category)
+      ? (mod as any).category
+      : resolveItemCategory(mod, inst.loader.type, browseFilter());
     if (!forcePrompt && checkModCompatibility(mod, inst.game_version, inst.loader.type, cat)) {
       handleInstallMod(mod);
       return;
@@ -3163,36 +3168,42 @@ const InstanceMods: Component = () => {
                     <div class="mod-card-meta">{categoryLabel(resolveItemCategory(mod, instance()?.loader?.type))} · {mod.enabled ? "Enabled" : "Disabled"}</div>
                     <div class="mod-card-actions">
                       <Show when={(mod as any).project_id}>
-                        <button
-                          type="button"
-                          class={`btn btn--icon btn--sm card-fav-btn ${isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "active" : ""}`}
-                          data-tip={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id) ? "Unfavorite" : "Favorite"}
-                          aria-label="Toggle favorite"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const m = mod as any;
-                            const p = m.platform || "modrinth";
-                            const cat = resolveItemCategory(m, instance()?.loader?.type);
-                            toggleFavoriteItem({
-                              id: `${p}:${m.project_id}`,
-                              platform: p,
-                              project_id: m.project_id,
-                              slug: m.slug || m.filename,
-                              title: m.title || m.filename,
-                              description: m.description || "",
-                              author: m.author,
-                              icon_url: m.icon_url,
-                              local_icon_path: m.local_icon_path,
-                              category: cat as any,
-                              loaders: m.loaders || [],
-                              versions: m.versions || [],
-                              version_name: m.version_name,
-                              date_added: new Date().toISOString(),
-                            });
-                          }}
-                        >
-                          <IconHeart filled={isFavorite((mod as any).platform || "modrinth", (mod as any).project_id)} />
-                        </button>
+                        {(() => {
+                          const m = mod as any;
+                          const isCf = m.source === "curseforge" || /^\d+$/.test(m.project_id);
+                          const p: "modrinth" | "curseforge" = isCf ? "curseforge" : (m.platform || "modrinth");
+                          const fav = isFavorite(p, m.project_id);
+                          return (
+                            <button
+                              type="button"
+                              class={`btn btn--icon btn--sm card-fav-btn ${fav ? "active" : ""}`}
+                              data-tip={fav ? "Unfavorite" : "Favorite"}
+                              aria-label="Toggle favorite"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cat = resolveItemCategory(m, instance()?.loader?.type);
+                                toggleFavoriteItem({
+                                  id: `${p}:${m.project_id}`,
+                                  platform: p,
+                                  project_id: m.project_id,
+                                  slug: m.slug || m.filename,
+                                  title: m.title || m.filename,
+                                  description: m.description || "",
+                                  author: m.author,
+                                  icon_url: m.icon_url,
+                                  local_icon_path: m.local_icon_path,
+                                  category: cat as any,
+                                  loaders: m.loaders || [],
+                                  versions: m.versions || [],
+                                  version_name: m.version_name,
+                                  date_added: new Date().toISOString(),
+                                });
+                              }}
+                            >
+                              <IconHeart filled={fav} />
+                            </button>
+                          );
+                        })()}
                       </Show>
                       <Show when={modUpdates().has(mod.project_id) && isInstalledModCompatible(mod, instance()?.loader?.type)}>
                         <button
@@ -4107,7 +4118,7 @@ const InstanceMods: Component = () => {
         source={detailModSource()}
         loader={instance()?.loader?.type ?? ""}
         gameVersion={instance()?.game_version ?? ""}
-        category={detailMod() ? resolveItemCategory(detailMod(), instance()?.loader?.type, browseFilter()) : "mod"}
+        category={detailMod() ? ((detailMod() as any)?.category || resolveItemCategory(detailMod(), instance()?.loader?.type, browseFilter())) : "mod"}
         loaders={detailMod() ? extractLoaders(detailMod()!.categories) : []}
         installedVersionId={instanceMods().find((m: any) => m.project_id === detailMod()?.project_id)?.version_id}
         busy={isTaskQueuedOrActive(detailMod()?.project_id || "", instance()?.id)}

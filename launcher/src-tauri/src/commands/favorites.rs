@@ -9,11 +9,21 @@ pub async fn get_favorites() -> Result<Vec<FavoriteItem>, String> {
 }
 
 #[tauri::command]
-pub async fn toggle_favorite(item: FavoriteItem) -> Result<bool, String> {
-    favorites::toggle_favorite(item).await
+pub async fn toggle_favorite(app: tauri::AppHandle, item: FavoriteItem) -> Result<bool, String> {
+    let result = favorites::toggle_favorite(item).await?;
+    if crate::services::google_cloud::is_cloud_connected() {
+        crate::services::google_cloud::set_app_handle(app);
+        crate::services::google_cloud::spawn_background_sync();
+    }
+    Ok(result)
 }
 
 #[tauri::command]
-pub async fn remove_favorite(id: String) -> Result<bool, String> {
-    favorites::remove_favorite(&id).await
+pub async fn remove_favorite(app: tauri::AppHandle, id: String) -> Result<bool, String> {
+    let result = favorites::remove_favorite(&id).await?;
+    if crate::services::google_cloud::is_cloud_connected() {
+        crate::services::google_cloud::set_app_handle(app);
+        crate::services::google_cloud::spawn_background_sync();
+    }
+    Ok(result)
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { createSignal, createMemo } from "solid-js";
+import { listen } from "@tauri-apps/api/event";
 import {
   getFavorites,
   toggleFavorite,
@@ -50,15 +51,20 @@ export async function loadFavorites(): Promise<FavoriteItem[]> {
   }
 }
 
+const inFlightToggles = new Set<string>();
+
 /**
  * Optimistically toggle a favorite item.
  * Adds or removes immediately from the local signal for 0ms UI feedback,
+ * using functional state updates to prevent race conditions during rapid clicks,
  * then persists atomically via Rust IPC in the background.
  */
 export async function toggleFavoriteItem(item: FavoriteItem): Promise<boolean> {
-  const current = favorites();
   const id = item.id || `${item.platform}:${item.project_id}`;
-  const existingIdx = current.findIndex((i) => i.id === id || (i.platform === item.platform && i.project_id === item.project_id));
+  if (inFlightToggles.has(id)) {
+    return isFavorite(item.platform, item.project_id);
+  }
+  inFlightToggles.add(id);
 
   const payload: FavoriteItem = {
     ...item,
@@ -66,46 +72,60 @@ export async function toggleFavoriteItem(item: FavoriteItem): Promise<boolean> {
     date_added: item.date_added || new Date().toISOString(),
   };
 
-  if (existingIdx >= 0) {
-    // Optimistic remove
-    setFavorites(current.filter((_, idx) => idx !== existingIdx));
-    try {
-      await toggleFavorite(payload);
-      return false;
-    } catch (err) {
-      console.error("Failed to toggle favorite:", err);
-      // Rollback
-      setFavorites(current);
-      return true;
+  let wasPresent = false;
+  setFavorites((prev) => {
+    const idx = prev.findIndex((i) => i.id === id || (i.platform === item.platform && i.project_id === item.project_id));
+    if (idx >= 0) {
+      wasPresent = true;
+      return prev.filter((_, i) => i !== idx);
+    } else {
+      wasPresent = false;
+      return [payload, ...prev];
     }
-  } else {
-    // Optimistic add (to top)
-    setFavorites([payload, ...current]);
-    try {
-      await toggleFavorite(payload);
-      return true;
-    } catch (err) {
-      console.error("Failed to toggle favorite:", err);
-      // Rollback
-      setFavorites(current);
-      return false;
-    }
+  });
+
+  try {
+    const res = await toggleFavorite(payload);
+    return res;
+  } catch (err) {
+    console.error("Failed to toggle favorite:", err);
+    // Functional rollback: restore or remove strictly this item
+    setFavorites((prev) => {
+      const idx = prev.findIndex((i) => i.id === id);
+      if (wasPresent && idx === -1) {
+        return [payload, ...prev];
+      } else if (!wasPresent && idx >= 0) {
+        return prev.filter((_, i) => i !== idx);
+      }
+      return prev;
+    });
+    return wasPresent;
+  } finally {
+    inFlightToggles.delete(id);
   }
 }
 
 export async function removeFavoriteItem(id: string): Promise<boolean> {
-  const current = favorites();
-  setFavorites(current.filter((i) => i.id !== id));
+  let removedItem: FavoriteItem | undefined;
+  setFavorites((prev) => {
+    removedItem = prev.find((i) => i.id === id);
+    return prev.filter((i) => i.id !== id);
+  });
   try {
     return await removeFavorite(id);
   } catch (err) {
     console.error("Failed to remove favorite:", err);
-    setFavorites(current);
+    if (removedItem) {
+      setFavorites((prev) => [removedItem!, ...prev]);
+    }
     return false;
   }
 }
 
-// Auto-load favorites upon module initialization
+// Auto-load favorites upon module initialization and re-sync on cloud sync
 if (typeof window !== "undefined") {
   loadFavorites();
+  listen("cloud-settings-synced", () => {
+    loadFavorites().catch(() => {});
+  }).catch(() => {});
 }

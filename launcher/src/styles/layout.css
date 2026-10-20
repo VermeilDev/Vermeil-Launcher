@@ -143,8 +143,12 @@ body:has(.news-modal-overlay) [data-tip]:hover {
   -webkit-mask-image: none !important;
 }
 
-/* Immediate parent elevation for any element with a hovered tooltip */
-body:not(:has(.modal-overlay)):not(:has(.news-modal-overlay)) *:has(> [data-tip]:hover) {
+/* Card and row action parent elevation when hovering a tooltip */
+.mod-card-actions:has(> [data-tip]:hover),
+.modpack-card-actions:has(> [data-tip]:hover),
+.modpack-cassette-actions:has(> [data-tip]:hover),
+.inst-card-badges:has(> [data-tip]:hover),
+.setting-control:has(> [data-tip]:hover) {
   z-index: 110;
 }
 

@@ -939,7 +939,14 @@ async fn perform_backup_with_context(
     settings.last_cloud_backup = Some(now_iso.clone());
 
     let cloud_settings = sanitize_settings_for_cloud(&settings);
-    let favorites = crate::services::favorites::load_favorites().await.unwrap_or_default();
+    let local_favorites = crate::services::favorites::load_favorites().await.unwrap_or_default();
+    let cloud_favorites: Vec<_> = local_favorites
+        .into_iter()
+        .map(|mut f| {
+            f.local_icon_path = None; // Strip machine-specific paths from cloud backup
+            f
+        })
+        .collect();
 
     let backup = VermeilCloudBackup {
         format_version: 1,
@@ -947,7 +954,7 @@ async fn perform_backup_with_context(
         app_version: env!("CARGO_PKG_VERSION").to_string(),
         settings: cloud_settings,
         pinned_instances: Vec::new(),
-        favorites,
+        favorites: cloud_favorites,
     };
 
     let json_bytes = serde_json::to_string_pretty(&backup)
@@ -1070,10 +1077,14 @@ async fn perform_restore_with_id(
         let mut merged_favs = local_favs;
         for cloud_fav in backup.favorites.iter() {
             if !merged_favs.iter().any(|f| f.id == cloud_fav.id) {
-                merged_favs.push(cloud_fav.clone());
+                let mut clean_fav = cloud_fav.clone();
+                clean_fav.local_icon_path = None; // Force local machine to re-resolve/cache
+                merged_favs.push(clean_fav);
             }
         }
-        let _ = crate::services::favorites::save_favorites(&merged_favs).await;
+        if let Err(e) = crate::services::favorites::save_favorites(&merged_favs).await {
+            tracing::warn!("Failed to save merged favorites during cloud restore: {}", e);
+        }
     }
 
     // 4. Bidirectional sync: if local settings had higher lifetime_play_seconds or a newer

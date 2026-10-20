@@ -33,6 +33,7 @@ import ServerRoutingModal, { serverRoutingModalOpen, closeServerRoutingModal } f
 import { listInstances, getActiveAccount, getSettings, getSkinProfile, getIngameCape, listCustomCapes, showWindow, loadDownloadHistory, saveDownloadHistory, isGoogleCloudConnected, setThemeIcon, type LocalSkin, type SkinVariant, type CustomCape, type Instance, type LauncherSettings } from "./ipc/commands";
 import { listen } from "@tauri-apps/api/event";
 import { checkForUpdates } from "./services/updater";
+import { loadFavorites } from "./services/favorites";
 import { matchesKeybind, resolveBinding } from "./lib/keybinds";
 import { getThemeLogo } from "./lib/theme";
 
@@ -671,6 +672,7 @@ getSettings().then((s) => {
 
 listen("cloud-settings-synced", async () => {
   await refreshPinnedInstanceIds();
+  loadFavorites().catch(() => {});
   try {
     const s = await getSettings();
     await applyRuntimeSettings(s);

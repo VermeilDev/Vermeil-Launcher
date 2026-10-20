@@ -56,7 +56,11 @@ pub async fn cache_remote_icon(url: &str) -> Option<String> {
         return Some(clean_path_string(&path));
     }
 
-    // Not cached yet — go fetch.
+    // Not cached yet — validate scheme and fetch.
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return None;
+    }
+
     let resp = match HTTP.get(url).send().await {
         Ok(r) if r.status().is_success() => r,
         Ok(r) => {
@@ -69,8 +73,19 @@ pub async fn cache_remote_icon(url: &str) -> Option<String> {
         }
     };
 
+    if let Some(len) = resp.content_length() {
+        if len > 5 * 1024 * 1024 {
+            tracing::warn!("icon cache: rejecting oversized icon ({} bytes) from {}", len, url);
+            return None;
+        }
+    }
+
     let bytes = match resp.bytes().await {
-        Ok(b) => b,
+        Ok(b) if b.len() <= 5 * 1024 * 1024 => b,
+        Ok(_) => {
+            tracing::warn!("icon cache: icon body exceeded 5MB cap from {}", url);
+            return None;
+        }
         Err(e) => {
             tracing::debug!("icon cache: read body for {} failed: {}", url, e);
             return None;

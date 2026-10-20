@@ -39,13 +39,28 @@ struct FavoritesFile {
     pub items: Vec<FavoriteItem>,
 }
 
+static FAVORITES_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 fn favorites_path() -> PathBuf {
     paths::data_dir().join("favorites.json")
+}
+
+fn favorites_backup_path() -> PathBuf {
+    paths::data_dir().join("favorites.json.bak")
 }
 
 pub async fn load_favorites() -> Result<Vec<FavoriteItem>, String> {
     let path = favorites_path();
     if !path.exists() {
+        let bak = favorites_backup_path();
+        if !bak.exists() {
+            return Ok(Vec::new());
+        }
+        if let Ok(contents) = tokio::fs::read_to_string(&bak).await {
+            if let Ok(file) = serde_json::from_str::<FavoritesFile>(&contents) {
+                return Ok(file.items);
+            }
+        }
         return Ok(Vec::new());
     }
 
@@ -60,18 +75,23 @@ pub async fn load_favorites() -> Result<Vec<FavoriteItem>, String> {
             if let Ok(items) = serde_json::from_str::<Vec<FavoriteItem>>(&contents) {
                 return Ok(items);
             }
+            // If primary file was corrupted, try recovering from backup mirror
+            let bak = favorites_backup_path();
+            if bak.exists() {
+                if let Ok(bak_contents) = tokio::fs::read_to_string(&bak).await {
+                    if let Ok(bak_file) = serde_json::from_str::<FavoritesFile>(&bak_contents) {
+                        tracing::warn!("Recovered favorites from favorites.json.bak after parse failure: {}", e);
+                        return Ok(bak_file.items);
+                    }
+                }
+            }
             tracing::warn!("Failed to parse favorites.json: {}", e);
-            Ok(Vec::new())
+            Err(format!("Failed to parse favorites.json: {}", e))
         }
     }
 }
 
 pub async fn save_favorites(items: &[FavoriteItem]) -> Result<(), String> {
-    let dir = paths::data_dir();
-    tokio::fs::create_dir_all(&dir)
-        .await
-        .map_err(|e| format!("Failed to create data dir: {}", e))?;
-
     let file = FavoritesFile {
         version: 1,
         items: items.to_vec(),
@@ -80,16 +100,17 @@ pub async fn save_favorites(items: &[FavoriteItem]) -> Result<(), String> {
     let json = serde_json::to_string_pretty(&file)
         .map_err(|e| format!("Failed to serialize favorites: {}", e))?;
 
-    let tmp_path = dir.join("favorites.json.tmp");
-    let final_path = dir.join("favorites.json");
+    let final_path = favorites_path();
+    let backup_path = favorites_backup_path();
 
-    tokio::fs::write(&tmp_path, json.as_bytes())
-        .await
-        .map_err(|e| format!("Failed to write temporary favorites: {}", e))?;
-
-    tokio::fs::rename(&tmp_path, &final_path)
-        .await
-        .map_err(|e| format!("Failed to commit favorites: {}", e))?;
+    tokio::task::spawn_blocking(move || {
+        paths::atomic_write(&final_path, json.as_bytes())
+            .map_err(|e| format!("Failed to commit favorites: {}", e))?;
+        let _ = paths::atomic_write(&backup_path, json.as_bytes());
+        Ok::<(), String>(())
+    })
+    .await
+    .map_err(|e| format!("Failed to execute blocking write: {}", e))??;
 
     Ok(())
 }
@@ -98,7 +119,8 @@ pub async fn save_favorites(items: &[FavoriteItem]) -> Result<(), String> {
 /// If already present, removes it and returns Ok(false).
 /// If not present, caches its icon if available, adds it to the front, and returns Ok(true).
 pub async fn toggle_favorite(mut item: FavoriteItem) -> Result<bool, String> {
-    let mut items = load_favorites().await.unwrap_or_default();
+    let _guard = FAVORITES_LOCK.lock().await;
+    let mut items = load_favorites().await?;
 
     if let Some(pos) = items.iter().position(|i| i.id == item.id) {
         items.remove(pos);
@@ -106,12 +128,13 @@ pub async fn toggle_favorite(mut item: FavoriteItem) -> Result<bool, String> {
         return Ok(false);
     }
 
-    // Try to cache the icon locally for offline resilience if not already cached
-    if item.local_icon_path.is_none() {
-        if let Some(ref url) = item.icon_url {
-            if let Some(cached_path) = icon_cache::cache_remote_icon(url).await {
-                item.local_icon_path = Some(cached_path);
-            }
+    // Never trust client-supplied local filesystem paths from IPC
+    item.local_icon_path = None;
+
+    // Cache the icon locally for offline resilience if remote url is available
+    if let Some(ref url) = item.icon_url {
+        if let Some(cached_path) = icon_cache::cache_remote_icon(url).await {
+            item.local_icon_path = Some(cached_path);
         }
     }
 
@@ -125,7 +148,8 @@ pub async fn toggle_favorite(mut item: FavoriteItem) -> Result<bool, String> {
 }
 
 pub async fn remove_favorite(id: &str) -> Result<bool, String> {
-    let mut items = load_favorites().await.unwrap_or_default();
+    let _guard = FAVORITES_LOCK.lock().await;
+    let mut items = load_favorites().await?;
     if let Some(pos) = items.iter().position(|i| i.id == id) {
         items.remove(pos);
         save_favorites(&items).await?;
