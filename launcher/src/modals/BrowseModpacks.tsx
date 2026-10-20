@@ -307,6 +307,15 @@ const BrowseModpacks: Component = () => {
           <div class="modpack-source-tabs">
             <button
               type="button"
+              class={`modpack-source-tab tab-fav tip-below ${modSource() === "favorites" ? "active" : ""}`}
+              onClick={() => handleSourceSelect("favorites")}
+              data-tip="Favorites"
+              aria-label="Favorites"
+            >
+              <IconHeart filled={modSource() === "favorites"} />
+            </button>
+            <button
+              type="button"
               class={`modpack-source-tab tab-mr ${modSource() === "modrinth" ? "active" : ""}`}
               onClick={() => handleSourceSelect("modrinth")}
             >
@@ -320,15 +329,6 @@ const BrowseModpacks: Component = () => {
             >
               <IconCurseForge />
               <span>CurseForge</span>
-            </button>
-            <button
-              type="button"
-              class={`modpack-source-tab tab-fav tip-below ${modSource() === "favorites" ? "active" : ""}`}
-              onClick={() => handleSourceSelect("favorites")}
-              data-tip="Favorites"
-              aria-label="Favorites"
-            >
-              <IconHeart filled={modSource() === "favorites"} />
             </button>
           </div>
 
