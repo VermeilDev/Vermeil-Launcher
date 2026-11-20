@@ -518,11 +518,28 @@ export {
 };
 
 /**
- * Pre-launch check. If no account exists, shows modal and returns false.
- * Caller should bail out of the launch if this returns false.
+ * Pre-launch check. If an account refresh is currently in-flight on startup,
+ * awaits its resolution before deciding. If no valid account exists or reauth
+ * is needed, shows the modal and returns false.
  */
-export function ensureAccountOrPrompt(): boolean {
-  if (!account()) {
+export async function ensureAccountOrPrompt(): Promise<boolean> {
+  if (account.loading) {
+    const start = Date.now();
+    while (account.loading && Date.now() - start < 3500) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+  const acc = account();
+  if (!acc) {
+    setShowNoAccountModal(true);
+    return false;
+  }
+  if (acc.needs_reauth) {
+    showToast({
+      title: "Session Expired",
+      message: "Please sign in to your Microsoft account again.",
+      type: "error",
+    });
     setShowNoAccountModal(true);
     return false;
   }

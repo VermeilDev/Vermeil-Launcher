@@ -49,6 +49,7 @@ import {
   IconCloudSync,
   IconX,
   IconSettings,
+  IconRefresh,
 } from "../components/Icons";
 import CharacterStage from "../components/CharacterStage";
 import { openInstancePickerModal } from "../modals/InstancePickerModal";
@@ -380,7 +381,7 @@ const Home: Component = () => {
     worldName?: string,
     gameVersion?: string
   ) => {
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (launchingInstanceId()) {
       showToast({ title: "Launching in progress", message: "Please wait for the current launch to finish.", type: "info" });
       return;
@@ -439,7 +440,7 @@ const Home: Component = () => {
   };
 
   const launchServerWithInstance = async (instanceId: string, serverAddress: string, serverName: string) => {
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (launchingInstanceId()) {
       showToast({ title: "Launching in progress", message: "Please wait for the current launch to finish.", type: "info" });
       return;
@@ -499,7 +500,7 @@ const Home: Component = () => {
   };
 
   const handleJoinServer = async (server: QuickServerEntry) => {
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (launchingInstanceId()) {
       showToast({ title: "Launching in progress", message: "Please wait for the current launch to finish.", type: "info" });
       return;
@@ -672,10 +673,18 @@ const Home: Component = () => {
             <Show
               when={account()}
               fallback={
-                <>
-                  <IconUser class="header-pill-icon" />
-                  <span>Account: <strong>Not Signed In</strong></span>
-                </>
+                <Show
+                  when={account.loading}
+                  fallback={
+                    <>
+                      <IconUser class="header-pill-icon" />
+                      <span>Account: <strong>Not Signed In</strong></span>
+                    </>
+                  }
+                >
+                  <IconRefresh class="header-pill-icon spin-icon" />
+                  <span>Account: <strong>Connecting...</strong></span>
+                </Show>
               }
             >
               <IconMicrosoft class="header-pill-icon" />

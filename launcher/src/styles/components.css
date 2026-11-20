@@ -5410,6 +5410,16 @@ select.field-input[size] { appearance: none; }
   box-shadow: 0 0 10px var(--accent-glow);
   border-radius: 1px;
 }
+.inst-category-item--updates {
+  color: #34d399 !important;
+}
+.inst-category-item--updates:hover:not(.active) {
+  color: #6ee7b7 !important;
+}
+.inst-category-item--updates.active::after {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
 
 /* Inline Results / Installed Count */
 .inst-category-count-wrap {

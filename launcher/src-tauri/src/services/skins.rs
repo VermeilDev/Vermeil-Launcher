@@ -404,6 +404,22 @@ async fn fetch_texture_as_data_url(url: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("Texture body read failed: {}", e))?;
 
+    // Mirror skin/cape texture to Minecraft's assets/skins/<xx>/<hash> cache
+    // so Minecraft's internal HttpTexture finds it pre-loaded on disk,
+    // avoiding the Quick Play singleplayer race condition where the game
+    // renders before the async network texture download completes.
+    if let Some(hash) = url.rsplit('/').next() {
+        if hash.len() >= 4 {
+            let prefix = &hash[..2];
+            let target_dir = crate::util::paths::assets_dir().join("skins").join(prefix);
+            let target_file = target_dir.join(hash);
+            if !target_file.exists() {
+                let _ = std::fs::create_dir_all(&target_dir);
+                let _ = std::fs::write(&target_file, &bytes);
+            }
+        }
+    }
+
     let data_url = bytes_to_data_url(&bytes);
 
     // Insert into cache. Bounded loosely — the cache holds skin + cape
@@ -441,6 +457,42 @@ fn profile_cache() -> &'static Mutex<HashMap<String, (u64, PlayerProfile)>> {
 /// active until the TTL lapses.
 async fn invalidate_profile_cache(account_id: &str) {
     profile_cache().lock().await.remove(account_id);
+}
+
+/// Pre-warms the Mojang texture cache and session server before game boot.
+/// Ensures the active skin PNG is written to `<assets_dir>/skins/<xx>/<hash>`
+/// and hits `sessionserver.mojang.com` so DNS & TLS are warm, preventing
+/// the Quick Play singleplayer fallback to default Steve/Alex.
+pub async fn pre_warm_skin_cache(account_id: &str) {
+    if account_id.is_empty() || account_id == "0" {
+        return;
+    }
+
+    // 1. Non-blocking DNS & session server pre-warm to prime Cloudflare/DNS cache
+    let session_url = format!("https://sessionserver.mojang.com/session/minecraft/profile/{}", account_id);
+    let http = crate::util::http::HTTP.clone();
+    tokio::spawn(async move {
+        let _ = http.get(&session_url)
+            .timeout(std::time::Duration::from_millis(1500))
+            .send()
+            .await;
+    });
+
+    // 2. Mirror active local skin to assets/skins if present
+    let local_skins = list_local_skins(account_id);
+    if let Some(active) = local_skins.first() {
+        if let Ok((bytes, _)) = read_local_skin(account_id, &active.hash) {
+            if active.hash.len() >= 4 {
+                let prefix = &active.hash[..2];
+                let target_dir = crate::util::paths::assets_dir().join("skins").join(prefix);
+                let target_file = target_dir.join(&active.hash);
+                if !target_file.exists() {
+                    let _ = std::fs::create_dir_all(&target_dir);
+                    let _ = std::fs::write(&target_file, &bytes);
+                }
+            }
+        }
+    }
 }
 
 fn bytes_to_data_url(bytes: &[u8]) -> String {

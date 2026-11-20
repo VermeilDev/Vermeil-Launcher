@@ -324,7 +324,7 @@ const InstanceMods: Component = () => {
       }
       return;
     }
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (isCurrentInstanceInstalling()) {
       showToast({ title: "Installing", message: "Please wait for installation to finish", type: "info" });
       return;
@@ -375,7 +375,7 @@ const InstanceMods: Component = () => {
       showToast({ title: "Game already running", message: "Another game instance is currently active. Please close it first.", type: "info" });
       return;
     }
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (isCurrentInstanceInstalling()) {
       showToast({ title: "Installing", message: "Please wait for installation to finish", type: "info" });
       return;
@@ -559,7 +559,7 @@ const InstanceMods: Component = () => {
   });
 
   const [contentTab, setContentTab] = createSignal<"installed" | "browse" | "favorites">("installed");
-  const [installedFilter, setInstalledFilter] = createSignal<"all" | "mod" | "resourcepack" | "shader" | "datapack">("all");
+  const [installedFilter, setInstalledFilter] = createSignal<"all" | "mod" | "resourcepack" | "shader" | "datapack" | "updates">("all");
   // Installed tab: search + sort. Sort defaults to newest-first because users
   // most often want to find what they just installed. The Vec<ModEntry> from
   // backend is in install order (push at end), so newest = reversed list.
@@ -682,12 +682,15 @@ const InstanceMods: Component = () => {
       setModUpdates(new Map(Object.entries(map)));
       if (interactive) {
         const count = Object.keys(map).length;
+        if (count > 0) {
+          setInstalledPage(1);
+        }
         showToast({
           title: count === 0 ? "Up to date" : `${count} update${count === 1 ? "" : "s"} available`,
           message:
             count === 0
               ? "Every installed item is on its latest compatible version."
-              : "Click the green pill on a card to upgrade.",
+              : "Click the green pill on a card to upgrade, or Update All.",
           type: count === 0 ? "info" : "success",
           autoCloseMs: 3500,
         });
@@ -1437,9 +1440,16 @@ const InstanceMods: Component = () => {
     const mods = instanceMods();
     const f = installedFilter();
     const q = installedSearch().trim().toLowerCase();
+    const updates = modUpdates();
+    const loaderType = instance()?.loader?.type;
+
     const filtered = mods.filter((m: any) => {
-      const cat = resolveItemCategory(m, instance()?.loader?.type);
-      if (f !== "all" && cat !== f) return false;
+      if (f === "updates") {
+        if (!updates.has(m.project_id) || !isInstalledModCompatible(m, loaderType)) return false;
+      } else {
+        const cat = resolveItemCategory(m, loaderType);
+        if (f !== "all" && cat !== f) return false;
+      }
       // Managed companion mod jars are rendered as the dedicated managed card, not in the general mod grid.
       if (m.filename && m.filename.startsWith("vermeil-") && m.filename.includes("+")) return false;
       if (q) {
@@ -1450,7 +1460,31 @@ const InstanceMods: Component = () => {
     });
     // Backend pushes new mods to the end of the Vec, so the array is
     // already in install order (oldest → newest). Reverse for newest-first.
-    return installedSort() === "newest" ? filtered.slice().reverse() : filtered;
+    const baseSorted = installedSort() === "newest" ? filtered.slice().reverse() : filtered.slice();
+
+    // Priority float: when updates exist and not already viewing the updates-only filter,
+    // float cards with pending updates to the top so they appear immediately on Page 1.
+    if (updates.size > 0 && f !== "updates") {
+      const withUpdates: any[] = [];
+      const withoutUpdates: any[] = [];
+      for (const m of baseSorted) {
+        if (updates.has(m.project_id) && isInstalledModCompatible(m, loaderType)) {
+          withUpdates.push(m);
+        } else {
+          withoutUpdates.push(m);
+        }
+      }
+      return [...withUpdates, ...withoutUpdates];
+    }
+
+    return baseSorted;
+  });
+
+  // Revert back to "all" if the user was on the "updates" filter and all updates completed
+  createEffect(() => {
+    if (installedFilter() === "updates" && modUpdates().size === 0) {
+      setInstalledFilter("all");
+    }
   });
 
   const showCompanion = (): boolean => {
@@ -1728,6 +1762,27 @@ const InstanceMods: Component = () => {
     });
   };
 
+  const handleUpdateAll = () => {
+    const inst = instance();
+    if (!inst) return;
+    const mods = instanceMods();
+    let queued = 0;
+    for (const [projectId, update] of modUpdates()) {
+      if (isTaskQueuedOrActive(projectId, inst.id)) continue;
+      const mod = mods.find((m: any) => m.project_id === projectId);
+      const title = mod?.title || mod?.filename || update.latest_filename;
+      handleUpdateMod(projectId, title);
+      queued++;
+    }
+    if (queued > 0) {
+      showToast({
+        title: "Updates Queued",
+        message: `Queued ${queued} update${queued === 1 ? "" : "s"} for installation.`,
+        type: "success",
+      });
+    }
+  };
+
   const handleConvertMod = (mod: any) => {
     const inst = instance();
     if (!inst) return;
@@ -1853,6 +1908,7 @@ const InstanceMods: Component = () => {
   const installedActiveCount = (): number => {
     const mods = instanceMods();
     const f = installedFilter();
+    if (f === "updates") return modUpdates().size;
     return f === "all" ? mods.length : mods.filter((m: any) => resolveItemCategory(m, instance()?.loader?.type) === f).length;
   };
 
@@ -2788,6 +2844,16 @@ const InstanceMods: Component = () => {
                     </span>
                     <span>{checkingUpdates() ? "Checking..." : "Updates"}</span>
                   </button>
+                  <Show when={modUpdates().size > 0}>
+                    <button
+                      class="btn inst-panel-btn inst-action-btn btn--success tip-below"
+                      onClick={handleUpdateAll}
+                      data-tip={`Update all ${modUpdates().size} available updates`}
+                    >
+                      <IconArrowUp />
+                      <span>Update All ({modUpdates().size})</span>
+                    </button>
+                  </Show>
                   <button
                     class="btn inst-panel-btn tip-below"
                     onClick={() => { if (instance()) openInstanceFolder(instance()!.id); }}
@@ -2801,6 +2867,7 @@ const InstanceMods: Component = () => {
                     data-tip={installedSelectMode() ? "Cancel" : "Select to delete"}
                     disabled={(() => {
                       const mods = instanceMods();
+                      if (installedFilter() === "updates") return modUpdates().size === 0;
                       if (installedFilter() === "all") return mods.length === 0;
                       return mods.filter((m: any) => resolveItemCategory(m, instance()?.loader?.type) === installedFilter()).length === 0;
                     })()}
@@ -2924,10 +2991,18 @@ const InstanceMods: Component = () => {
                   <button class={`inst-category-item ${installedFilter() === "resourcepack" ? "active" : ""}`} onClick={() => setInstalledFilter("resourcepack")}>Resources</button>
                   <button class={`inst-category-item ${installedFilter() === "shader" ? "active" : ""}`} onClick={() => setInstalledFilter("shader")}>Shaders</button>
                   <button class={`inst-category-item ${installedFilter() === "datapack" ? "active" : ""}`} onClick={() => setInstalledFilter("datapack")}>Datapacks</button>
+                  <Show when={modUpdates().size > 0}>
+                    <button
+                      class={`inst-category-item inst-category-item--updates ${installedFilter() === "updates" ? "active" : ""}`}
+                      onClick={() => { setInstalledFilter("updates"); setInstalledPage(1); }}
+                    >
+                      Updates ({modUpdates().size})
+                    </button>
+                  </Show>
                 </div>
                 <div class="inst-category-count-wrap">
                   <span class="inst-count-text">
-                    <strong class="inst-count-bold">{installedSearch().trim() ? totalInstalledCount() : installedActiveCount()}</strong> {installedSearch().trim() ? "found" : "installed"}
+                    <strong class="inst-count-bold">{installedSearch().trim() ? totalInstalledCount() : installedActiveCount()}</strong> {installedFilter() === "updates" ? "updates available" : installedSearch().trim() ? "found" : "installed"}
                   </span>
                 </div>
               </div>

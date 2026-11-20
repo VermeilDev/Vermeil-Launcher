@@ -61,7 +61,7 @@ const Titlebar: Component<{ title: string }> = (props) => {
           size={20}
           class="account-pill-head"
         />
-        <span>{account()?.name ?? "Not signed in"}</span>
+        <span>{account()?.name ?? (account.loading ? "Connecting..." : "Not signed in")}</span>
       </div>
     </div>
   );

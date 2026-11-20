@@ -350,7 +350,7 @@ const Library: Component = () => {
       }
       return;
     }
-    if (!ensureAccountOrPrompt()) return;
+    if (!await ensureAccountOrPrompt()) return;
     if (isInstanceInstalling(inst)) {
       showToast({ title: "Installing", message: "Please wait for installation to finish", type: "info" });
       return;

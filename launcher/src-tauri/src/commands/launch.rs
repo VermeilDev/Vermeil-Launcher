@@ -84,6 +84,9 @@ pub async fn launch_instance(
     // Get active account with proactive token freshness verification
     let (username, uuid, token) = crate::commands::auth::get_launch_account().await?;
 
+    // Pre-warm skin assets and Mojang session cache to prevent Quick Play singleplayer fallback to default Steve/Alex
+    crate::services::skins::pre_warm_skin_cache(&uuid).await;
+
     if is_launch_cancelled() {
         return Err("Launch cancelled by user".to_string());
     }
