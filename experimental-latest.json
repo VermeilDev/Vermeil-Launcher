@@ -1,23 +1,23 @@
 {
-  "version": "0.1.0-alpha.14",
-  "notes": "## 0.1.0 (Alpha Build 14)\n\n### Added\n\n- Added unified Favorites system for bookmarking mods, modpacks, resource packs, shaders, and datapacks across Modrinth and CurseForge\n- Added offline icon caching and automatic Google Cloud synchronization for saved favorites\n\n### Changed\n\n- Reordered content and modpack mode tabs to position Favorites first for immediate access\n- Positioned content category navigation directly beneath the search and filter toolbar for improved ergonomics\n- Equalized button heights across standard (26px) and compact (24px) card views with 3-stage mechanical press physics\n\n### Fixed\n\n- Fixed CurseForge platform detection on installed mod cards when favoriting\n- Prevented category filter leakage when installing favorited mods from different content types\n- Hardened favorites data persistence with atomic writes, background cloud sync triggers, and self-healing backup mirror",
-  "pub_date": "2026-10-20T02:22:38.747Z",
+  "version": "0.1.0-alpha.15",
+  "notes": "## 0.1.0 (Alpha Build 15)\n\n### Added\n\n- Added \"Updates (N)\" category navigation pill in installed content view to instantly isolate out-of-date mods\n- Added \"Update All\" action button in installed toolbar to sequentially enqueue all pending mod updates\n\n### Changed\n\n- Automatically prioritized mods with pending updates to the top of the installed list (Page 1)\n- Reset installed pagination to Page 1 when checking updates so available updates are immediately visible\n\n### Fixed\n\n- Handled in-flight background token refresh on launcher startup to prevent false \"Account Not Signed In\" prompt\n- Pre-warmed Mojang texture cache and mirrored skin assets on launch to prevent Quick Play singleplayer fallback to default Steve/Alex\n- Added live \"Connecting...\" indicator to Home header and titlebar while account authentication warms up",
+  "pub_date": "2026-11-20T01:57:34.470Z",
   "platforms": {
-    "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkNnc2p3OUVRZmZpb3hTVG1BSXNLNHBjNW9EYktGTzVsaGwwT1BTV1Rtb2VKV1ZBak5OVUNnZGo3N2F5cTROTlBPaDByakl6ZWlHdlZKMUdxR3pkblEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDYyNzk0CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNF9hbWQ2NC5BcHBJbWFnZQpyZERNUzU1NDVmampuV255WWxTYmIvbDBnTDBQN0VpNlpGYUh3cWVEMGNTdnc2TmJsLzQ0ZFhFNUtRMWE5WGxiOHV6ZTNGTjI5QXNrR1YzenY5QlhCZz09Cg==",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.14/Vermeil_0.1.0-alpha.14_amd64.AppImage"
-    },
-    "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkNnc2p3OUVRZmZpb3hTVG1BSXNLNHBjNW9EYktGTzVsaGwwT1BTV1Rtb2VKV1ZBak5OVUNnZGo3N2F5cTROTlBPaDByakl6ZWlHdlZKMUdxR3pkblEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDYyNzk0CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNF9hbWQ2NC5BcHBJbWFnZQpyZERNUzU1NDVmampuV255WWxTYmIvbDBnTDBQN0VpNlpGYUh3cWVEMGNTdnc2TmJsLzQ0ZFhFNUtRMWE5WGxiOHV6ZTNGTjI5QXNrR1YzenY5QlhCZz09Cg==",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.14/Vermeil_0.1.0-alpha.14_amd64.AppImage"
-    },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkQ2elVFb0xidEppUzA1dkxwdW92blluUlZTRXFUS1dWeHVGVng3KzRZT2MrNzFLd281bTVTeGRXMC9CVHc0SWRoeXJmdUZ6TDlUbGt2cy96TWUwZ0FzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDYyOTU2CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNF94NjQtc2V0dXAuZXhlCmRJRUJUS2IxdmtSR2NIRXRycmZDdW1wVi8xNmttN0pEdy81K2Y2akxJUXhDUEE4clViTlJKVkprQnFWSTR6aVRQL0F6MkVoM3VGcnRXdkZ5eTh4dER3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.14/Vermeil_0.1.0-alpha.14_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk03WHZxZ28wUWV3NVJKdm8xNWxwd08rKzdldGZKK085UDQ1U05XNlZaZGFhU2F5TGQ4YkxXZTllR21lOGI5OTV2NzhlT1NVdldmbVdEMk1xbEhDSGdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MTM5MDQzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNV94NjQtc2V0dXAuZXhlClo1MkxQb3dzUlBYbWYwS0Uxa2FJa0dmZUdjaXJucWZmS21qTFYxNHhHTHdnbU5qMFBFdllSWDBYN3pJaC9aZURZNC9FR1NLaW1LVDJLYXc1YlkxakFBPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.15/Vermeil_0.1.0-alpha.15_x64-setup.exe"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTkQ2elVFb0xidEppUzA1dkxwdW92blluUlZTRXFUS1dWeHVGVng3KzRZT2MrNzFLd281bTVTeGRXMC9CVHc0SWRoeXJmdUZ6TDlUbGt2cy96TWUwZ0FzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDYyOTU2CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNF94NjQtc2V0dXAuZXhlCmRJRUJUS2IxdmtSR2NIRXRycmZDdW1wVi8xNmttN0pEdy81K2Y2akxJUXhDUEE4clViTlJKVkprQnFWSTR6aVRQL0F6MkVoM3VGcnRXdkZ5eTh4dER3PT0K",
-      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.14/Vermeil_0.1.0-alpha.14_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTk03WHZxZ28wUWV3NVJKdm8xNWxwd08rKzdldGZKK085UDQ1U05XNlZaZGFhU2F5TGQ4YkxXZTllR21lOGI5OTV2NzhlT1NVdldmbVdEMk1xbEhDSGdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MTM5MDQzCWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNV94NjQtc2V0dXAuZXhlClo1MkxQb3dzUlBYbWYwS0Uxa2FJa0dmZUdjaXJucWZmS21qTFYxNHhHTHdnbU5qMFBFdllSWDBYN3pJaC9aZURZNC9FR1NLaW1LVDJLYXc1YlkxakFBPT0K",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.15/Vermeil_0.1.0-alpha.15_x64-setup.exe"
+    },
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTlBiRXV0WXJUUzRzVHN2aTdjUDd4VG9IU1N3Mk5lSVMzUFZYMjNqeHJTcml3MldCVjFuMXdGZDVPY0ROQng4anp3dk15TW51Z0lhbERsOWg1R2ZOSlFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MTM5ODQ5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNV9hbWQ2NC5BcHBJbWFnZQoxOE1TY2d3MnpFTnhOay90dE9zMEpXamJNUlo1NWlyYzhIUGNrbENTekwyNVVrcDErZFVtYkVmZllZSzd6WEs2U3NFOGdVeDRRdkMvL1BtZWhWeUhCUT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.15/Vermeil_0.1.0-alpha.15_amd64.AppImage"
+    },
+    "linux-x86_64-appimage": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTWktzRk9GWTJGTlBiRXV0WXJUUzRzVHN2aTdjUDd4VG9IU1N3Mk5lSVMzUFZYMjNqeHJTcml3MldCVjFuMXdGZDVPY0ROQng4anp3dk15TW51Z0lhbERsOWg1R2ZOSlFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MTM5ODQ5CWZpbGU6VmVybWVpbF8wLjEuMC1hbHBoYS4xNV9hbWQ2NC5BcHBJbWFnZQoxOE1TY2d3MnpFTnhOay90dE9zMEpXamJNUlo1NWlyYzhIUGNrbENTekwyNVVrcDErZFVtYkVmZllZSzd6WEs2U3NFOGdVeDRRdkMvL1BtZWhWeUhCUT09Cg==",
+      "url": "https://github.com/VermeilDev/Vermeil-Launcher/releases/download/v0.1.0-alpha.15/Vermeil_0.1.0-alpha.15_amd64.AppImage"
     }
   }
 }
