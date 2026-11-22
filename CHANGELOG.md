@@ -1,17 +1,16 @@
-## 0.1.0 (Alpha Build 15)
-
-### Added
-
-- Added "Updates (N)" category navigation pill in installed content view to instantly isolate out-of-date mods
-- Added "Update All" action button in installed toolbar to sequentially enqueue all pending mod updates
+## 0.1.0 (Alpha Build 16)
 
 ### Changed
 
-- Automatically prioritized mods with pending updates to the top of the installed list (Page 1)
-- Reset installed pagination to Page 1 when checking updates so available updates are immediately visible
+- Debounced settings slider disk saves while retaining immediate 60 FPS visual responsiveness during drag
+- Isolated logs popout bundle to reduce separate window launch overhead
 
 ### Fixed
 
-- Handled in-flight background token refresh on launcher startup to prevent false "Account Not Signed In" prompt
-- Pre-warmed Mojang texture cache and mirrored skin assets on launch to prevent Quick Play singleplayer fallback to default Steve/Alex
-- Added live "Connecting..." indicator to Home header and titlebar while account authentication warms up
+- Enforced strict path sanitization across modpack file downloads and archive override extractions to prevent directory traversal
+- Enforced strict SHA-1 hash verification for mod and archive downloads
+- Hardened IPC handlers to restrict file opening to images within the launcher directory and prevent directory traversal on instance deletion
+- Restricted article metadata fetching strictly to official Mojang launchercontent endpoints
+- Sanitized HTML error responses on local OAuth loopback server
+- Capped network ping packets and mod jar zip entry reads to prevent memory exhaustion
+- Restricted webview asset protocol scope to application data directories and removed unsafe-eval from content security policy
