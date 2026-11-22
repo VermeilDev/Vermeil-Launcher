@@ -533,6 +533,30 @@ const Settings: Component = () => {
     return `${gb.toFixed(gb < 10 ? 1 : 0).replace(/\.0$/, "")} GB`;
   };
 
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let latestSettingsToSave: LauncherSettings | null = null;
+
+  const flushSave = async () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (latestSettingsToSave) {
+      const toSave = latestSettingsToSave;
+      latestSettingsToSave = null;
+      try {
+        await saveSettings(toSave);
+        await applyRuntimeSettings(toSave);
+      } catch (e) {
+        console.error("Failed to save settings:", e);
+      }
+    }
+  };
+
+  onCleanup(() => {
+    void flushSave();
+  });
+
   const updateSetting = async <K extends keyof LauncherSettings>(key: K, value: LauncherSettings[K]) => {
     const current = settings();
     if (!current) return;
@@ -556,36 +580,51 @@ const Settings: Component = () => {
     if (key === "window_size_preset") {
       setWindowPreset(value as string);
     }
-    try {
-      await saveSettings(updated);
-      await applyRuntimeSettings(updated);
-      // The per-instance Java-args editor pre-fills from the global GC preset.
-      // It lives on another screen, so fire after the save lands (not just the
-      // optimistic mutate) — it reads settings from disk and would otherwise
-      // race this write. The instance screen re-derives its args on this event.
-      if (key === "gc_preset") {
-        window.dispatchEvent(new CustomEvent("vermeil-gc-preset-changed"));
+
+    const isSliderKey =
+      key === "video_settings" ||
+      key === "concurrent_downloads" ||
+      key === "concurrent_writes" ||
+      key === "download_speed_limit_mb";
+
+    latestSettingsToSave = updated;
+
+    if (isSliderKey) {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        void flushSave();
+      }, 250);
+    } else {
+      try {
+        await flushSave();
+        // The per-instance Java-args editor pre-fills from the global GC preset.
+        // It lives on another screen, so fire after the save lands (not just the
+        // optimistic mutate) — it reads settings from disk and would otherwise
+        // race this write. The instance screen re-derives its args on this event.
+        if (key === "gc_preset") {
+          window.dispatchEvent(new CustomEvent("vermeil-gc-preset-changed"));
+        }
+      } catch (e) {
+        console.error("Failed to save setting:", e);
+        // Roll back on failure
+        mutate(current);
+        if (key === "theme") {
+          applyTheme(current.theme);
+        }
+        if (key === "download_toasts") {
+          setDownloadToastsEnabled(current.download_toasts);
+        }
+        if (key === "auto_hide_dock") {
+          setAutoHideDockSetting(current.auto_hide_dock);
+        }
+        if (key === "pagination_position") {
+          setPaginationPosition(current.pagination_position as "bottom" | "left" | "right");
+        }
+        if (key === "window_size_preset") {
+          setWindowPreset(current.window_size_preset ?? "1100x720");
+        }
+        await refetch();
       }
-    } catch (e) {
-      console.error("Failed to save setting:", e);
-      // Roll back on failure
-      mutate(current);
-      if (key === "theme") {
-        applyTheme(current.theme);
-      }
-      if (key === "download_toasts") {
-        setDownloadToastsEnabled(current.download_toasts);
-      }
-      if (key === "auto_hide_dock") {
-        setAutoHideDockSetting(current.auto_hide_dock);
-      }
-      if (key === "pagination_position") {
-        setPaginationPosition(current.pagination_position as "bottom" | "left" | "right");
-      }
-      if (key === "window_size_preset") {
-        setWindowPreset(current.window_size_preset ?? "1100x720");
-      }
-      await refetch();
     }
   };
 

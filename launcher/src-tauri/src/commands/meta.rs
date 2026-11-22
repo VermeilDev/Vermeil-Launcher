@@ -240,9 +240,19 @@ pub async fn get_article_body(content_url: String) -> Result<String, String> {
 
     // contentPath is like "javaPatchNotes/abc123.json" — needs /v2/ prefix
     let url = if content_url.starts_with("http") {
+        if !content_url.starts_with("https://launchercontent.mojang.com/") {
+            return Err(
+                "Access denied: article URL must originate from launchercontent.mojang.com"
+                    .to_string(),
+            );
+        }
         content_url
     } else {
-        format!("https://launchercontent.mojang.com/v2/{}", content_url)
+        let clean_path = content_url.trim_start_matches('/');
+        if clean_path.contains("..") {
+            return Err("Invalid article path".to_string());
+        }
+        format!("https://launchercontent.mojang.com/v2/{}", clean_path)
     };
 
     let resp = crate::util::http::HTTP

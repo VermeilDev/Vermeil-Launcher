@@ -392,7 +392,7 @@ const IID_IPROPERTY_STORE: windows_sys::core::GUID =
 #[cfg(windows)]
 const PKEY_RELAUNCH_ICON: Win32PropertyKey = Win32PropertyKey {
     fmtid: windows_sys::core::GUID::from_u128(0x9f4c2855_9f79_4b39_a8d0_e1d42de1d5f3),
-    pid: 2,
+    pid: 3,
 };
 #[cfg(windows)]
 const VT_LPWSTR: u16 = 31;

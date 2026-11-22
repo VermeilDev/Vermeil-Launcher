@@ -80,7 +80,7 @@ for (const file of files) {
     for (const rule of RULES) {
       for (const match of line.matchAll(rule.re)) {
         if (!(rule.group && SAFE.test(match[1]))) {
-          report(file, i + 1, rule.id, match[0].slice(0, 80));
+          report(file, i + 1, rule.id, '[REDACTED]');
         }
       }
     }

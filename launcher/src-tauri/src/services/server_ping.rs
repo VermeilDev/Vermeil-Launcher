@@ -145,8 +145,15 @@ pub async fn ping_server(address: &str) -> ServerPingInfo {
             ));
         }
 
-        // Read JSON string length and bytes
-        let json_len = read_varint(&mut stream).await? as usize;
+        // Read JSON string length and bytes with bounded size cap (max 1 MB) to prevent OOM
+        let raw_len = read_varint(&mut stream).await?;
+        if raw_len <= 0 || raw_len > 1_048_576 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Server ping JSON payload length invalid or exceeds 1MB ceiling",
+            ));
+        }
+        let json_len = raw_len as usize;
         let mut json_buf = vec![0u8; json_len];
         stream.read_exact(&mut json_buf).await?;
 

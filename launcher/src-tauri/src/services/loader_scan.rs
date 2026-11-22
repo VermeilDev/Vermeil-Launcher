@@ -101,13 +101,14 @@ fn read_requirement(jar_path: &Path, loader_type: &LoaderType) -> Option<String>
 }
 
 /// Read the entry named `name` from the archive into a string, if present.
+/// Bounds decompression to at most 1 MB to prevent zip bomb resource exhaustion.
 fn read_entry<R: std::io::Read + std::io::Seek>(
     archive: &mut zip::ZipArchive<R>,
     name: &str,
 ) -> Option<String> {
-    let mut entry = archive.by_name(name).ok()?;
+    let entry = archive.by_name(name).ok()?;
     let mut content = String::new();
-    entry.read_to_string(&mut content).ok()?;
+    entry.take(1024 * 1024).read_to_string(&mut content).ok()?;
     Some(content)
 }
 

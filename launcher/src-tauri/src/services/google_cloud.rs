@@ -137,6 +137,15 @@ fn generate_pkce() -> (String, String) {
     (verifier, challenge)
 }
 
+fn html_escape(input: &str) -> String {
+    input
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
+}
+
 /// Runs the local loopback OAuth 2.0 PKCE flow in the user's default browser,
 /// exchanges the authorization code for an access token and optional refresh token.
 pub async fn start_google_oauth() -> Result<(String, Option<String>), String> {
@@ -217,9 +226,9 @@ pub async fn start_google_oauth() -> Result<(String, Option<String>), String> {
 
         let (mut s, _) = accept_res;
         let mut buffer = [0u8; 4096];
-        let n = match s.read(&mut buffer).await {
-            Ok(0) | Err(_) => continue,
-            Ok(n) => n,
+        let n = match tokio::time::timeout(tokio::time::Duration::from_secs(5), s.read(&mut buffer)).await {
+            Ok(Ok(n)) if n > 0 => n,
+            _ => continue,
         };
 
         let request_str = String::from_utf8_lossy(&buffer[..n]);
@@ -282,6 +291,7 @@ pub async fn start_google_oauth() -> Result<(String, Option<String>), String> {
             }
 
             if let Some(err) = error_val {
+                let sanitized_err = html_escape(&err);
                 let error_html = format!(
                     "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nConnection: close\r\n\r\n\
                     <!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Vermeil — Authorization Cancelled</title></head>\
@@ -289,7 +299,7 @@ pub async fn start_google_oauth() -> Result<(String, Option<String>), String> {
                     <h2 style=\"color:#f87171;\">Authorization Cancelled</h2><p>Google authentication failed: {}</p>\
                     <script>if(window.history&&window.history.replaceState){{window.history.replaceState({{l:1}},document.title,window.location.pathname);for(var i=0;i<25;i++)window.history.pushState({{l:1}},document.title,window.location.pathname);window.addEventListener('popstate',function(){{window.history.pushState({{l:1}},document.title,window.location.pathname);}});}}</script>\
                     </body></html>",
-                    err
+                    sanitized_err
                 );
                 let _ = s.write_all(error_html.as_bytes()).await;
                 let _ = s.flush().await;

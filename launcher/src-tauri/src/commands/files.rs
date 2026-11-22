@@ -442,9 +442,34 @@ pub async fn get_instances_storage_footprint() -> Result<u64, String> {
 #[tauri::command]
 pub async fn open_file_path(path: String) -> Result<(), String> {
     let p = std::path::PathBuf::from(&path);
-    if p.exists() {
-        let _ = open::that(&p);
+    if !p.exists() || !p.is_file() {
+        return Err("File does not exist or is not a regular file".to_string());
     }
+
+    // Must be inside the launcher's data directory (e.g. instances/<id>/.minecraft/screenshots)
+    let canonical = p.canonicalize().map_err(|e| format!("Invalid path: {}", e))?;
+    let data_dir = paths::data_dir()
+        .canonicalize()
+        .unwrap_or_else(|_| paths::data_dir());
+    if !canonical.starts_with(&data_dir) {
+        return Err("Access denied: path is outside the launcher directory".to_string());
+    }
+
+    // Must be a safe image file extension (never executables, scripts, or binaries)
+    let is_safe_image = canonical
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|ext| {
+            let lower = ext.to_ascii_lowercase();
+            lower == "png" || lower == "jpg" || lower == "jpeg" || lower == "webp"
+        })
+        .unwrap_or(false);
+
+    if !is_safe_image {
+        return Err("Access denied: only image files may be opened via this handler".to_string());
+    }
+
+    let _ = open::that(&canonical);
     Ok(())
 }
 

@@ -37,7 +37,7 @@ Vermeil ships with an auto-updater that downloads signed installers from GitHub 
 | Transport | HTTPS to GitHub (`updates/latest.json` branch) |
 | Manifest | Plain JSON pointing to the installer + its signature |
 | Payload integrity | Minisign Ed25519 signature verified against an embedded pubkey before install runs |
-| Privilege scope | NSIS installer in `installMode: currentUser` writes only to `%LOCALAPPDATA%\Programs\Vermeil` |
+| Privilege scope | NSIS installer in `installMode: currentUser` writes to `%LOCALAPPDATA%\Vermeil` |
 | Downgrade protection | Tauri's updater only flags `new_version > current_version` per semver |
 | File-replace race | Install runs at `RunEvent::Exit` so the running binary's file lock is released first |
 

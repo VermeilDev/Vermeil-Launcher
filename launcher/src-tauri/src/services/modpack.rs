@@ -355,7 +355,13 @@ pub async fn install_from_mrpack_file(
 
     for mf in &index.files {
         if let Some(url) = mf.downloads.first() {
-            let dest = minecraft_dir.join(&mf.path);
+            let dest = match paths::safe_join(&minecraft_dir, &mf.path) {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::warn!("Skipping unsafe file path in modpack: {}", e);
+                    continue;
+                }
+            };
             mod_tasks.push(DownloadTask {
                 url: url.clone(),
                 dest: dest.clone(),
@@ -1076,10 +1082,13 @@ async fn extract_overrides(
             };
 
             if let Some(rel) = rel_path {
-                if rel.contains("..") {
-                    continue; // Skip path traversal attempts
-                }
-                let dest = minecraft_dir.join(&rel);
+                let dest = match paths::safe_join(&minecraft_dir, &rel) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        tracing::warn!("Skipping unsafe override in modpack: {}", e);
+                        continue;
+                    }
+                };
                 if rel.is_empty() || entry.is_dir() {
                     if created_dirs.insert(dest.clone()) {
                         let _ = fs::create_dir_all(&dest);

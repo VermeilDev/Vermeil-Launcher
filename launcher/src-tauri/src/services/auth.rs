@@ -380,7 +380,8 @@ fn get_or_create_device_key() -> Result<DeviceKey, String> {
         let _ = fs::create_dir_all(paths::data_dir());
         let pem = signing_key.to_pkcs8_pem(LineEnding::LF)
             .map_err(|e| format!("Serialize key: {}", e))?;
-        let stored = credentials::encrypt_credential(&pem).unwrap_or_else(|_| pem.to_string());
+        let stored = credentials::encrypt_credential(&pem)
+            .map_err(|e| format!("Failed to securely encrypt device authentication key: {}", e))?;
         fs::write(&key_path, stored.as_bytes()).map_err(|e| format!("Write key: {}", e))?;
         let _ = fs::write(&id_path, id.to_string());
         credentials::restrict_file_permissions(&key_path);
@@ -426,7 +427,7 @@ async fn get_device_token(key: &DeviceKey, current_date: DateTime<Utc>) -> Resul
     ).await?;
 
     let token: DeviceToken = serde_json::from_str(&resp.body)
-        .map_err(|e| format!("Parse device token: {} — body: {}", e, resp.body))?;
+        .map_err(|e| format!("Parse device token failed: {}", e))?;
 
     Ok(token.token)
 }
@@ -468,7 +469,7 @@ async fn sisu_authenticate(
         .to_string();
 
     let redirect: SisuAuthResponse = serde_json::from_str(&resp.body)
-        .map_err(|e| format!("Parse SISU auth: {} — body: {}", e, resp.body))?;
+        .map_err(|e| format!("Parse SISU auth failed: {}", e))?;
 
     Ok((session_id, redirect.msa_oauth_redirect))
 }
@@ -553,7 +554,7 @@ async fn sisu_authorize(
     ).await?;
 
     serde_json::from_str(&resp.body)
-        .map_err(|e| format!("Parse SISU authorize: {} — body: {}", e, resp.body))
+        .map_err(|e| format!("Parse SISU authorize failed: {}", e))
 }
 
 async fn xsts_authorize(
@@ -582,7 +583,7 @@ async fn xsts_authorize(
     ).await?;
 
     serde_json::from_str(&resp.body)
-        .map_err(|e| format!("Parse XSTS: {} — body: {}", e, resp.body))
+        .map_err(|e| format!("Parse XSTS failed: {}", e))
 }
 
 async fn minecraft_token(xsts: &XboxToken) -> Result<MinecraftTokenResponse, String> {
@@ -605,7 +606,7 @@ async fn minecraft_token(xsts: &XboxToken) -> Result<MinecraftTokenResponse, Str
 
     let text = resp.text().await.map_err(|e| e.to_string())?;
     serde_json::from_str(&text)
-        .map_err(|e| format!("Parse MC token: {} — body: {}", e, text))
+        .map_err(|e| format!("Parse MC token failed: {}", e))
 }
 
 async fn get_mc_profile(mc_token: &str) -> Result<McProfileResponse, String> {
@@ -618,16 +619,16 @@ async fn get_mc_profile(mc_token: &str) -> Result<McProfileResponse, String> {
 
     if !resp.status().is_success() {
         let status = resp.status();
-        let text = resp.text().await.unwrap_or_default();
+        let _text = resp.text().await.unwrap_or_default();
         if status == reqwest::StatusCode::NOT_FOUND {
             return Err("This Microsoft account does not have a Minecraft: Java Edition license. Please ensure you have purchased the game on this account.".to_string());
         }
-        return Err(format!("MC profile error ({}): {}", status, text));
+        return Err(format!("MC profile error (HTTP {})", status));
     }
 
     let text = resp.text().await.map_err(|e| e.to_string())?;
     serde_json::from_str(&text)
-        .map_err(|e| format!("Parse MC profile: {} — body: {}", e, text))
+        .map_err(|e| format!("Parse MC profile failed: {}", e))
 }
 
 // === SIGNED REQUEST INFRASTRUCTURE ===

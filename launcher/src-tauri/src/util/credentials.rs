@@ -192,8 +192,21 @@ pub fn atomic_write(path: &Path, data: &[u8]) -> Result<(), String> {
     };
 
     {
+        #[cfg(unix)]
+        let mut file = {
+            use std::os::unix::fs::OpenOptionsExt;
+            std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&tmp_path)
+                .map_err(|e| format!("Create temp file {}: {}", tmp_path.display(), e))?
+        };
+        #[cfg(not(unix))]
         let mut file = std::fs::File::create(&tmp_path)
             .map_err(|e| format!("Create temp file {}: {}", tmp_path.display(), e))?;
+
         file.write_all(data)
             .map_err(|e| format!("Write temp file {}: {}", tmp_path.display(), e))?;
         file.sync_all()

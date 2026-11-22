@@ -56,6 +56,7 @@ pub async fn create_instance(config: CreateInstanceConfig) -> Result<Instance, S
 
 #[tauri::command]
 pub async fn get_instance(id: String) -> Result<Instance, String> {
+    crate::util::paths::validate_instance_id(&id)?;
     let mut instance = instance_service::get_by_id(&id)
         .await
         .map_err(|e| e.to_string())?;
@@ -78,6 +79,11 @@ pub async fn delete_instance(id: String) -> Result<(), String> {
 pub async fn delete_instances(ids: Vec<String>) -> Result<(), String> {
     if ids.is_empty() {
         return Ok(());
+    }
+
+    // Validate every instance ID first to strictly reject path traversal attempts
+    for id in &ids {
+        crate::util::paths::validate_instance_id(id)?;
     }
 
     let instances_dir = crate::util::paths::instances_dir();

@@ -363,12 +363,12 @@ impl LibrariesLinkGuard {
 
     #[cfg(windows)]
     fn create_link(target: &Path, link: &Path) -> bool {
-        // cmd /C mklink /J <link> <target> creates an NTFS directory junction.
+        // cmd /C mklink /J "<link>" "<target>" creates an NTFS directory junction.
+        // Quotes ensure paths with spaces or special characters are handled safely by cmd.exe.
         // Junctions work without Administrator privileges or Developer Mode on Windows.
+        let cmd_str = format!("mklink /J \"{}\" \"{}\"", link.display(), target.display());
         let status = std::process::Command::new("cmd")
-            .args(["/C", "mklink", "/J"])
-            .arg(link)
-            .arg(target)
+            .args(["/C", &cmd_str])
             .creation_flags(crate::services::java::CREATE_NO_WINDOW)
             .output();
         match status {

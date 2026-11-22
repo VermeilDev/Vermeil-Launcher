@@ -258,45 +258,40 @@ pub fn file_valid(path: &Path, expected_sha1: &Option<String>, expected_size: &O
         return false;
     }
 
+    let meta = match std::fs::metadata(path) {
+        Ok(m) => m,
+        Err(_) => return false,
+    };
+
+    // If expected_size is provided, file size must match
     if let Some(size) = expected_size {
-        // Size is the cheap, authoritative check for cached files.
-        if std::fs::metadata(path).map(|m| m.len() == *size).unwrap_or(false) {
-            return true;
+        if meta.len() != *size {
+            return false;
         }
     }
 
+    // If expected_sha1 is provided, verify hash
     if let Some(hash) = expected_sha1 {
+        // Fast-path: vanilla Minecraft asset objects (<data>/assets/objects/xx/xxhash)
+        // are content-addressed and already named after their SHA-1 hash.
+        let is_asset_object = path.starts_with(crate::util::paths::assets_dir());
+        if is_asset_object && expected_size.is_some() {
+            return true;
+        }
+
+        // For all other files (mods, libraries, client JARs), compute SHA-1
         if let Ok(mut file) = std::fs::File::open(path) {
             use std::io;
             let mut hasher = Sha1::new();
             if io::copy(&mut file, &mut hasher).is_ok() {
                 let result = format!("{:x}", hasher.finalize());
-                if result == *hash {
-                    return true;
-                }
+                return result == *hash;
             }
         }
+        return false;
     }
 
-    // For mod and resourcepack archives, a non-empty, structurally valid ZIP file on disk
-    // is considered valid even if upstream manifest metadata had size/hash drift.
-    let is_archive = path
-        .extension()
-        .map(|e| {
-            let ext = e.to_string_lossy().to_lowercase();
-            ext == "jar" || ext == "zip" || ext == "mrpack"
-        })
-        .unwrap_or(false);
-
-    if is_archive {
-        if let Ok(file) = std::fs::File::open(path) {
-            if let Ok(archive) = zip::ZipArchive::new(file) {
-                return !archive.is_empty();
-            }
-        }
-    }
-
-    expected_size.is_none() && expected_sha1.is_none()
+    expected_size.is_some() || (expected_size.is_none() && expected_sha1.is_none())
 }
 
 /// Fetch the bytes of a URL with retry. The fetch semaphore is held only for
@@ -348,36 +343,13 @@ async fn persist_bytes(
         hasher.update(bytes);
         let result = format!("{:x}", hasher.finalize());
         if &result != hash {
-            // Modpack manifests (both CurseForge and Modrinth exports) occasionally contain
-            // drifted or cross-platform hash metadata (e.g. author exported CurseForge hashes
-            // into a Modrinth mrpack, or CDN edge re-signing). If the downloaded payload is a
-            // valid archive, the transfer succeeded cleanly over TLS and the mismatch is
-            // upstream manifest metadata drift.
-            let is_archive = dest
-                .extension()
-                .map(|e| {
-                    let ext = e.to_string_lossy().to_lowercase();
-                    ext == "jar" || ext == "zip" || ext == "mrpack"
-                })
-                .unwrap_or(false);
-
-            if is_archive && is_valid_zip(bytes) {
-                tracing::warn!(
-                    "Hash mismatch for {} (expected {}, got {} from {}), but payload is a valid archive ({} bytes). Accepting download.",
-                    dest.display(),
-                    hash,
-                    result,
-                    url,
-                    bytes.len()
-                );
-            } else {
-                return Err(format!(
-                    "Hash mismatch for {}: expected {}, got {}",
-                    dest.display(),
-                    hash,
-                    result
-                ));
-            }
+            return Err(format!(
+                "Hash mismatch for {}: expected {}, got {} (source: {})",
+                dest.display(),
+                hash,
+                result,
+                url
+            ));
         }
     }
 
@@ -604,6 +576,7 @@ pub async fn download_all(
 
 /// Validate whether an in-memory byte buffer forms a valid ZIP archive (e.g. .jar, .zip, .mrpack).
 /// Verifies the presence and integrity of the ZIP central directory.
+#[cfg(test)]
 fn is_valid_zip(bytes: &[u8]) -> bool {
     if bytes.len() < 22 {
         return false;
@@ -698,17 +671,32 @@ mod tests {
         let temp_dir = std::env::temp_dir().join(format!("vermeil_test_{}", uuid::Uuid::new_v4()));
         let write_sem = Arc::new(Semaphore::new(1));
 
-        // 1. Valid jar with wrong expected_sha1 succeeds via graceful archive fallback
+        // 1. Valid jar with matching expected_sha1 succeeds
+        let mut hasher = Sha1::new();
+        hasher.update(&zip_bytes);
+        let actual_hash = format!("{:x}", hasher.finalize());
+
         let jar_path = temp_dir.join("test_mod.jar");
         let res = persist_bytes(
             &zip_bytes,
             &jar_path,
+            &Some(actual_hash.clone()),
+            "https://cdn.modrinth.com/sample.jar",
+            &write_sem,
+        ).await;
+        assert!(res.is_ok(), "Valid jar archive with matching hash should succeed");
+        assert!(file_valid(&jar_path, &Some(actual_hash.clone()), &Some(zip_bytes.len() as u64)));
+
+        // 2. Jar with wrong expected_sha1 fails strictly
+        let bad_hash_jar = temp_dir.join("bad_hash.jar");
+        let res = persist_bytes(
+            &zip_bytes,
+            &bad_hash_jar,
             &Some("0000000000000000000000000000000000000000".to_string()),
             "https://cdn.modrinth.com/sample.jar",
             &write_sem,
         ).await;
-        assert!(res.is_ok(), "Valid jar archive should succeed despite drifted expected_sha1");
-        assert!(file_valid(&jar_path, &Some("0000000000000000000000000000000000000000".to_string()), &Some(999999)));
+        assert!(res.is_err(), "Jar archive with wrong hash must fail strictly");
 
         // 2. Corrupted jar with wrong expected_sha1 fails
         let corrupt_jar = temp_dir.join("corrupt.jar");

@@ -139,13 +139,12 @@ fn guess_extension(url: &str) -> Option<String> {
     let url = url.split('?').next().unwrap_or(url);
     let last = url.rsplit('/').next()?;
     let dot = last.rfind('.')?;
-    let ext = &last[dot + 1..];
-    // Sanity: only accept short alphanumeric extensions. Anything weirder and
-    // we fall back to PNG.
-    if ext.is_empty() || ext.len() > 5 || !ext.chars().all(|c| c.is_ascii_alphanumeric()) {
-        return None;
+    let ext = last[dot + 1..].to_ascii_lowercase();
+    // Whitelist only safe image file extensions. Anything else defaults to PNG.
+    match ext.as_str() {
+        "png" | "webp" | "jpg" | "jpeg" | "gif" | "ico" | "svg" => Some(ext),
+        _ => None,
     }
-    Some(ext.to_lowercase())
 }
 
 fn hex_lower(bytes: &[u8]) -> String {

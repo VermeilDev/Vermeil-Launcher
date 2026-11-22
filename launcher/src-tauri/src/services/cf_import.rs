@@ -404,7 +404,13 @@ async fn build_mod_tasks(
             }
         };
 
-        let dest = mods_dir.join(&info.file_name);
+        let dest = match paths::safe_join(&mods_dir, &info.file_name) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::warn!("Skipping unsafe mod file name in CurseForge pack: {}", e);
+                continue;
+            }
+        };
         let sha1 = info
             .hashes
             .iter()
@@ -730,10 +736,13 @@ async fn extract_overrides_async(
 
             // Strip the overrides/ prefix to get the relative path
             let relative = &name[prefix.len()..];
-            if relative.contains("..") {
-                continue;
-            }
-            let dest = minecraft_dir.join(relative);
+            let dest = match paths::safe_join(&minecraft_dir, relative) {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::warn!("Skipping unsafe override in CurseForge pack: {}", e);
+                    continue;
+                }
+            };
 
             if entry.is_dir() {
                 if created_dirs.insert(dest.clone()) {

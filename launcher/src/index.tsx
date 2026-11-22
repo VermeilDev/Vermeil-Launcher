@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { render } from "solid-js/web";
-import App from "./App";
+import { lazy } from "solid-js";
+const App = lazy(() => import("./App"));
 import LogsPopout from "./screens/LogsPopout";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./styles/base.css";

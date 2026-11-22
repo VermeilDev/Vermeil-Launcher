@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 VermeilDev
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Returns the root data directory for the launcher.
 ///
@@ -77,6 +77,69 @@ pub fn icons_cache_dir() -> PathBuf {
 /// Kept strictly separate from any cache or legacy `icons` directories so it is NEVER purged or moved.
 pub fn theme_icons_dir() -> PathBuf {
     data_dir().join("theme_icons")
+}
+
+/// Safely joins a relative path to a base path, ensuring that the target cannot
+/// escape the base directory (preventing directory traversal / Zip Slip attacks).
+///
+/// Rejects any path with `..`, root components (`/` or `\`), drive prefixes (`C:`),
+/// or non-normal path components on both Windows and Linux.
+pub fn safe_join<P: AsRef<Path>>(base: &Path, rel: P) -> Result<PathBuf, String> {
+    let rel_ref = rel.as_ref();
+    let rel_str = rel_ref.to_string_lossy();
+
+    // Reject raw absolute path patterns explicitly across platforms
+    if rel_str.starts_with('/') || rel_str.starts_with('\\') {
+        return Err(format!("Absolute path not allowed: {:?}", rel_ref));
+    }
+    // Check for Windows drive letter (e.g. "C:" or "d:")
+    if rel_str.len() >= 2
+        && rel_str.as_bytes()[1] == b':'
+        && rel_str.as_bytes()[0].is_ascii_alphabetic()
+    {
+        return Err(format!("Drive letter not allowed in relative path: {:?}", rel_ref));
+    }
+
+    let mut clean_rel = PathBuf::new();
+    // Normalize both '/' and '\' to ensure cross-platform safety
+    for part in rel_str.split(|c| c == '/' || c == '\\') {
+        if part.is_empty() || part == "." {
+            continue;
+        }
+        if part == ".." {
+            return Err(format!(
+                "Path traversal attempt (parent directory reference) in path: {:?}",
+                rel_ref
+            ));
+        }
+        clean_rel.push(part);
+    }
+
+    let joined = base.join(clean_rel);
+    if !joined.starts_with(base) {
+        return Err(format!(
+            "Path traversal detected: target {:?} escapes base {:?}",
+            joined, base
+        ));
+    }
+
+    Ok(joined)
+}
+
+/// Validates that an instance ID is a safe identifier (alphanumeric, hyphens, underscores)
+/// and cannot be used for path traversal attacks across instance directories.
+pub fn validate_instance_id(id: &str) -> Result<(), String> {
+    let trimmed = id.trim();
+    if trimmed.is_empty() {
+        return Err("Instance ID cannot be empty".to_string());
+    }
+    if !trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        return Err(format!(
+            "Invalid instance ID '{}': must contain only alphanumeric characters, hyphens, and underscores",
+            id
+        ));
+    }
+    Ok(())
 }
 
 /// Migrate legacy root-level cache folders (`icons`, `meta`, `versions`, `loader-scratch`,
@@ -309,5 +372,40 @@ mod tests {
         std::fs::write(temp.join("nested").join("b.txt"), b"1234567").unwrap(); // 7 bytes
         assert_eq!(dir_size(&temp), 12);
         let _ = std::fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn test_safe_join() {
+        let base = Path::new("/base/path");
+
+        // Valid relative paths
+        assert!(safe_join(base, "mods/mod.jar").is_ok());
+        assert!(safe_join(base, "config/sub/options.txt").is_ok());
+        assert!(safe_join(base, "overrides\\config\\options.txt").is_ok());
+        assert_eq!(
+            safe_join(base, "mods/test.jar").unwrap(),
+            base.join("mods").join("test.jar")
+        );
+
+        // Path traversal attempts
+        assert!(safe_join(base, "../evil.jar").is_err());
+        assert!(safe_join(base, "mods/../../evil.jar").is_err());
+        assert!(safe_join(base, "/etc/passwd").is_err());
+        assert!(safe_join(base, "\\Windows\\evil.dll").is_err());
+        assert!(safe_join(base, "C:\\Windows\\evil.dll").is_err());
+        assert!(safe_join(base, "C:/Windows/evil.dll").is_err());
+    }
+
+    #[test]
+    fn test_validate_instance_id() {
+        assert!(validate_instance_id("valid-id_123").is_ok());
+        assert!(validate_instance_id("550e8400-e29b-41d4-a716-446655440000").is_ok());
+
+        assert!(validate_instance_id("").is_err());
+        assert!(validate_instance_id("   ").is_err());
+        assert!(validate_instance_id("../traversal").is_err());
+        assert!(validate_instance_id("bad/slash").is_err());
+        assert!(validate_instance_id("bad\\backslash").is_err());
+        assert!(validate_instance_id("id with spaces").is_err());
     }
 }
